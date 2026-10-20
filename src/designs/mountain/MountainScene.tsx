@@ -17,7 +17,7 @@ export function MountainScene({ hour, ended, paused }: DesignSceneProps) {
   return (
     <>
       <CrayonDefs />
-      <TrailStage hour={ended ? 21.6 : hour} stage={stage} mood={mood} season={settings.season} paused={paused} />
+      <TrailStage hour={ended ? 21.6 : hour} stage={stage} mood={mood} season={settings.season} paused={paused} hikerLook={settings.hikerLook} tent={settings.tentStyle} />
     </>
   );
 }

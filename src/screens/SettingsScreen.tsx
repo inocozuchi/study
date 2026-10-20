@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bell, ChevronLeft, ChevronRight, Clock, Coffee, Database, Leaf, Mountain, Music, PlusSquare, Repeat, Smartphone, Sun, Timer, Trash2,
-  Contrast, Moon, Type, User, Volume2, Waves, Wind,
+  Contrast, IdCard, Moon, TrainFront, Type, User, Volume2, Waves, Wind,
 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { Toggle } from '@/components/ui/Toggle';
@@ -19,7 +19,9 @@ import { springSheet } from '@/lib/motion';
 import { useHoldScene } from '@/lib/sceneHold';
 import { ambient } from '@/audio/ambient';
 import { FONTS, fontById, loadFontPreviews, unloadFontPreviews } from '@/lib/fonts';
-import type { AmbientChannel, AmbientMix, Appearance, FontId, Season, Settings, SkyOverride } from '@/types';
+import { ModeSheet } from '@/components/profile/ModeSheet';
+import { ProfileSheet } from '@/components/profile/ProfileSheet';
+import type { AmbientChannel, AmbientMix, Appearance, FontId, Season, Settings, SkyOverride, TrainClass } from '@/types';
 
 /**
  * 設定の 1 項目＝1 枚の浮いたカード（泰山木POS の設定と同じ）。
@@ -66,7 +68,7 @@ const SKY_LABEL: Record<SkyOverride, string> = { auto: '旅の時間', clock: '�
 
 const FONT_SAMPLE = Array.from(new Set(FONTS.map((f) => `${f.label}${f.detail}　集中 25:00`).join(''))).join('');
 
-type PickerKey = 'focus' | 'short' | 'long' | 'every' | 'bgm' | 'ambient' | 'sky' | 'season' | 'font' | 'appearance';
+type PickerKey = 'focus' | 'short' | 'long' | 'every' | 'bgm' | 'ambient' | 'sky' | 'season' | 'font' | 'appearance' | 'trainClass';
 
 const AMBIENT_PRESETS: { key: string; label: string; mix: AmbientMix; icon: string }[] = [
   { key: 'none', label: 'なし', icon: '🔇', mix: { rain: 0, fire: 0, wind: 0, river: 0, insects: 0 } },
@@ -90,6 +92,8 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
   const [picker, setPicker] = useState<PickerKey | null>(null);
   const [nameOpen, setNameOpen] = useState(false);
   const [installOpen, setInstallOpen] = useState(false);
+  const [modeOpen, setModeOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   // 設定は画面全体を覆うので、開いて少したったら下のシーンを止める（スライドの間は見えている）
   const [covered, setCovered] = useState(false);
   useEffect(() => {
@@ -152,6 +156,15 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
         detail: <span style={{ fontFamily: f.text }}>{f.detail}</span>,
       })),
       onSelect: (v) => updateSettings({ font: v as FontId }),
+    },
+    trainClass: {
+      title: '列車の種別',
+      value: settings.trainClass,
+      options: [
+        { value: 'local', label: '普通', detail: '各駅にのんびり', icon: '🚃' },
+        { value: 'express', label: '特急', detail: '景色が約 1.6 倍の速さで流れる', icon: '🚄' },
+      ],
+      onSelect: (v) => updateSettings({ trainClass: v as TrainClass }),
     },
     season: { title: 'シーズン', value: settings.season, options: SEASON_ORDER.map((s) => ({ value: s, label: SEASONS[s].label, icon: SEASONS[s].emoji })), onSelect: (v) => updateSettings({ season: v as Season }) },
   };
@@ -234,9 +247,12 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                 <Row icon={<Sun size={21} />} title="空の時間" value={skyLabel} onClick={() => setPicker('sky')} />
               </Group>
 
-              <Group title="タイマーのデザイン" footer="デザインは今後追加予定です。">
-                <Row icon={<Mountain size={21} />} title="デザイン" value={getDesign(settings.timerDesign).name} />
+              <Group title="旅のモード" footer="航空モードは準備中です。列車の走行音は public/sounds/train.mp3 を置くと鳴ります。">
+                <Row icon={<Mountain size={21} />} title="モード" value={getDesign(settings.timerDesign).name} onClick={() => setModeOpen(true)} />
+                <Row icon={<IdCard size={21} />} title="旅のパス" value={`${settings.userName} · ${settings.goal.trim() || '目標を決める'}`} onClick={() => setProfileOpen(true)} />
                 <Row icon={<span className="text-[15px]">{SEASONS[settings.season].emoji}</span>} title="登山：シーズン" value={SEASONS[settings.season].label} onClick={() => setPicker('season')} />
+                <Row icon={<TrainFront size={21} />} title="列車：種別" value={settings.trainClass === 'express' ? '特急' : '普通'} onClick={() => setPicker('trainClass')} />
+                <Row icon={<Volume2 size={19} />} title="列車：走行音" right={<Toggle checked={settings.trainSound} onChange={set('trainSound')} label="走行音" />} />
               </Group>
 
               <Group title="データ" footer="記録はこの端末のブラウザ内に保存されます。ホーム画面に追加するとアプリとして全画面で使えます。">
@@ -251,6 +267,8 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
       {p && <PickerModal open={!!picker} onClose={() => setPicker(null)} title={p.title} value={p.value} options={p.options} onSelect={p.onSelect} />}
 
       <InstallSheet open={installOpen} onClose={() => setInstallOpen(false)} />
+      <ModeSheet open={modeOpen} onClose={() => setModeOpen(false)} />
+      <ProfileSheet open={profileOpen} onClose={() => setProfileOpen(false)} />
 
       <Sheet open={nameOpen} onClose={() => setNameOpen(false)} title="名前" subtitle="ホームの挨拶で呼ぶ名前です">
         <form

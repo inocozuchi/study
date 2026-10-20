@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from 'react';
 
 /**
- * 環境音のライブラリ：public/ambient/sounds.json に書かれた音声ファイル（アップロードした環境音）。
+ * 環境音のライブラリ：public/ambient/sounds.json と public/sounds/sounds.json に書かれた音声ファイル。
+ * public/sounds の train.*（列車の走行音）は audio/trainSound.ts が使うので、ここには出さない。
  * ビルド時にフォルダの中の音声ファイルも自動で一覧に足される（vite.config.ts の audioManifests）。
  * 実行時に読むので、音を足してもコードの変更は不要。
  */
@@ -70,21 +71,21 @@ export function getAmbientSounds() {
   return sounds;
 }
 
-/** public/ambient/sounds.json を読み込む */
-export async function loadAmbientLibrary() {
-  if (loaded) return;
-  loaded = true;
+/** フォルダの一覧（sounds.json）を読む。列車の走行音（sounds/train.*）は列車モードが使うので外す */
+async function readFolder(dir: 'ambient' | 'sounds'): Promise<AmbientSound[]> {
   try {
-    const res = await fetch('./ambient/sounds.json', { cache: 'no-cache' });
-    if (!res.ok) return;
+    const res = await fetch(`./${dir}/sounds.json`, { cache: 'no-cache' });
+    if (!res.ok) return [];
     const json = (await res.json()) as { sounds?: ManifestSound[] };
-    sounds = (json.sounds ?? [])
+    const strip = new RegExp(`^\\.?\\/?(${dir}\\/)?`);
+    return (json.sounds ?? [])
       .filter((t) => t && typeof t.file === 'string' && t.file.trim())
+      .filter((t) => !(dir === 'sounds' && /^train[^/]*$/i.test(t.file.replace(strip, ''))))
       .map((t) => {
-        const url = /^https?:\/\//.test(t.file) ? t.file : `./ambient/${t.file.replace(/^\.?\/?(ambient\/)?/, '').split('/').map(encodeURIComponent).join('/')}`;
+        const url = /^https?:\/\//.test(t.file) ? t.file : `./${dir}/${t.file.replace(strip, '').split('/').map(encodeURIComponent).join('/')}`;
         const title = t.title?.trim() || fileName(t.file);
         return {
-          id: `amb-${t.file}`,
+          id: dir === 'ambient' ? `amb-${t.file}` : `snd-${t.file}`,
           url,
           title,
           emoji: t.emoji?.trim() || guessEmoji(`${title} ${t.file}`),
@@ -95,10 +96,19 @@ export async function loadAmbientLibrary() {
           trimSilence: t.trimSilence !== false,
         };
       });
-    listeners.forEach((l) => l());
   } catch {
-    /* sounds.json がない・壊れている → 内蔵の環境音だけ */
+    /* 一覧がない・壊れている → そのフォルダの音はなし */
+    return [];
   }
+}
+
+/** public/ambient と public/sounds の一覧を読み込む */
+export async function loadAmbientLibrary() {
+  if (loaded) return;
+  loaded = true;
+  const lists = await Promise.all([readFolder('ambient'), readFolder('sounds')]);
+  sounds = lists.flat();
+  if (sounds.length) listeners.forEach((l) => l());
 }
 
 export function onAmbientLibraryChange(l: () => void) {

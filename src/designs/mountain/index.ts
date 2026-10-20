@@ -3,6 +3,8 @@ import { MountainScene } from './MountainScene';
 import { MountainSession } from './MountainSession';
 import { MountainResult } from './MountainResult';
 import { SeasonPicker } from './SeasonPicker';
+import { IdCard } from './IdCard';
+import { MountainCustomize } from './MountainCustomize';
 import type { TimerDesign } from '../types';
 import { SEASONS, stageSky } from './scene/palette';
 import { hexToRgb, mix, type RGB } from '@/lib/scene';
@@ -17,6 +19,9 @@ const parse = (c: string): RGB => (c.startsWith('#') ? hexToRgb(c) : (c.match(/[
 export const mountainDesign: TimerDesign = {
   id: 'mountain',
   name: '登山',
+  tagline: '集中は山を登る旅。休憩は焚き火、終わりはキャンプの夜',
+  ProfileCard: IdCard,
+  ProfileOptions: MountainCustomize,
   Scene: MountainScene,
   Session: MountainSession,
   Result: MountainResult,

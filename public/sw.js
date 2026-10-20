@@ -1,12 +1,12 @@
 /* Focus Trail Service Worker
  * - インストール時に index.html を取得し、参照しているハッシュ付きアセットも事前キャッシュ
  * - ナビゲーション：ネットワーク優先（オフライン時はキャッシュの index.html）
- * - BGM・環境音の一覧（bgm/tracks.json・ambient/sounds.json）：ネットワーク優先（アップロードした音がすぐ反映される）
+ * - BGM・環境音の一覧（bgm/tracks.json・ambient/sounds.json・sounds/sounds.json）：ネットワーク優先（アップロードした音がすぐ反映される）
  * - Google Fonts（フォント設定で選んだ書体）：キャッシュ優先。版をまたいで残し、オフラインでも同じ書体で表示する
  * - 同一オリジンの静的アセット（BGM の音声ファイルを含む）：キャッシュ優先 + 裏で更新（stale-while-revalidate）
  */
 // 公開時に deploy.yml がビルド番号を付け足す（毎回 SW が更新され、古いアセットのキャッシュが消える）
-const VERSION = 'focus-trail-v5';
+const VERSION = 'focus-trail-v6';
 const FONT_CACHE = 'focus-trail-fonts';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
@@ -73,7 +73,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.pathname.endsWith('/bgm/tracks.json') || url.pathname.endsWith('/ambient/sounds.json')) {
+  if (url.pathname.endsWith('/bgm/tracks.json') || url.pathname.endsWith('/ambient/sounds.json') || url.pathname.endsWith('/sounds/sounds.json')) {
     event.respondWith(
       (async () => {
         const cache = await caches.open(VERSION);

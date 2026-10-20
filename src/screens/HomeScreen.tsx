@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Music, Settings2 } from 'lucide-react';
+import { ChevronDown, IdCard, Music, Settings2 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { useTimer, type JourneyResult } from '@/store/TimerStore';
 import { Pressable } from '@/components/ui/Pressable';
@@ -9,7 +9,9 @@ import { BreathOverlay } from '@/components/focus/BreathOverlay';
 import { CassettePlayer } from '@/components/audio/CassettePlayer';
 import { TOOL_TABS, ToolsPanel, type ToolTab } from '@/components/tools/ToolsPanel';
 import { SettingsScreen } from './SettingsScreen';
-import { getDesign } from '@/designs';
+import { getDesign, TRAVEL_MODES } from '@/designs';
+import { ModeSheet } from '@/components/profile/ModeSheet';
+import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { streaks, summary } from '@/lib/stats';
 import { dateKey, fmtDuration } from '@/lib/time';
 import { useNow } from '@/hooks/useNow';
@@ -29,6 +31,8 @@ export function HomeScreen({ result, setResult }: Props) {
   const [music, setMusic] = useState(false);
   const [tool, setTool] = useState<ToolTab | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [modeOpen, setModeOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const journeying = timer.phase !== 'idle' || !!timer.journeyStartedAt;
   const design = getDesign(settings.timerDesign);
@@ -69,6 +73,8 @@ export function HomeScreen({ result, setResult }: Props) {
               onMusic={() => setMusic(true)}
               onSettings={() => setSettingsOpen(true)}
               onTool={setTool}
+              onMode={() => setModeOpen(true)}
+              onProfile={() => setProfileOpen(true)}
             />
           </motion.div>
         )}
@@ -79,12 +85,15 @@ export function HomeScreen({ result, setResult }: Props) {
       <CassettePlayer open={music} onClose={() => setMusic(false)} />
       <ToolsPanel tab={tool} onTab={setTool} onClose={() => setTool(null)} />
       <SettingsScreen open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <ModeSheet open={modeOpen} onClose={() => setModeOpen(false)} />
+      <ProfileSheet open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   );
 }
 
-function HomeIdle({ onFocus, onMusic, onSettings, onTool }: { onFocus: () => void; onMusic: () => void; onSettings: () => void; onTool: (t: ToolTab) => void }) {
+function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: { onFocus: () => void; onMusic: () => void; onSettings: () => void; onTool: (t: ToolTab) => void; onMode: () => void; onProfile: () => void }) {
   const { settings, sessions } = useApp();
+  const mode = TRAVEL_MODES.find((m) => m.id === settings.timerDesign);
   // 日付が変わったら「今日」と連続日数を数え直す
   const today = dateKey(useNow(60_000));
   const sum = useMemo(() => summary(sessions), [sessions, today]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -94,13 +103,24 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool }: { onFocus: () => voi
   return (
     <div className="relative mx-auto h-full max-w-xl">
       {/* 上部 */}
-      <div className="flex items-center justify-between px-5 pt-safe">
-        <Pressable onClick={onMusic} aria-label="サウンド" className={`fabric-denim stitch mt-1 grid h-11 w-11 place-items-center rounded-full ${settings.bgmPlaying || settings.ambientPlaying ? 'text-sun' : ''}`}>
+      <div className="flex items-center justify-between gap-2 px-5 pt-safe">
+        <Pressable onClick={onMusic} aria-label="サウンド" className={`fabric-denim stitch mt-1 grid h-11 w-11 shrink-0 place-items-center rounded-full ${settings.bgmPlaying || settings.ambientPlaying ? 'text-sun' : ''}`}>
           <Music size={18} />
         </Pressable>
-        <Pressable onClick={onSettings} aria-label="設定" className="fabric-denim stitch mt-1 grid h-11 w-11 place-items-center rounded-full">
-          <Settings2 size={18} />
+        {/* 旅のモード（登山 / 列車 / 航空） */}
+        <Pressable onClick={onMode} aria-label={`旅のモード：${mode?.mode.name}`} className="fabric-denim stitch mt-1 flex h-11 items-center gap-1.5 rounded-full pl-3.5 pr-3 text-[14px] font-bold">
+          <span className="text-[17px] leading-none">{mode?.emoji}</span>
+          {mode?.mode.name}
+          <ChevronDown size={15} strokeWidth={2.6} className="opacity-80" />
         </Pressable>
+        <div className="flex shrink-0 gap-2">
+          <Pressable onClick={onProfile} aria-label="旅のパス" className="fabric-denim stitch mt-1 grid h-11 w-11 place-items-center rounded-full">
+            <IdCard size={18} />
+          </Pressable>
+          <Pressable onClick={onSettings} aria-label="設定" className="fabric-denim stitch mt-1 grid h-11 w-11 place-items-center rounded-full">
+            <Settings2 size={18} />
+          </Pressable>
+        </div>
       </div>
 
       {/* 挨拶 */}

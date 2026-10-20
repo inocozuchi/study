@@ -65,6 +65,12 @@ export type Appearance = 'system' | 'light' | 'dark';
 /** 文字のフォント（lib/fonts.ts の FONTS） */
 export type FontId = 'ud' | 'system' | 'noto' | 'rounded' | 'maru' | 'hand' | 'mincho';
 
+/** 旅のモード。'flight'（航空）は準備中（カードだけ） */
+export type TravelMode = 'mountain' | 'train' | 'flight';
+/** タイマーのデザインとして選べるモード */
+export type TimerDesignId = Exclude<TravelMode, 'flight'>;
+export type TrainClass = 'local' | 'express';
+
 export interface Settings {
   pomodoroFocus: number;
   pomodoroShortBreak: number;
@@ -94,8 +100,20 @@ export interface Settings {
   bgmVolume: number;
   /** 集中開始時の深呼吸 */
   breathing: boolean;
-  /** タイマーのデザイン（現在は登山のみ） */
-  timerDesign: 'mountain';
+  /** 旅のモード（タイマーのデザイン）。航空は準備中で選べない */
+  timerDesign: TimerDesignId;
+  /** 目標（列車の「行き先」、飛行機の DESTINATION）。空なら「目標」 */
+  goal: string;
+  /** 出発駅（列車のきっぷ）。空なら「はじまり」 */
+  departure: string;
+  /** 列車：普通 / 特急 */
+  trainClass: TrainClass;
+  /** 列車の走行音（public/sounds/train.*） */
+  trainSound: boolean;
+  /** 登山：ハイカーの服（0..2） */
+  hikerLook: number;
+  /** 登山：テント（0..2） */
+  tentStyle: number;
   font: FontId;
   appearance: Appearance;
   /** Google カレンダー：OAuth クライアント ID（端末ごと。lib/googleCalendar の BUILTIN_CLIENT_ID があれば不要） */

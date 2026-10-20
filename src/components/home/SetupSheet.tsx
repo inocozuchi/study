@@ -31,7 +31,7 @@ export function SetupSheet({ open, onClose, onStarted }: { open: boolean; onClos
     setName(subjectById(settings.selectedSubjectId)?.name ?? activeSubjects[0]?.name ?? '');
     setMode(settings.mode);
     setMinutes(settings.mode === 'countdown' ? settings.countdownMinutes : settings.pomodoroFocus);
-    setDraft({ season: settings.season, sky: settings.sky });
+    setDraft({ season: settings.season, sky: settings.sky, trainClass: settings.trainClass, trainSound: settings.trainSound });
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const changeMode = (m: TimerMode) => {

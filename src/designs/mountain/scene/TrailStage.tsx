@@ -25,6 +25,9 @@ export interface TrailStageProps {
   season: Season;
   /** 他の画面で覆われている間は描画を止める */
   paused?: boolean;
+  /** ハイカーの服・テント（プロフィールで選ぶ） */
+  hikerLook?: number;
+  tent?: number;
 }
 
 /** 歩行サイクルの長さ（秒）と 1 歩の歩幅（リグ単位）。地面の流れる速さはここから導く */
@@ -37,7 +40,7 @@ const GROUND_SPEED = STRIDE / (0.6 * CYCLE);
  *   L1 空 / L2 遠景の山 / L3 両脇の木 / L4 草原の斜面とキャラクター / L5 前景ボケ / L6 光と粒子
  * 1 本の requestAnimationFrame で関節と各トラックの transform だけを書き換える。
  */
-export function TrailStage({ hour, stage, mood, season, paused = false }: TrailStageProps) {
+export function TrailStage({ hour, stage, mood, season, paused = false, hikerLook = 0, tent = 0 }: TrailStageProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ W: 0, H: 0 });
   const reduced = usePrefersReducedMotion();
@@ -204,6 +207,8 @@ export function TrailStage({ hour, stage, mood, season, paused = false }: TrailS
             hikerRefs={hikerRefs}
             dogRefs={dogRefs}
             hikerBoxRef={hikerBoxRef}
+            hikerLook={hikerLook}
+            tent={tent}
           />
           <ForegroundLayer ref={fgRef} W={L.W} H={L.H} look={look} />
           {/* 時間帯のティント：夜は群青、朝夕は暖色 */}
