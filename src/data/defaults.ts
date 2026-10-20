@@ -1,0 +1,28 @@
+import type { Settings } from '@/types';
+
+export const DEFAULT_SETTINGS: Settings = {
+  pomodoroFocus: 25,
+  pomodoroShortBreak: 5,
+  pomodoroLongBreak: 15,
+  longBreakEvery: 4,
+  countdownMinutes: 50,
+  mode: 'pomodoro',
+  deepFocus: false,
+  wakeLock: true,
+  chime: true,
+  ambient: { rain: 0, fire: 0, wind: 0.55, river: 0, insects: 0 },
+  ambientPlaying: false,
+  selectedSubjectId: null,
+  sky: 'auto',
+  userName: '旅人',
+  season: 'autumn',
+  style: 'solo',
+  roomCode: '',
+  autoContinue: true,
+  bgmOnFocus: true,
+  bgmPlaying: false,
+  bgmTrack: 0,
+  bgmVolume: 0.7,
+  breathing: true,
+  timerDesign: 'mountain',
+};
