@@ -1,22 +1,5 @@
 /* 列車デザイン専用（クラス名は tr-） */
 
-/* 踏切の警報灯：左右が交互に点滅 */
-@keyframes tr-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0.15; }
-}
-.tr-blink { animation: tr-blink 1s steps(1) infinite; }
-.tr-blink-b { animation-delay: -0.5s; }
-
-/* コーヒーの湯気 */
-@keyframes tr-steam {
-  0% { transform: translateY(4px); opacity: 0; }
-  30% { opacity: 0.7; }
-  100% { transform: translateY(-6px); opacity: 0; }
-}
-.tr-steam { animation: tr-steam 3s ease-out infinite; transform-box: fill-box; }
-.tr-reduced .tr-blink, .tr-reduced .tr-steam { animation-play-state: paused; }
-
 /* HUD のボタン：深緑の革に真鍮の縁 */
 .tr-btn {
   @apply rounded-full font-bold;
@@ -47,3 +30,23 @@
     radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.45), transparent 70%);
   color: #2d241c;
 }
+
+/* 景色の切り替え：新しい時間帯・天気の組をふわっと重ねる */
+@keyframes tr-fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.tr-fadein { animation: tr-fadein 1.6s ease-in-out both; }
+
+/* 窓の外の雨のすじ（斜めの細い線を上から下へ流す。合成レイヤーだけで動く） */
+@keyframes tr-rain {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-21px, 140px, 0); }
+}
+.tr-rain {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='70' height='140'><g stroke='%23DCE8F5' stroke-linecap='round'><path d='M12 4 l-4 26' stroke-opacity='.55'/><path d='M44 38 l-3 20' stroke-opacity='.4'/><path d='M28 74 l-4 28' stroke-opacity='.5'/><path d='M60 96 l-3 18' stroke-opacity='.35'/><path d='M6 112 l-3 20' stroke-opacity='.45'/></g></svg>");
+  background-size: 70px 140px;
+  animation: tr-rain 0.55s linear infinite;
+  will-change: transform;
+}
+.tr-reduced .tr-rain { animation-play-state: paused; }

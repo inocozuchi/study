@@ -70,6 +70,7 @@ export type TravelMode = 'mountain' | 'train' | 'flight';
 /** タイマーのデザインとして選べるモード */
 export type TimerDesignId = Exclude<TravelMode, 'flight'>;
 export type TrainClass = 'local' | 'express';
+export type TrainWeather = 'clear' | 'rain';
 
 export interface Settings {
   pomodoroFocus: number;
@@ -113,6 +114,8 @@ export interface Settings {
   trainClass: TrainClass;
   /** 列車の走行音（public/sounds/train.*） */
   trainSound: boolean;
+  /** 列車：天気（雨なら雨の景色） */
+  trainWeather: TrainWeather;
   /** 登山：ハイカーの服（0..2） */
   hikerLook: number;
   /** 登山：テント（0..2） */

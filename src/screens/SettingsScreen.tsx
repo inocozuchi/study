@@ -267,6 +267,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                 <Row icon={<IdCard size={21} />} title="旅のパス" value={`${settings.userName} · ${settings.goal.trim() || '目標を決める'}`} onClick={() => setProfileOpen(true)} />
                 <Row icon={<SeasonIcon season={settings.season} size={21} />} title="登山：シーズン" value={SEASONS[settings.season].label} onClick={() => setPicker('season')} />
                 <Row icon={<TrainFront size={21} />} title="列車：種別" value={settings.trainClass === 'express' ? '特急' : '普通'} onClick={() => setPicker('trainClass')} />
+                <Row icon={<CloudRain size={19} />} title="列車：雨の景色" right={<Toggle checked={settings.trainWeather === 'rain'} onChange={(v) => updateSettings({ trainWeather: v ? 'rain' : 'clear' })} label="雨の景色" />} />
                 <Row icon={<Volume2 size={19} />} title="列車：走行音" right={<Toggle checked={settings.trainSound} onChange={set('trainSound')} label="走行音" />} />
               </Group>
 

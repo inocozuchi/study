@@ -29,6 +29,7 @@ export const DEFAULT_SETTINGS: Settings = {
   departure: '',
   trainClass: 'local',
   trainSound: true,
+  trainWeather: 'clear',
   hikerLook: 0,
   tentStyle: 0,
   font: 'ud',

@@ -1,28 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { skyAt, rgba } from '@/lib/scene';
 import { trainSound } from '@/audio/trainSound';
-import { LAYER_SPEED, TILE, trainLayout, type TrainLayout } from './layout';
-import { CROSSING_W, CloudTiles, CountryLights, CountryTiles, Crossing, MountainTiles, SIGNAL_W, STATION_W, SignalStop, Station, TrackTiles } from './outside';
-import { Interior } from './Interior';
-
-/** 止まる場所の種類：出発駅（ホーム）・途中の駅（休憩）・信号場（一時停止）・終着駅（旅の終わり） */
-export type StopKind = 'origin' | 'station' | 'signal' | 'terminal';
-
-export interface StopInfo {
-  kind: StopKind;
-  name: string;
-  roman: string;
-  prev: string;
-  next: string;
-}
+import { VIEWS, assets, isNight, trainLayout, url, viewFor, type TrainLayout, type TrainView } from './views';
 
 export interface TrainStageProps {
   hour: number;
   /** 走っているか（集中中で一時停止していない） */
   moving: boolean;
   express: boolean;
-  /** 止まるときにどこへ止まるか */
-  stop: StopInfo;
+  /** 雨の景色にする */
+  rain: boolean;
   paused?: boolean;
   /** 走行音に速さを伝える */
   sound: boolean;
@@ -32,50 +18,73 @@ export interface TrainStageProps {
 const CRUISE = { local: 1, express: 1.65 };
 /** 加速（1 秒あたり）。普通は約 10 秒、特急は約 12 秒で巡航に届く */
 const ACCEL = { local: 0.11, express: 0.15 };
-/** ブレーキ（1 秒あたり）。止まる位置から逆算して、駅の真ん中にぴたりと止める */
-const BRAKE = 0.16;
-/** レールの継ぎ目（ガタンゴトン）の間隔と、2 つめの音までの距離（線路ぎわの px） */
-const JOINT = 1100;
-const JOINT_GAP = 150;
-const CROSSING_EVERY = 4200;
+/** ブレーキ（1 秒あたり） */
+const BRAKE = 0.2;
+/** 巡航 = 1 のときの流れる速さ（px/秒）。中景 : 遠景 = 10 : 1.5 */
+const SPEED = { mid: 60, sky: 9, fence: 150 };
+/** 電柱が窓を横切る時間（秒）と、次の電柱までの間隔（秒） */
+const POLE_PASS = 0.4;
+const POLE_GAP: [number, number] = [2, 5];
+/** 景色の切り替え（ふわっと重ねる）時間 */
+const FADE_MS = 1600;
+
+/** 窓の中での各層の高さ・位置（窓の高さに対する割合） */
+const GEO = {
+  mid: { h: 0.64 },
+  fence: { h: 0.3, sink: 0.04 },
+  pole: { h: 1.55, top: -0.3 },
+};
+
+/** 車内（最前面）の色：外の明るさに合わせる */
+function frameMood(view: TrainView, night: boolean) {
+  if (view === 'night') return { filter: 'brightness(0.4) saturate(0.85)', tint: '#14204F', tintOpacity: 0.42 };
+  if (view === 'rain') return night ? { filter: 'grayscale(0.15) brightness(0.45)', tint: '#14204F', tintOpacity: 0.4 } : { filter: 'grayscale(0.15) brightness(0.85)', tint: '#2D4A66', tintOpacity: 0.18 };
+  if (view === 'sunset') return { filter: 'saturate(1.08) brightness(0.96)', tint: 'linear-gradient(180deg, #FF9A4A, #D9483B)', tintOpacity: 0.3 };
+  return { filter: 'none', tint: '#000', tintOpacity: 0 };
+}
+
+interface Tracks {
+  sky: HTMLDivElement | null;
+  mid: HTMLDivElement | null;
+  fence: HTMLDivElement | null;
+  pole: HTMLDivElement | null;
+}
 
 /**
- * 列車の車窓：5 層の視差スクロール。
- *   L1 空と雲 / L2 遠くの山 / L3 田園・集落 / L4 線路ぎわ（電柱・踏切・駅） / L5 車内の窓枠
- * 1 本の requestAnimationFrame で、各層の transform だけを書き換える（30fps まで）。
- * 速さ v は加速・減速し、止まるときは駅（または信号場）が窓の真ん中に来るよう逆算してブレーキをかける。
+ * 列車の車窓：アニメ美術の画像を重ねた視差スクロール。
+ *   遠景（空）/ 中景（田園）/ 近景（フェンス・電柱）を窓の形に切り抜いた中で流し、
+ *   最前面に車内の絵（frame-table：窓ガラスが透過）を固定する。
+ * 動かすのは各層の transform だけ（1 本の requestAnimationFrame）。
+ * 時間帯・天気が変わったら、新しい組をふわっと重ねてから古い組を外す。
  */
-export function TrainStage({ hour, moving, express, stop, paused = false, sound }: TrainStageProps) {
+export function TrainStage({ hour, moving, express, rain, paused = false, sound }: TrainStageProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [L, setL] = useState<TrainLayout | null>(null);
-  const tracks = useRef<{ clouds: HTMLDivElement | null; mountains: HTMLDivElement | null; country: HTMLDivElement | null; lights: HTMLDivElement | null; track: HTMLDivElement | null; crossing: HTMLDivElement | null; stop: HTMLDivElement | null; sway: HTMLDivElement | null }>({
-    clouds: null,
-    mountains: null,
-    country: null,
-    lights: null,
-    track: null,
-    crossing: null,
-    stop: null,
-    sway: null,
-  });
+  const view = viewFor(hour, rain);
+  const night = isNight(hour);
 
-  // 止まっている場所（窓の外の L4 の世界座標）。変わったときだけ描き直す
-  const [shownStop, setShownStop] = useState<(StopInfo & { worldX: number }) | null>(null);
+  // 表示中の景色の組（切り替えの間は 2 組）
+  const [views, setViews] = useState<{ v: TrainView; fade: boolean }[]>([{ v: view, fade: false }]);
+  useEffect(() => {
+    setViews((cur) => (cur[cur.length - 1].v === view ? cur : [...cur.filter((x) => x.v !== view), { v: view, fade: true }]));
+    const id = setTimeout(() => setViews((cur) => cur.slice(-1)), FADE_MS + 200);
+    return () => clearTimeout(id);
+  }, [view]);
+
+  const tracks = useRef(new Map<TrainView, Tracks>());
+  const swayRef = useRef<HTMLDivElement>(null);
 
   const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const live = useRef({ moving, express, stop, sound });
-  live.current = { moving, express, stop, sound };
-
+  const live = useRef({ moving, express });
+  live.current = { moving, express };
   const state = useRef({
     v: moving ? (express ? CRUISE.express : CRUISE.local) : 0,
-    off: { clouds: 0, mountains: 0, country: 0, track: 0 },
-    braking: false,
-    stopX: null as number | null,
-    bump: 0,
-    bumpQueue: [] as number[],
+    off: { sky: 0, mid: 0, fence: 0 },
+    pole: { x: Infinity, wait: 1 + Math.random() * 2 },
     t: 0,
+    bump: 0,
+    joint: 0,
     lastSound: 0,
-    written: {} as Record<string, string>,
   });
 
   useLayoutEffect(() => {
@@ -88,115 +97,79 @@ export function TrainStage({ hour, moving, express, stop, paused = false, sound 
     return () => ro.disconnect();
   }, []);
 
-  // はじめから止まっているときは、出発駅を窓の真ん中に置く
+  // ほかの時間帯・天気の画像は、少したってから先に読み込んでおく（切り替えで白く抜けない）
   useEffect(() => {
-    if (!L) return;
-    const s = state.current;
-    if (s.v === 0 && s.stopX == null) {
-      s.stopX = s.off.track + L.win.w / 2;
-      setShownStop({ ...live.current.stop, worldX: s.stopX });
-    }
-  }, [L]);
-
-  // 止まっている間に行き先が変わった（休憩 → 旅の終わり など）ときは、看板だけ書き換える
-  useEffect(() => {
-    setShownStop((cur) => (cur && cur.kind !== 'signal' && stop.kind !== 'signal' ? { ...stop, worldX: cur.worldX } : cur));
-  }, [stop.kind, stop.name, stop.prev, stop.next]); // eslint-disable-line react-hooks/exhaustive-deps
+    const id = setTimeout(() => {
+      for (const v of VIEWS) for (const u of [url.sky(v), url.mid(v), url.fence(v), url.pole(v)]) new Image().src = u;
+    }, 4000);
+    return () => clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     if (!L || paused) return;
     const s = state.current;
-    const T = tracks.current;
-    const cx = L.win.w / 2;
+    const wh = L.win.h;
+    const ww = L.win.w;
     const k = reduced ? 0.5 : 1;
+    // 1 枚ぶんの横幅（px）。この幅で割った余りだけ動かすと、つなぎ目なく流れ続ける
+    const tile = (v: TrainView) => ({
+      sky: (assets.sets[v].sky.width / assets.sets[v].sky.height) * wh,
+      mid: (assets.sets[v].mid.width / assets.sets[v].mid.height) * wh * GEO.mid.h,
+      pole: (assets.sets[v].pole.width / assets.sets[v].pole.height) * wh * GEO.pole.h,
+    });
+    const fenceTile = (assets.fence.width / assets.fence.height) * wh * GEO.fence.h;
+    const poleW = Math.max(...VIEWS.map((v) => tile(v).pole));
     let raf = 0;
     let last = performance.now();
-    const write = (key: string, el: HTMLElement | null, v: string) => {
-      if (!el || s.written[key] === v) return;
-      s.written[key] = v;
-      el.style.transform = v;
-    };
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
-      if (now - last < 1000 / 31) return;
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       s.t += dt;
       const cfg = live.current;
       const cls = cfg.express ? 'express' : 'local';
       const target = cfg.moving ? CRUISE[cls] : 0;
-      let step: number;
-      if (target > 0) {
-        s.braking = false;
-        if (s.v < target) s.v = Math.min(target, s.v + ACCEL[cls] * dt * (1 - 0.55 * (s.v / target) ** 2));
-        else s.v = Math.max(target, s.v - BRAKE * dt);
-        step = s.v * LAYER_SPEED.track * dt;
-      } else if (s.v > 0) {
-        if (!s.braking) {
-          // 今の速さで止まれる距離の先に、駅（信号場）を置く
-          s.braking = true;
-          const speed = s.v * LAYER_SPEED.track;
-          const dist = (speed * speed) / (2 * BRAKE * LAYER_SPEED.track);
-          s.stopX = s.off.track + dist + cx;
-          setShownStop({ ...cfg.stop, worldX: s.stopX });
-        }
-        const remain = (s.stopX ?? 0) - cx - s.off.track;
-        if (remain <= 0.5) {
-          step = Math.max(0, remain);
-          s.v = 0;
-        } else {
-          s.v = Math.sqrt(2 * BRAKE * LAYER_SPEED.track * remain) / LAYER_SPEED.track;
-          step = Math.min(remain, s.v * LAYER_SPEED.track * dt);
+      if (s.v < target) s.v = Math.min(target, s.v + ACCEL[cls] * dt * (1 - 0.55 * (s.v / target) ** 2));
+      else s.v = Math.max(target, s.v - BRAKE * dt * (0.4 + s.v));
+      if (s.v < 0.002) s.v = 0;
+      const sp = s.v * k;
+      s.off.sky += (SPEED.sky * sp + 1.2) * dt; // 雲は止まっていてもわずかに流れる
+      s.off.mid += SPEED.mid * sp * dt;
+      s.off.fence += SPEED.fence * sp * dt;
+
+      // 電柱：ときどき右から現れ、一瞬で駆け抜ける
+      if (s.pole.x === Infinity) {
+        if (s.v > 0.25) {
+          s.pole.wait -= dt * s.v;
+          if (s.pole.wait <= 0) s.pole.x = ww;
         }
       } else {
-        step = 0;
-      }
-      const ds = (step / LAYER_SPEED.track) * k;
-      const prevTrack = s.off.track;
-      s.off.track += step * (target > 0 ? k : 1);
-      s.off.country += ds * LAYER_SPEED.country;
-      s.off.mountains += ds * LAYER_SPEED.mountains;
-      // 雲は止まっていてもゆっくり流れる
-      s.off.clouds += ds * LAYER_SPEED.clouds + dt * 2;
-
-      const tx = (o: number, tile: number) => `translate3d(${-(o % tile).toFixed(1)}px,0,0)`;
-      write('clouds', T.clouds, tx(s.off.clouds, TILE.clouds));
-      write('mountains', T.mountains, tx(s.off.mountains, TILE.mountains));
-      const country = tx(s.off.country, TILE.country);
-      write('country', T.country, country);
-      write('lights', T.lights, country);
-      write('track', T.track, tx(s.off.track, TILE.track));
-
-      // 踏切（一定の間隔で現れる）
-      let crossX = CROSSING_EVERY * 0.5 - (s.off.track % CROSSING_EVERY);
-      if (crossX < -CROSSING_W - 40) crossX += CROSSING_EVERY;
-      write('crossing', T.crossing, `translate3d(${crossX.toFixed(1)}px,0,0)`);
-
-      // 駅・信号場：窓の真ん中に止まる位置から、いまの位置を出す
-      if (s.stopX != null && T.stop) {
-        const w = T.stop.dataset.w ? Number(T.stop.dataset.w) : STATION_W;
-        const sx = s.stopX - s.off.track - w / 2;
-        if (sx < -w - 40 && s.v > 0) {
-          s.stopX = null;
-          T.stop.style.visibility = 'hidden';
-        } else {
-          T.stop.style.visibility = '';
-          write('stop', T.stop, `translate3d(${sx.toFixed(1)}px,0,0)`);
+        s.pole.x -= ((ww + poleW) / Math.max(0.3, POLE_PASS / s.v)) * dt * (reduced ? 0.6 : 1);
+        if (s.pole.x < -poleW || s.v === 0) {
+          s.pole.x = Infinity;
+          s.pole.wait = POLE_GAP[0] + Math.random() * (POLE_GAP[1] - POLE_GAP[0]);
         }
+      }
+
+      for (const [v, tr] of tracks.current) {
+        const t = tile(v);
+        if (tr.sky) tr.sky.style.transform = `translate3d(${-(s.off.sky % t.sky).toFixed(1)}px,0,0)`;
+        if (tr.mid) tr.mid.style.transform = `translate3d(${-(s.off.mid % t.mid).toFixed(1)}px,0,0)`;
+        if (tr.fence) tr.fence.style.transform = `translate3d(${-(s.off.fence % fenceTile).toFixed(1)}px,0,0)`;
+        if (tr.pole) tr.pole.style.transform = s.pole.x === Infinity ? 'translate3d(-9999px,0,0)' : `translate3d(${s.pole.x.toFixed(1)}px,0,0)`;
       }
 
       // 揺れ：走っている間の小さな上下と、レールの継ぎ目のガタンゴトン
-      const vn = s.v / CRUISE.local;
-      if (Math.floor(s.off.track / JOINT) !== Math.floor(prevTrack / JOINT)) s.bumpQueue.push(s.t, s.t + JOINT_GAP / Math.max(60, s.v * LAYER_SPEED.track));
-      while (s.bumpQueue.length && s.bumpQueue[0] <= s.t) {
-        s.bumpQueue.shift();
-        s.bump = Math.min(1.6, 0.6 + vn * 0.7);
+      const vn = Math.min(1, s.v);
+      s.joint += SPEED.fence * s.v * dt;
+      if (s.joint > 900) {
+        s.joint -= 900;
+        s.bump = 0.6 + vn * 0.8;
       }
-      s.bump *= Math.exp(-dt * 16);
-      const sway = reduced ? 0 : Math.sin(s.t * 2.3) * 0.7 * Math.min(1, vn) + Math.sin(s.t * 5.1) * 0.25 * Math.min(1, vn) + s.bump;
-      write('sway', T.sway, `translate3d(0,${sway.toFixed(2)}px,0)`);
+      s.bump *= Math.exp(-dt * 14);
+      const sway = reduced ? 0 : Math.sin(s.t * 2.3) * 0.7 * vn + Math.sin(s.t * 5.1) * 0.25 * vn + s.bump;
+      if (swayRef.current) swayRef.current.style.transform = `translate3d(0,${sway.toFixed(2)}px,0)`;
 
-      // 走行音（1 秒に 8 回まで）
       if (now - s.lastSound > 120) {
         s.lastSound = now;
         trainSound.setMotion(s.v / CRUISE[cls], cfg.express);
@@ -211,87 +184,115 @@ export function TrainStage({ hour, moving, express, stop, paused = false, sound 
     return () => trainSound.setEnabled(false);
   }, [sound, paused]);
 
-  const sky = skyAt(hour);
-  const glow = Math.max(0, 1 - Math.abs(hour - 18) / 1.4) + Math.max(0, 1 - Math.abs(hour - 6) / 1.2);
-  const night = sky.night;
-  const n = (tile: number) => (L ? Math.ceil(L.win.w / tile) + 1 : 1);
+  const mood = frameMood(view, night);
+  const bindTracks = (v: TrainView, t: Partial<Tracks> | null) => {
+    const cur = tracks.current.get(v) ?? { sky: null, mid: null, fence: null, pole: null };
+    if (t) tracks.current.set(v, { ...cur, ...t });
+    else tracks.current.delete(v);
+  };
 
   return (
-    <div ref={rootRef} className={`absolute inset-0 overflow-hidden ${reduced || paused ? 'tr-reduced' : ''}`} style={{ background: '#3E2B20' }}>
+    <div ref={rootRef} className={`absolute inset-0 overflow-hidden ${reduced || paused ? 'tr-reduced' : ''}`} style={{ background: assets.frame.edge.top }}>
       {L && (
         <>
-          {/* 窓の外（L1〜L4）。窓の形に切り抜く */}
-          <div className="absolute overflow-hidden" style={{ left: L.win.x, top: L.win.y, width: L.win.w, height: L.win.h, borderRadius: 18 }}>
-            {/* L1 空 */}
-            <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${rgba(sky.top)} 0%, ${rgba(sky.mid)} 45%, ${rgba(sky.bot)} 62%)`, transition: 'background 2s' }} />
-            <div ref={(el) => { tracks.current.clouds = el; }} className="absolute left-0 top-0 will-change-transform" style={{ opacity: 1 - night * 0.6 }}>
-              <CloudTiles h={L.win.h} hz={L.horizon} n={n(TILE.clouds)} />
-            </div>
-            {/* L2 遠くの山 */}
-            <div ref={(el) => { tracks.current.mountains = el; }} className="absolute left-0 top-0 will-change-transform">
-              <MountainTiles h={L.win.h} hz={L.horizon} n={n(TILE.mountains)} />
-            </div>
-            {/* L3 田園 */}
-            <div ref={(el) => { tracks.current.country = el; }} className="absolute left-0 top-0 will-change-transform">
-              <CountryTiles h={L.win.h} hz={L.horizon} n={n(TILE.country)} />
-            </div>
-            {/* 時間帯の色（タイルは描き直さず、半透明を重ねる） */}
-            <div className="pointer-events-none absolute inset-0" style={{ background: '#0E1631', opacity: night * 0.62, transition: 'opacity 2s' }} />
-            <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(255,150,90,0), #FF9A5C)', opacity: Math.min(1, glow) * 0.2, transition: 'opacity 2s' }} />
-            <div ref={(el) => { tracks.current.lights = el; }} className="pointer-events-none absolute left-0 top-0 will-change-transform" style={{ opacity: Math.max(0, night - 0.2) * 1.25, transition: 'opacity 2s' }}>
-              <CountryLights h={L.win.h} hz={L.horizon} n={n(TILE.country)} />
-            </div>
-            {/* L4 線路ぎわ */}
-            <div className="absolute inset-0">
-              <div ref={(el) => { tracks.current.track = el; }} className="absolute left-0 top-0 will-change-transform">
-                <TrackTiles h={L.win.h} hz={L.horizon} n={n(TILE.track)} />
-              </div>
-              <div ref={(el) => { tracks.current.crossing = el; }} className="absolute left-0 top-0 will-change-transform">
-                <Crossing h={L.win.h} />
-              </div>
-              {shownStop && (
-                <div
-                  ref={(el) => { tracks.current.stop = el; }}
-                  data-w={shownStop.kind === 'signal' ? SIGNAL_W : STATION_W}
-                  className="absolute left-0 top-0 will-change-transform"
-                  style={{ transform: `translate3d(${(shownStop.worldX - state.current.off.track - (shownStop.kind === 'signal' ? SIGNAL_W : STATION_W) / 2).toFixed(1)}px,0,0)` }}
-                >
-                  {shownStop.kind === 'signal' ? <SignalStop h={L.win.h} /> : <Station h={L.win.h} name={shownStop.name} roman={shownStop.roman} prev={shownStop.prev} next={shownStop.next} terminal={shownStop.kind === 'terminal'} />}
-                </div>
-              )}
-              {/* 夜は線路ぎわも暗く */}
-              <div className="pointer-events-none absolute inset-0" style={{ background: '#0E1631', opacity: night * 0.45, transition: 'opacity 2s' }} />
-            </div>
+          {/* 窓の外：窓の形に切り抜いた中だけで景色が流れる */}
+          <div className="absolute overflow-hidden" style={{ left: L.win.x, top: L.win.y, width: L.win.w, height: L.win.h, background: '#8FB7DA' }}>
+            {views.map(({ v, fade }) => (
+              <ViewLayers key={v} view={v} L={L} fade={fade} part="back" bind={(t) => bindTracks(v, t)} />
+            ))}
+            {/* 電柱（フェンスより手前、線路のすぐそば） */}
+            {views.map(({ v, fade }) => (
+              <ViewLayers key={v} view={v} L={L} fade={fade} part="pole" bind={(t) => bindTracks(v, t)} />
+            ))}
+            {/* 雨のすじ（雨のときだけ。合成レイヤーで流すだけ） */}
+            <div className="tr-rain pointer-events-none absolute -left-[30px] -right-[30px] -top-[140px] bottom-0" style={{ opacity: view === 'rain' ? 0.5 : 0, transition: `opacity ${FADE_MS}ms` }} />
+            {/* 雨の夜は外も暗く */}
+            <div className="pointer-events-none absolute inset-0" style={{ background: '#0A1030', opacity: view === 'rain' && night ? 0.5 : 0, transition: `opacity ${FADE_MS}ms` }} />
+            {/* ガラスの映り込み */}
+            <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(115deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.07) 38%, rgba(255,255,255,0) 46%, rgba(255,255,255,0) 62%, rgba(255,255,255,0.04) 68%, rgba(255,255,255,0) 74%)' }} />
           </div>
 
-          {/* L5 車内（揺れは外側の div の transform だけ） */}
-          <div ref={(el) => { tracks.current.sway = el; }} className="absolute inset-0 will-change-transform">
-            {/* ガラスの映り込みと内側の影 */}
+          {/* 最前面：車内（窓枠・テーブル）。外の明るさに合わせて色を整える */}
+          <div ref={swayRef} className="pointer-events-none absolute inset-0 will-change-transform">
+            <img
+              src={url.frame}
+              alt=""
+              aria-hidden
+              draggable={false}
+              decoding="async"
+              className="absolute max-w-none select-none"
+              style={{ left: L.frame.x, top: L.frame.y, width: L.frame.w, height: L.frame.h, filter: mood.filter, transition: `filter ${FADE_MS}ms` }}
+            />
+            {/* 色の重ね：車内の絵の形だけに乗せる（窓の外には乗らない） */}
             <div
-              className="pointer-events-none absolute"
+              className="absolute"
               style={{
-                left: L.win.x,
-                top: L.win.y,
-                width: L.win.w,
-                height: L.win.h,
-                borderRadius: 18,
-                boxShadow: 'inset 0 14px 28px -6px rgba(0,0,0,0.45), inset 0 -10px 22px -10px rgba(0,0,0,0.35), inset 10px 0 22px -12px rgba(0,0,0,0.35), inset -10px 0 22px -12px rgba(0,0,0,0.35)',
-                background: 'linear-gradient(115deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.09) 38%, rgba(255,255,255,0) 46%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.05) 66%, rgba(255,255,255,0) 72%)',
+                left: L.frame.x,
+                top: L.frame.y,
+                width: L.frame.w,
+                height: L.frame.h,
+                background: mood.tint,
+                opacity: mood.tintOpacity,
+                transition: `opacity ${FADE_MS}ms`,
+                WebkitMaskImage: `url(${url.frame})`,
+                maskImage: `url(${url.frame})`,
+                WebkitMaskSize: '100% 100%',
+                maskSize: '100% 100%',
               }}
             />
-            <Interior L={L} />
-            {/* コーヒーの湯気 */}
-            <svg className="pointer-events-none absolute overflow-visible" style={{ left: L.W / 2 + Math.min(250, L.win.w * 0.62) * 0.24 - 10, top: L.win.y + L.win.h + 10 + 24 - 40, width: 20, height: 26 }} viewBox="-10 -26 20 26" aria-hidden>
-              <g className="tr-steam" opacity="0.7">
-                <path d="M-2 -2 Q-5 -8 -1 -13 Q3 -18 -1 -24" stroke="#fff" strokeWidth="1.3" fill="none" strokeLinecap="round" />
-                <path d="M3 -3 Q1 -8 4 -12 Q6 -16 3 -20" stroke="#fff" strokeWidth="1.1" fill="none" strokeLinecap="round" />
-              </g>
-            </svg>
           </div>
-          {/* 天井の灯り（夜ほど暖かく） */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2" style={{ background: 'radial-gradient(60% 50% at 50% 0%, rgba(255,214,150,0.35), rgba(255,214,150,0) 70%)', opacity: 0.25 + night * 0.75, transition: 'opacity 2s' }} />
         </>
       )}
+    </div>
+  );
+}
+
+/** 横に並べた画像の帯（流すとつなぎ目なく続く）。cover の幅を 1 枚ぶん越えるまで並べる */
+function Strip({ src, h, ratio, cover }: { src: string; h: number; ratio: number; cover: number }) {
+  const w = ratio * h;
+  const n = Math.ceil(cover / w) + 1;
+  return (
+    <div className="flex" style={{ width: w * n, height: h }}>
+      {Array.from({ length: n }, (_, i) => (
+        <img key={i} src={src} alt="" aria-hidden draggable={false} decoding="async" className="block max-w-none select-none" style={{ width: w, height: h }} />
+      ))}
+    </div>
+  );
+}
+
+/** 1 組の景色。back＝遠景・中景・フェンス、pole＝電柱。切り替えで後から来た組はふわっと現れる */
+function ViewLayers({ view, L, fade, part, bind }: { view: TrainView; L: TrainLayout; fade: boolean; part: 'back' | 'pole'; bind: (t: Partial<Tracks> | null) => void }) {
+  const t = useRef<Partial<Tracks>>({});
+  useEffect(() => {
+    bind(t.current);
+    return () => {
+      if (part === 'back') bind(null);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const a = assets.sets[view];
+  const wh = L.win.h;
+  const midH = wh * GEO.mid.h;
+  const poleH = wh * GEO.pole.h;
+  if (part === 'pole')
+    return (
+      <div className={`absolute inset-0 ${fade ? 'tr-fadein' : ''}`}>
+        <div className="absolute left-0 will-change-transform" style={{ top: wh * GEO.pole.top, transform: 'translate3d(-9999px,0,0)' }} ref={(el) => { t.current.pole = el; }}>
+          <img src={url.pole(view)} alt="" aria-hidden draggable={false} decoding="async" className="block max-w-none select-none" style={{ height: poleH, width: (a.pole.width / a.pole.height) * poleH }} />
+        </div>
+      </div>
+    );
+  return (
+    <div className={`absolute inset-0 ${fade ? 'tr-fadein' : ''}`}>
+      <div className="absolute left-0 top-0 will-change-transform" ref={(el) => { t.current.sky = el; }}>
+        <Strip src={url.sky(view)} h={wh} ratio={a.sky.width / a.sky.height} cover={L.win.w} />
+      </div>
+      <div className="absolute left-0 will-change-transform" style={{ top: wh - midH }} ref={(el) => { t.current.mid = el; }}>
+        <Strip src={url.mid(view)} h={midH} ratio={a.mid.width / a.mid.height} cover={L.win.w} />
+      </div>
+      {/* 手前のフェンス（中景より速く流れる。色は時間帯・天気ごとに合わせた画像） */}
+      <div className="absolute left-0 will-change-transform" style={{ top: wh * (1 - GEO.fence.h + GEO.fence.sink) }} ref={(el) => { t.current.fence = el; }}>
+        <Strip src={url.fence(view)} h={wh * GEO.fence.h} ratio={assets.fence.width / assets.fence.height} cover={L.win.w} />
+      </div>
     </div>
   );
 }

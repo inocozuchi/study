@@ -1,14 +1,23 @@
-import { Check } from 'lucide-react';
+import { Check, CloudRain, Sun } from 'lucide-react';
 import { Toggle } from '@/components/ui/Toggle';
-import type { TrainClass } from '@/types';
+import { Segmented } from '@/components/ui/Segmented';
+import type { SkyOverride, TrainClass, TrainWeather } from '@/types';
 import type { DesignSetupProps } from '../types';
+
+const SKIES: { value: SkyOverride; label: string }[] = [
+  { value: 'auto', label: '旅の時間' },
+  { value: 'clock', label: '今の時刻' },
+  { value: 'day', label: '昼' },
+  { value: 'sunset', label: '夕方' },
+  { value: 'night', label: '夜' },
+];
 
 const CLASSES: { value: TrainClass; label: string; note: string; color: string }[] = [
   { value: 'local', label: '普通', note: '各駅にのんびり', color: '#1F3A68' },
   { value: 'express', label: '特急', note: '景色が約 1.6 倍速', color: '#C8352B' },
 ];
 
-/** 支度シートに差し込む「列車」：普通 / 特急（サボ＝行先札ふうの板）と走行音 */
+/** 支度シートに差し込む「列車」：普通 / 特急（サボ＝行先札ふうの板）・天気・走行音 */
 export function ClassPicker({ draft, onChange }: DesignSetupProps) {
   const cls = draft.trainClass ?? 'local';
   return (
@@ -37,6 +46,27 @@ export function ClassPicker({ draft, onChange }: DesignSetupProps) {
           );
         })}
       </div>
+      <p className="section-label mb-2 mt-4">天気</p>
+      <Segmented<TrainWeather>
+        value={draft.trainWeather ?? 'clear'}
+        onChange={(v) => onChange({ trainWeather: v })}
+        options={[
+          { value: 'clear', label: <span className="flex items-center justify-center gap-1.5"><Sun size={15} /> 晴れ</span> },
+          { value: 'rain', label: <span className="flex items-center justify-center gap-1.5"><CloudRain size={15} /> 雨</span> },
+        ]}
+      />
+      <p className="section-label mb-2 mt-4">時間帯</p>
+      <div className="flex flex-wrap gap-1.5">
+        {SKIES.map((o) => {
+          const active = (draft.sky ?? 'auto') === o.value;
+          return (
+            <button key={o.value} onClick={() => onChange({ sky: o.value })} aria-pressed={active} className={`rounded-full px-3.5 py-2 text-[13px] font-bold transition-colors ${active ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}>
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-1.5 px-1 text-[12px] text-fg-2">{(draft.sky ?? 'auto') === 'auto' ? '集中を始めると朝。進むほど昼・夕方になり、休憩で夜の景色になります' : '雨のときは雨の景色になります'}</p>
       <div className="mt-3 flex items-center justify-between rounded-card bg-sunken px-4 py-3">
         <span>
           <span className="block text-[15px] font-bold">走行音</span>
