@@ -52,7 +52,7 @@ function makeBand(P: number, H: number, seed: number, topMin: number, topMax: nu
 
 /** Layer 2：空気遠近法で青く霞む遠景の山脈。トラックを translate して極めてゆっくり流す */
 export const MountainLayer = memo(
-  forwardRef<HTMLDivElement, { W: number; H: number; stage: number }>(function MountainLayer({ W, H, stage }, ref) {
+  forwardRef<HTMLDivElement, { W: number; H: number; snow: number }>(function MountainLayer({ W, H, snow }, ref) {
     const P = Math.max(W, 900);
     const { far, near } = useMemo(
       () => ({
@@ -61,7 +61,7 @@ export const MountainLayer = memo(
       }),
       [P, H],
     );
-    const snowAmt = stage >= 3 ? 1 : 0.85;
+    const snowAmt = Math.max(0.85, snow);
     const tile = (
       <svg width={P} height={H} viewBox={`0 0 ${P} ${H}`} className="block shrink-0">
         <defs>
@@ -70,7 +70,7 @@ export const MountainLayer = memo(
             <stop offset="0.7" stopColor="#CFE0EE" stopOpacity="0.55" />
           </linearGradient>
         </defs>
-        <g filter="url(#ft-rough)">
+        <g filter="url(#crayon)">
         {/* 遠い稜線：大気の青灰色 */}
         <path d={far.ridge} fill="#9DB3CB" />
         {far.facets.map((d, i) => <path key={i} d={d} fill={i % 2 ? '#8AA1BC' : '#BFD0E1'} />)}

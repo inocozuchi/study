@@ -88,10 +88,12 @@ function Cumulus({ className, width, lit, sh, seed, duration, delay, opacity = 1
             {base.map(([x, y, r], i) => <circle key={i} cx={x} cy={y} r={r} />)}
           </clipPath>
         </defs>
+        <g filter="url(#crayon)">
         <g clipPath={`url(#${id})`}>
           <rect x="0" y="0" width="300" height="168" fill={sh} style={{ transition: 'fill 2s' }} />
           {light.map(([x, y, r], i) => <circle key={i} cx={x} cy={y} r={r} fill={lit} style={{ transition: 'fill 2s' }} />)}
           <rect x="0" y="150" width="300" height="30" fill={sh} opacity="0.65" />
+        </g>
         </g>
         <rect x="0" y="168" width="300" height="20" fill="transparent" />
       </svg>

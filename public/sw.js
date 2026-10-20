@@ -3,7 +3,7 @@
  * - ナビゲーション：ネットワーク優先（オフライン時はキャッシュの index.html）
  * - 同一オリジンの静的アセット：キャッシュ優先 + 裏で更新（stale-while-revalidate）
  */
-const VERSION = 'focus-trail-v1';
+const VERSION = 'focus-trail-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {

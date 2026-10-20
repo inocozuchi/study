@@ -1,8 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { AppData, FocusSession, PlanBlock, Settings, Subject } from '@/types';
+import type { AppData, DiaryEntry, FocusSession, Habit, PlanBlock, Settings, Subject, Todo } from '@/types';
 import { repository } from '@/data';
 import { routeProgress, subjectMinutes } from '@/lib/altitude';
 import { uid } from '@/lib/id';
+import { MOUNTAIN_SUGGESTIONS, SUBJECT_COLORS } from '@/lib/subjects';
 
 export interface SummitEvent {
   subject: Subject;
@@ -27,6 +28,17 @@ interface AppContextValue extends AppData {
 
   updateSettings: (patch: Partial<Settings>) => void;
 
+  /** 名前で科目を探し、なければ新しいルートとして作る */
+  ensureSubject: (name: string) => Subject;
+
+  saveDiary: (date: string, patch: Partial<Omit<DiaryEntry, 'date'>>) => void;
+  addTodo: (text: string) => void;
+  toggleTodo: (id: string) => void;
+  deleteTodo: (id: string) => void;
+  addHabit: (name: string, emoji: string, color: string) => void;
+  toggleHabit: (id: string, date: string) => void;
+  deleteHabit: (id: string) => void;
+
   resetToSample: () => Promise<void>;
   clearAll: () => Promise<void>;
 
@@ -41,6 +53,9 @@ const EMPTY: AppData = {
   sessions: [],
   plans: [],
   settings: undefined as unknown as Settings,
+  diary: [],
+  todos: [],
+  habits: [],
 };
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -148,6 +163,68 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const ensureSubject = useCallback(
+    (name: string) => {
+      const trimmed = name.trim();
+      const existing = dataRef.current.subjects.find((s) => s.name === trimmed && !s.archived);
+      if (existing) return existing;
+      const n = dataRef.current.subjects.length;
+      return saveSubject({
+        name: trimmed,
+        color: SUBJECT_COLORS[n % SUBJECT_COLORS.length],
+        icon: 'book',
+        mountainName: MOUNTAIN_SUGGESTIONS[n % MOUNTAIN_SUGGESTIONS.length],
+        targetMinutes: 600,
+      });
+    },
+    [saveSubject],
+  );
+
+  const saveDiary = useCallback((date: string, patch: Partial<Omit<DiaryEntry, 'date'>>) => {
+    setData((d) => {
+      const prev = d.diary.find((e) => e.date === date);
+      const entry: DiaryEntry = { date, text: '', ...prev, ...patch, updatedAt: Date.now() };
+      repository.saveDiary(entry);
+      return { ...d, diary: [...d.diary.filter((e) => e.date !== date), entry] };
+    });
+  }, []);
+
+  const addTodo = useCallback((text: string) => {
+    const todo: Todo = { id: uid('todo-'), text: text.trim(), done: false, createdAt: Date.now() };
+    setData((d) => ({ ...d, todos: [...d.todos, todo] }));
+    repository.upsertTodo(todo);
+  }, []);
+  const toggleTodo = useCallback((id: string) => {
+    setData((d) => {
+      const todos = d.todos.map((t) => (t.id === id ? { ...t, done: !t.done, doneAt: !t.done ? Date.now() : undefined } : t));
+      const t = todos.find((x) => x.id === id);
+      if (t) repository.upsertTodo(t);
+      return { ...d, todos };
+    });
+  }, []);
+  const deleteTodo = useCallback((id: string) => {
+    setData((d) => ({ ...d, todos: d.todos.filter((t) => t.id !== id) }));
+    repository.deleteTodo(id);
+  }, []);
+
+  const addHabit = useCallback((name: string, emoji: string, color: string) => {
+    const habit: Habit = { id: uid('hab-'), name: name.trim(), emoji, color, createdAt: Date.now(), log: [] };
+    setData((d) => ({ ...d, habits: [...d.habits, habit] }));
+    repository.upsertHabit(habit);
+  }, []);
+  const toggleHabit = useCallback((id: string, date: string) => {
+    setData((d) => {
+      const habits = d.habits.map((h) => (h.id === id ? { ...h, log: h.log.includes(date) ? h.log.filter((x) => x !== date) : [...h.log, date] } : h));
+      const h = habits.find((x) => x.id === id);
+      if (h) repository.upsertHabit(h);
+      return { ...d, habits };
+    });
+  }, []);
+  const deleteHabit = useCallback((id: string) => {
+    setData((d) => ({ ...d, habits: d.habits.filter((h) => h.id !== id) }));
+    repository.deleteHabit(id);
+  }, []);
+
   const resetToSample = useCallback(async () => setData(await repository.resetToSample()), []);
   const clearAll = useCallback(async () => setData(await repository.clearAll()), []);
 
@@ -167,6 +244,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     savePlan,
     deletePlan,
     updateSettings,
+    ensureSubject,
+    saveDiary,
+    addTodo,
+    toggleTodo,
+    deleteTodo,
+    addHabit,
+    toggleHabit,
+    deleteHabit,
     resetToSample,
     clearAll,
     summit,

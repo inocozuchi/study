@@ -1,0 +1,212 @@
+import { useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  Bell, ChevronLeft, ChevronRight, Clock, Coffee, Database, Eye, Leaf, Music, Repeat, RotateCcw, Smartphone, Sun, Timer, Trash2,
+  User, Volume2, Waves, Wind,
+} from 'lucide-react';
+import { useApp } from '@/store/AppStore';
+import { Toggle } from '@/components/ui/Toggle';
+import { PickerModal, type PickerOption } from '@/components/ui/PickerModal';
+import { Sheet } from '@/components/ui/Sheet';
+import { Modal } from '@/components/ui/Modal';
+import { BGM_TRACKS } from '@/audio/bgm';
+import { SEASONS, SEASON_ORDER } from '@/components/scene/stage/palette';
+import { wakeLockSupported } from '@/hooks/useWakeLock';
+import { springSheet } from '@/lib/motion';
+import type { AmbientChannel, AmbientMix, Season, Settings, SkyOverride } from '@/types';
+
+function Row({ icon, color, title, detail, value, onClick, right }: { icon: ReactNode; color: string; title: string; detail?: string; value?: ReactNode; onClick?: () => void; right?: ReactNode }) {
+  const Comp = onClick ? motion.button : motion.div;
+  return (
+    <Comp whileTap={onClick ? { backgroundColor: 'rgba(58,46,40,0.06)' } : undefined} onClick={onClick} className="flex w-full items-center gap-3 px-4 py-3 text-left">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] text-white" style={{ background: color, backgroundImage: 'var(--noise-light)' }}>
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[15px] font-semibold">{title}</span>
+        {detail && <span className="mt-0.5 block text-[12px] leading-snug text-ink-soft">{detail}</span>}
+      </span>
+      {value != null && <span className="shrink-0 text-[14px] text-ink-soft">{value}</span>}
+      {right}
+      {onClick && !right && <ChevronRight size={17} className="shrink-0 text-ink-faint" />}
+    </Comp>
+  );
+}
+
+function Group({ title, children, footer }: { title: string; children: ReactNode; footer?: string }) {
+  return (
+    <section className="mt-6">
+      <p className="mb-1.5 px-4 font-maru text-[13px] font-bold text-ink-soft">{title}</p>
+      <div className="paper-card divide-y divide-ink/[0.08] overflow-hidden">{children}</div>
+      {footer && <p className="mt-1.5 px-4 text-[12px] leading-relaxed text-ink-faint">{footer}</p>}
+    </section>
+  );
+}
+
+type PickerKey = 'focus' | 'short' | 'long' | 'every' | 'bgm' | 'ambient' | 'sky' | 'season';
+
+const AMBIENT_PRESETS: { key: string; label: string; mix: AmbientMix; icon: string }[] = [
+  { key: 'none', label: 'なし', icon: '🔇', mix: { rain: 0, fire: 0, wind: 0, river: 0, insects: 0 } },
+  { key: 'wind', label: '森', icon: '🌲', mix: { rain: 0, fire: 0, wind: 0.6, river: 0, insects: 0 } },
+  { key: 'river', label: '川', icon: '🏞', mix: { rain: 0, fire: 0, wind: 0.2, river: 0.65, insects: 0 } },
+  { key: 'rain', label: '雨', icon: '🌧', mix: { rain: 0.7, fire: 0, wind: 0.1, river: 0, insects: 0 } },
+  { key: 'insects', label: '虫の音', icon: '🦗', mix: { rain: 0, fire: 0, wind: 0.15, river: 0, insects: 0.6 } },
+  { key: 'fire', label: '焚き火', icon: '🔥', mix: { rain: 0, fire: 0.7, wind: 0.15, river: 0, insects: 0.2 } },
+];
+
+function ambientKey(mix: AmbientMix) {
+  const top = (Object.keys(mix) as AmbientChannel[]).sort((a, b) => mix[b] - mix[a])[0];
+  return mix[top] > 0.01 ? top : 'none';
+}
+
+/** iOS 設定アプリ風（紙のトーン）。ホームの歯車から右へスライドして開く */
+export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { settings, updateSettings, resetToSample, clearAll } = useApp();
+  const [picker, setPicker] = useState<PickerKey | null>(null);
+  const [nameOpen, setNameOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [confirm, setConfirm] = useState<null | 'sample' | 'clear'>(null);
+  const set = <K extends keyof Settings>(k: K) => (v: Settings[K]) => updateSettings({ [k]: v } as Partial<Settings>);
+
+  const minutes = (list: number[]): PickerOption<number>[] => list.map((m) => ({ value: m, label: `${m}分` }));
+  const pickers: Record<PickerKey, { title: string; value: string | number; options: PickerOption<string | number>[]; onSelect: (v: string | number) => void }> = {
+    focus: { title: '集中時間', value: settings.pomodoroFocus, options: minutes([15, 20, 25, 30, 40, 45, 50, 60, 90]), onSelect: (v) => updateSettings({ pomodoroFocus: Number(v) }) },
+    short: { title: '休憩時間', value: settings.pomodoroShortBreak, options: minutes([3, 5, 7, 10, 15]), onSelect: (v) => updateSettings({ pomodoroShortBreak: Number(v) }) },
+    long: { title: '長い休憩', value: settings.pomodoroLongBreak, options: minutes([10, 15, 20, 25, 30]), onSelect: (v) => updateSettings({ pomodoroLongBreak: Number(v) }) },
+    every: { title: '長い休憩の間隔', value: settings.longBreakEvery, options: [2, 3, 4, 5, 6].map((n) => ({ value: n, label: `${n}回の登りごと` })), onSelect: (v) => updateSettings({ longBreakEvery: Number(v) }) },
+    bgm: { title: 'BGM', value: settings.bgmTrack, options: BGM_TRACKS.map((t, i) => ({ value: i, label: t.title, detail: `${t.subtitle} · ${t.bpm} BPM`, icon: '📼' })), onSelect: (v) => updateSettings({ bgmTrack: Number(v) }) },
+    ambient: {
+      title: '環境音',
+      value: ambientKey(settings.ambient),
+      options: AMBIENT_PRESETS.map((p) => ({ value: p.key, label: p.label, icon: p.icon })),
+      onSelect: (v) => {
+        const p = AMBIENT_PRESETS.find((x) => x.key === v)!;
+        updateSettings({ ambient: p.mix, ambientPlaying: p.key !== 'none' });
+      },
+    },
+    sky: {
+      title: '空の時間',
+      value: settings.sky,
+      options: [
+        { value: 'auto', label: '自動', detail: '現在時刻に合わせてうつろう', icon: '🕰' },
+        { value: 'dawn', label: '朝', icon: '🌅' },
+        { value: 'day', label: '昼', icon: '☀️' },
+        { value: 'sunset', label: '夕', icon: '🌇' },
+        { value: 'night', label: '夜', icon: '🌙' },
+      ],
+      onSelect: (v) => updateSettings({ sky: v as SkyOverride }),
+    },
+    season: { title: 'シーズン', value: settings.season, options: SEASON_ORDER.map((s) => ({ value: s, label: SEASONS[s].label, icon: SEASONS[s].emoji })), onSelect: (v) => updateSettings({ season: v as Season }) },
+  };
+  const p = picker ? pickers[picker] : null;
+  const skyLabel = { auto: '自動', dawn: '朝', day: '昼', sunset: '夕', night: '夜' }[settings.sky];
+
+  return createPortal(
+    <>
+      <AnimatePresence>
+        {open && (
+          <motion.div className="tex-canvas fixed inset-0 z-40 overflow-y-auto text-ink" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springSheet}>
+            <div className="mx-auto max-w-xl px-4 pb-16 pt-safe">
+              <button onClick={onClose} className="-ml-1 mt-1 flex items-center gap-0.5 py-2 text-[16px] font-semibold text-crayon-blue">
+                <ChevronLeft size={22} /> ホーム
+              </button>
+              <h1 className="px-1 font-maru text-[32px] font-black tracking-tight">設定</h1>
+
+              <Group title="プロフィール">
+                <Row
+                  icon={<User size={16} />}
+                  color="#E68FA8"
+                  title="名前"
+                  value={settings.userName}
+                  onClick={() => {
+                    setName(settings.userName);
+                    setNameOpen(true);
+                  }}
+                />
+              </Group>
+
+              <Group title="時間設定" footer="ポモドーロの標準値です。出発前の支度でいつでも変えられます。">
+                <Row icon={<Timer size={16} />} color="#D9573B" title="集中時間" value={`${settings.pomodoroFocus}分`} onClick={() => setPicker('focus')} />
+                <Row icon={<Coffee size={16} />} color="#C98500" title="休憩時間" value={`${settings.pomodoroShortBreak}分`} onClick={() => setPicker('short')} />
+                <Row icon={<Clock size={16} />} color="#9085e9" title="長い休憩" value={`${settings.pomodoroLongBreak}分`} onClick={() => setPicker('long')} />
+                <Row icon={<Repeat size={16} />} color="#3987e5" title="長い休憩の間隔" value={`${settings.longBreakEvery}回ごと`} onClick={() => setPicker('every')} />
+                <Row icon={<Waves size={16} />} color="#199e70" title="休憩のあと自動で出発" right={<Toggle tone="paper" checked={settings.autoContinue} onChange={set('autoContinue')} color="#3E8C68" label="自動で出発" />} />
+                <Row icon={<Wind size={16} />} color="#5EA8B8" title="集中前の深呼吸" right={<Toggle tone="paper" checked={settings.breathing} onChange={set('breathing')} color="#3E8C68" label="深呼吸" />} />
+              </Group>
+
+              <Group title="音楽設定" footer="音楽・環境音はすべてブラウザ内でリアルタイムに合成しています。">
+                <Row icon={<Music size={16} />} color="#3E86C9" title="集中を始めたら音楽を流す" right={<Toggle tone="paper" checked={settings.bgmOnFocus} onChange={set('bgmOnFocus')} color="#3E86C9" label="音楽を流す" />} />
+                <Row icon={<span className="text-[15px]">📼</span>} color="#4A3A34" title="BGM" value={BGM_TRACKS[settings.bgmTrack]?.title} onClick={() => setPicker('bgm')} />
+                <Row
+                  icon={<Volume2 size={16} />}
+                  color="#6E5D52"
+                  title="音量"
+                  right={<input type="range" min={0} max={1} step={0.01} value={settings.bgmVolume} onChange={(e) => updateSettings({ bgmVolume: Number(e.target.value) })} className="w-32 accent-[#4A3A34]" aria-label="音量" />}
+                />
+                <Row icon={<Leaf size={16} />} color="#3E8C68" title="環境音" value={AMBIENT_PRESETS.find((x) => x.key === ambientKey(settings.ambient))?.label} onClick={() => setPicker('ambient')} />
+                <Row icon={<Bell size={16} />} color="#F2B33D" title="完了チャイム" right={<Toggle tone="paper" checked={settings.chime} onChange={set('chime')} color="#3E8C68" label="完了チャイム" />} />
+              </Group>
+
+              <Group title="システム設定">
+                <Row
+                  icon={<Smartphone size={16} />}
+                  color="#3987e5"
+                  title="画面を常時点灯"
+                  detail={wakeLockSupported ? '集中中は画面がスリープしません' : 'このブラウザは未対応です'}
+                  right={<Toggle tone="paper" checked={settings.wakeLock} onChange={set('wakeLock')} color="#3E8C68" label="常時点灯" />}
+                />
+                <Row icon={<Eye size={16} />} color="#9085e9" title="よそ見検知（ディープ集中）" detail="別のアプリへ移ると旅人が立ち止まります" right={<Toggle tone="paper" checked={settings.deepFocus} onChange={set('deepFocus')} color="#3E8C68" label="よそ見検知" />} />
+                <Row icon={<Sun size={16} />} color="#E8743A" title="空の時間" value={skyLabel} onClick={() => setPicker('sky')} />
+                <Row icon={<span className="text-[15px]">{SEASONS[settings.season].emoji}</span>} color="#7FB04A" title="シーズン" value={SEASONS[settings.season].label} onClick={() => setPicker('season')} />
+              </Group>
+
+              <Group title="データ" footer="記録はこの端末のブラウザ内に保存されます。ホーム画面に追加するとアプリとして全画面で使えます。">
+                <Row icon={<RotateCcw size={16} />} color="#199e70" title="サンプルデータに戻す" onClick={() => setConfirm('sample')} />
+                <Row icon={<Trash2 size={16} />} color="#D9573B" title="すべての記録を消去" onClick={() => setConfirm('clear')} />
+                <Row icon={<Database size={16} />} color="#6E5D52" title="Focus Trail" value="v2.0" />
+              </Group>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {p && <PickerModal open={!!picker} onClose={() => setPicker(null)} title={p.title} value={p.value} options={p.options} onSelect={p.onSelect} />}
+
+      <Sheet open={nameOpen} onClose={() => setNameOpen(false)} title="名前" subtitle="ホームの挨拶で呼ぶ名前です" tone="paper">
+        <form
+          className="space-y-3 pb-5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (name.trim()) updateSettings({ userName: name.trim() });
+            setNameOpen(false);
+          }}
+        >
+          <input className="field-paper font-maru text-[18px] font-bold" value={name} onChange={(e) => setName(e.target.value)} maxLength={16} autoFocus placeholder="旅人" />
+          <button type="submit" className="ink-btn w-full py-3.5 text-[16px]">保存</button>
+        </form>
+      </Sheet>
+
+      <Modal open={!!confirm} onClose={() => setConfirm(null)} tone="paper">
+        <div className="p-6 text-center">
+          <p className="font-maru text-[19px] font-bold">{confirm === 'sample' ? 'サンプルデータに戻しますか？' : 'すべての記録を消去しますか？'}</p>
+          <p className="mt-2 text-[13px] text-ink-soft">{confirm === 'sample' ? '今の記録はサンプルで上書きされます。' : 'この操作は取り消せません。'}</p>
+          <div className="mt-5 grid grid-cols-2 gap-2">
+            <button onClick={() => setConfirm(null)} className="rounded-2xl bg-ink/[0.08] py-3 font-bold">やめる</button>
+            <button
+              onClick={async () => {
+                await (confirm === 'sample' ? resetToSample() : clearAll());
+                setConfirm(null);
+                onClose();
+              }}
+              className="rounded-2xl bg-crayon-red py-3 font-bold text-paper"
+            >
+              {confirm === 'sample' ? '戻す' : '消去'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </>,
+    document.body,
+  );
+}

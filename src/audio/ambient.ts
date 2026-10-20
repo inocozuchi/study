@@ -14,19 +14,25 @@ interface Channel {
   schedule?: (until: number) => void;
 }
 
-const CHANNEL_LEVEL: Record<AmbientChannel, number> = { rain: 0.9, fire: 1.0, wind: 0.85, river: 0.8 };
+const CHANNEL_LEVEL: Record<AmbientChannel, number> = { rain: 0.9, fire: 1.0, wind: 0.85, river: 0.8, insects: 0.7 };
 
 class AmbientEngine {
   private ctx: AudioContext | null = null;
   private master!: GainNode;
   private noise: Partial<Record<NoiseColor, AudioBuffer>> = {};
   private channels: Partial<Record<AmbientChannel, Channel>> = {};
-  private mix: AmbientMix = { rain: 0, fire: 0, wind: 0, river: 0 };
+  private mix: AmbientMix = { rain: 0, fire: 0, wind: 0, river: 0, insects: 0 };
   private playing = false;
   private timer: ReturnType<typeof setInterval> | null = null;
 
   get isPlaying() {
     return this.playing;
+  }
+
+  /** BGM などと AudioContext を共有する（ユーザー操作の中で unlock 済みであること） */
+  context(): AudioContext | null {
+    this.unlock();
+    return this.ctx;
   }
 
   /** ユーザー操作の中で呼ぶ（iOS Safari の自動再生制限対策） */
@@ -280,6 +286,25 @@ class AmbientEngine {
           },
         };
       }
+      case 'insects': {
+        // 夜の草むら：かすかな虫の地鳴り + 個体ごとの鳴き声
+        const drone = this.gain(0.05);
+        this.source('white', 1).connect(this.filter('bandpass', 5200, 6)).connect(drone).connect(bus);
+        this.lfo(13, 0.035, drone.gain, 'square');
+        const crickets = Array.from({ length: 4 }, (_, i) => ({ pitch: 3900 + i * 420 + Math.random() * 200, pan: -0.7 + i * 0.45, next: ctx.currentTime + Math.random() }));
+        return {
+          bus,
+          schedule: (until) => {
+            for (const c of crickets) {
+              if (c.next < ctx.currentTime) c.next = ctx.currentTime + Math.random() * 0.3;
+              while (c.next < until) {
+                this.cricket(bus, c.next, c.pitch, c.pan);
+                c.next += rnd(0.42, 0.62) + (Math.random() < 0.12 ? rnd(0.6, 2.2) : 0);
+              }
+            }
+          },
+        };
+      }
       case 'river': {
         // 水の流れの胴鳴り
         this.source('brown', 1.2).connect(this.filter('bandpass', 520, 0.55)).connect(this.gain(0.9)).connect(bus);
@@ -301,6 +326,29 @@ class AmbientEngine {
           },
         };
       }
+    }
+  }
+
+  /** コオロギ：高い正弦波を短いパルス列で鳴らす（個体ごとに音程・定位が違う） */
+  private cricket(dest: AudioNode, at: number, pitch: number, pan: number) {
+    const ctx = this.ctx!;
+    const p = ctx.createStereoPanner();
+    p.pan.value = pan;
+    p.connect(dest);
+    const pulses = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < pulses; i++) {
+      const t = at + i * 0.034;
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(pitch, t);
+      osc.frequency.linearRampToValueAtTime(pitch * 0.985, t + 0.022);
+      const e = ctx.createGain();
+      e.gain.setValueAtTime(0.0001, t);
+      e.gain.exponentialRampToValueAtTime(0.09, t + 0.004);
+      e.gain.exponentialRampToValueAtTime(0.0001, t + 0.024);
+      osc.connect(e).connect(p);
+      osc.start(t);
+      osc.stop(t + 0.03);
     }
   }
 

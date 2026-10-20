@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePrefersReducedMotion } from '@/hooks/useReducedMotion';
 import { computeLayout, type StageLayout } from './layout';
-import { MEADOW, stageSky } from './palette';
+import { SEASONS, stageSky, type SeasonLook } from './palette';
+import type { Season } from '@/types';
 import { applyHikerPose, type HikerRefs } from './HikerRig';
 import { applyDogPose, type DogRefs } from './DogRig';
 import { blendDog, blendPose, clamp01, dogLie, dogTrot, lerp, sitPose, smooth, walkPose } from './rigMath';
@@ -12,14 +13,20 @@ import { BACK_TILE, MeadowLayer, TEX_TILE, type MeadowRefs } from './layers/Mead
 import { FG_TILE, ForegroundLayer } from './layers/ForegroundLayer';
 import { LightLayer, type LightRefs } from './layers/LightLayer';
 
-export type TravelerMood = 'walk' | 'stand' | 'rest' | 'alert';
+/** sleep：旅の終わり。ハイカーはテントの中、焚き火は燻る */
+export type TravelerMood = 'walk' | 'stand' | 'rest' | 'alert' | 'sleep';
 
 export interface TrailStageProps {
   /** 0..24 */
   hour: number;
-  /** 登山ステージ 0..4 */
+  /** 登山ステージ 0..4（山頂付近では雲海が出る） */
   stage: number;
   mood: TravelerMood;
+  season: Season;
+  /** 一緒に歩く仲間の数（0..2） */
+  companions?: number;
+  /** 他の画面で覆われている間は描画を止める */
+  paused?: boolean;
 }
 
 /** 歩行サイクルの長さ（秒）と 1 歩の歩幅（リグ単位）。地面の流れる速さはここから導く */
@@ -32,7 +39,7 @@ const GROUND_SPEED = STRIDE / (0.6 * CYCLE);
  *   L1 空 / L2 遠景の山 / L3 両脇の木 / L4 草原の斜面とキャラクター / L5 前景ボケ / L6 光と粒子
  * 1 本の requestAnimationFrame で関節と各トラックの transform だけを書き換える。
  */
-export function TrailStage({ hour, stage, mood }: TrailStageProps) {
+export function TrailStage({ hour, stage, mood, season, companions = 0, paused = false }: TrailStageProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ W: 0, H: 0 });
   const reduced = usePrefersReducedMotion();
@@ -45,9 +52,10 @@ export function TrailStage({ hour, stage, mood }: TrailStageProps) {
   }, []);
 
   const L = useMemo<StageLayout | null>(() => (size.W && size.H ? computeLayout(size.W, size.H) : null), [size.W, size.H]);
-  const sky = stageSky(hour);
+  const look = SEASONS[season];
+  const sky = useMemo(() => stageSky(hour, look.skyBlue), [hour, look]);
   const st = Math.max(0, Math.min(4, Math.round(stage)));
-  const pal = MEADOW[st];
+  const comp = Math.max(0, Math.min(2, companions));
 
   const mountainRef = useRef<HTMLDivElement>(null);
   const fgRef = useRef<HTMLDivElement>(null);
@@ -56,9 +64,13 @@ export function TrailStage({ hour, stage, mood }: TrailStageProps) {
   const hikerRefs = useRef<HikerRefs>({});
   const dogRefs = useRef<DogRefs>({});
   const lightRefs = useRef<LightRefs>({ fire: null, flames: [], glow: null, canvas: null, alert: null });
+  const comp0 = useRef<HikerRefs>({});
+  const comp1 = useRef<HikerRefs>({});
+  const companionRefs = useMemo(() => [comp0, comp1], []);
+  const companionBoxRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const live = useRef({ mood, stage: st, night: sky.night, reduced });
-  live.current = { mood, stage: st, night: sky.night, reduced };
+  const live = useRef({ mood, look, night: sky.night, reduced, comp, paused });
+  live.current = { mood, look, night: sky.night, reduced, comp, paused };
 
   useEffect(() => {
     if (!L) return;
@@ -67,7 +79,8 @@ export function TrailStage({ hour, stage, mood }: TrailStageProps) {
       phase: 0,
       dogPhase: 0,
       w: live.current.mood === 'walk' ? 1 : 0,
-      camp: live.current.mood === 'rest' ? 1 : 0,
+      camp: live.current.mood === 'rest' || live.current.mood === 'sleep' ? 1 : 0,
+      sleep: live.current.mood === 'sleep' ? 1 : 0,
       alert: 0,
       scroll: 0,
     };
@@ -86,10 +99,12 @@ export function TrailStage({ hour, stage, mood }: TrailStageProps) {
       raf = requestAnimationFrame(frame);
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      const { mood, night, reduced, stage } = live.current;
+      if (live.current.paused) return;
+      const { mood, night, reduced, look, comp } = live.current;
       s.t += dt;
       s.w = lerp(s.w, mood === 'walk' ? 1 : 0, Math.min(1, dt * 2.6));
-      s.camp = lerp(s.camp, mood === 'rest' ? 1 : 0, Math.min(1, dt * 1.5));
+      s.camp = lerp(s.camp, mood === 'rest' || mood === 'sleep' ? 1 : 0, Math.min(1, dt * 1.5));
+      s.sleep = lerp(s.sleep, mood === 'sleep' ? 1 : 0, Math.min(1, dt * 1.2));
       s.alert = lerp(s.alert, mood === 'alert' ? 1 : 0, Math.min(1, dt * 7));
       s.phase = (s.phase + dt / CYCLE) % 1;
       s.dogPhase = (s.dogPhase + dt / 0.46) % 1;
@@ -111,22 +126,33 @@ export function TrailStage({ hour, stage, mood }: TrailStageProps) {
       const pose = sitK > 0.001 ? blendPose(walk, sitPose(L.tan, s.t), sitK) : walk;
       pose.head += s.alert * -10 + s.alert * Math.sin(s.t * 3) * 6;
       applyHikerPose(hikerRefs.current, pose);
+      if (hikerBoxRef.current) hikerBoxRef.current.style.opacity = String(1 - s.sleep);
+      // 仲間：少し位相をずらして同じ動き
+      for (let i = 0; i < comp; i++) {
+        const ph = (s.phase + 0.31 + i * 0.27) % 1;
+        const cw = walkPose(ph, s.w, L.tan, s.t + i * 2);
+        const cp = sitK > 0.001 ? blendPose(cw, sitPose(L.tan, s.t + 3 + i * 5), sitK) : cw;
+        applyHikerPose(companionRefs[i].current, cp);
+        const box = companionBoxRefs.current[i];
+        if (box) box.style.opacity = String(1 - s.sleep);
+      }
 
       // ── 犬：少し手前を駆けていく / 焚き火のそばで伏せる ──
       const lie = smooth(clamp01(s.camp));
       const dPose = blendDog(dogTrot(s.dogPhase, s.w * (1 - lie), s.t), dogLie(s.t), lie);
       applyDogPose(dogRefs.current, dPose);
       const dxWalk = L.hx + 54 * L.k + Math.sin(s.t * 0.45) * 7 * L.k * s.w;
-      const dxRest = L.hx - 38 * L.k;
+      const dxRest = L.fireX + 30 * L.k;
       const dx = lerp(dxWalk, dxRest, lie);
-      const dy = L.ground(dx) + L.near * (1 - lie * 0.6);
+      const dy = L.ground(dx) + L.near * (1 - lie * 0.4);
       if (m.dog) m.dog.style.transform = `translate3d(${dx}px,${dy}px,0)`;
 
       // ── キャンプ ──
       if (m.camp) m.camp.setAttribute('opacity', String(clamp01((s.camp - 0.15) / 0.6)));
       if (m.seat) m.seat.setAttribute('opacity', String(clamp01(s.camp * 2)));
       const lr = lightRefs.current;
-      const fireK = clamp01((s.camp - 0.25) / 0.5);
+      // 旅の終わりは燻る小さな火
+      const fireK = clamp01((s.camp - 0.25) / 0.5) * (1 - s.sleep * 0.55);
       if (lr.fire) lr.fire.setAttribute('opacity', String(fireK));
       if (fireK > 0) {
         lr.flames.forEach((f, i) => {
@@ -143,28 +169,31 @@ export function TrailStage({ hour, stage, mood }: TrailStageProps) {
       }
 
       // ── 粒子 ──
-      if (ctx) drawParticles(ctx, dpr, L, particles, dt, s, { night, stage, reduced, fire: fireK });
+      if (ctx) drawParticles(ctx, dpr, L, particles, dt, s, { night, look, reduced, fire: fireK, smoke: s.sleep });
     };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
   }, [L]);
 
   return (
-    <div ref={rootRef} className={`ft-stage absolute inset-0 overflow-hidden ${reduced ? 'ft-reduced' : ''}`}>
-      {/* 筆のかすれ（輪郭をわずかに揺らす） */}
-      <svg width="0" height="0" className="absolute">
-        <filter id="ft-rough" x="-5%" y="-5%" width="110%" height="110%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3" />
-          <feDisplacementMap in="SourceGraphic" scale="3.2" />
-        </filter>
-      </svg>
+    <div ref={rootRef} className={`ft-stage absolute inset-0 overflow-hidden ${reduced || paused ? 'ft-reduced' : ''}`}>
       {L && (
         <>
           <SkyLayer sky={sky} stage={st} />
-          <MountainLayer ref={mountainRef} W={L.W} H={L.H} stage={st} />
-          <TreeLayer W={L.W} H={L.H} stage={st} />
-          <MeadowLayer L={L} pal={pal} refs={meadowRefs} hikerRefs={hikerRefs} dogRefs={dogRefs} hikerBoxRef={hikerBoxRef} />
-          <ForegroundLayer ref={fgRef} W={L.W} H={L.H} stage={st} />
+          <MountainLayer ref={mountainRef} W={L.W} H={L.H} snow={look.snow} />
+          <TreeLayer W={L.W} H={L.H} look={look} />
+          <MeadowLayer
+            L={L}
+            look={look}
+            refs={meadowRefs}
+            hikerRefs={hikerRefs}
+            dogRefs={dogRefs}
+            hikerBoxRef={hikerBoxRef}
+            companionRefs={companionRefs}
+            companionBoxRefs={companionBoxRefs}
+            companions={comp}
+          />
+          <ForegroundLayer ref={fgRef} W={L.W} H={L.H} look={look} />
           {/* 時間帯のティント：夜は群青、朝夕は暖色 */}
           <div className="pointer-events-none absolute inset-0" style={{ background: '#16204A', mixBlendMode: 'multiply', opacity: sky.night * 0.82, transition: 'opacity 2s' }} />
           <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, #FF9A5A, #FF7A6A)', mixBlendMode: 'soft-light', opacity: sky.glow * 0.6, transition: 'opacity 2s' }} />
@@ -209,7 +238,7 @@ function drawParticles(
   ps: ReturnType<typeof createParticles>,
   dt: number,
   s: { t: number; w: number; camp: number },
-  env: { night: number; stage: number; reduced: boolean; fire: number },
+  env: { night: number; look: SeasonLook; reduced: boolean; fire: number; smoke: number },
 ) {
   const { W, H } = L;
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -242,8 +271,9 @@ function drawParticles(
     c.globalCompositeOperation = 'source-over';
   }
 
-  // 花びら・落ち葉（雪のステージでは雪）
-  if (env.stage === 3) {
+  // 季節の舞うもの：雪 / 桜 / 落ち葉 / 綿毛
+  const kind = env.look.particle;
+  if (kind === 'snow') {
     c.fillStyle = 'rgba(255,255,255,0.85)';
     for (const p of ps.snow) {
       p.a += dt;
@@ -265,16 +295,42 @@ function drawParticles(
       c.translate(p.x, p.y);
       c.rotate(p.rot);
       c.scale(1, Math.abs(Math.sin(p.rot * 1.3)) * 0.8 + 0.2);
-      c.fillStyle = p.hue > 0.6 ? `rgba(255,255,255,${0.85 * (0.4 + day * 0.6)})` : p.hue > 0.3 ? `rgba(240,150,50,${0.9 * (0.4 + day * 0.6)})` : `rgba(232,180,60,${0.9 * (0.4 + day * 0.6)})`;
+      const a = 0.4 + day * 0.6;
+      if (kind === 'sakura') c.fillStyle = p.hue > 0.5 ? `rgba(251,211,224,${0.95 * a})` : `rgba(242,169,192,${0.95 * a})`;
+      else if (kind === 'leaf') c.fillStyle = p.hue > 0.6 ? `rgba(217,87,59,${0.9 * a})` : p.hue > 0.3 ? `rgba(240,150,50,${0.9 * a})` : `rgba(232,180,60,${0.9 * a})`;
+      else c.fillStyle = `rgba(255,255,250,${0.8 * a})`;
       c.beginPath();
-      c.ellipse(0, 0, p.r * 1.4, p.r * 0.7, 0, 0, Math.PI * 2);
+      if (kind === 'seed') c.arc(0, 0, p.r * 0.7, 0, Math.PI * 2);
+      else if (kind === 'sakura') {
+        // 先の割れた花びら
+        c.moveTo(-p.r * 1.4, 0);
+        c.quadraticCurveTo(0, -p.r * 1.1, p.r * 1.4, -p.r * 0.25);
+        c.lineTo(p.r * 0.9, 0);
+        c.lineTo(p.r * 1.4, p.r * 0.25);
+        c.quadraticCurveTo(0, p.r * 1.1, -p.r * 1.4, 0);
+      } else c.ellipse(0, 0, p.r * 1.4, p.r * 0.7, 0, 0, Math.PI * 2);
       c.fill();
       c.restore();
     }
   }
 
-  // ホタル（夜の麓・森）
-  if (env.night > 0.4 && env.stage <= 1) {
+  // 燻る焚き火の煙（旅の終わり）
+  if (env.smoke > 0.05) {
+    const fx = L.fireX;
+    const fy = L.ground(fx) - 8 * L.k;
+    for (let i = 0; i < 5; i++) {
+      const ph = (s.t * 0.18 + i / 5) % 1;
+      const x = fx + Math.sin(ph * 5 + i) * 8 * L.k + ph * 14 * L.k;
+      const y = fy - ph * 70 * L.k;
+      c.fillStyle = `rgba(220,226,240,${0.22 * env.smoke * Math.sin(ph * Math.PI)})`;
+      c.beginPath();
+      c.arc(x, y, (3 + ph * 10) * L.k, 0, Math.PI * 2);
+      c.fill();
+    }
+  }
+
+  // ホタル（夏・春の夜）
+  if (env.night > 0.4 && (kind === 'seed' || kind === 'sakura')) {
     c.globalCompositeOperation = 'lighter';
     for (const p of ps.flies) {
       p.a += dt;

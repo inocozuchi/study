@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { springBouncy } from '@/lib/motion';
 
 /** 中央に浮かぶアラート / セレブレーション用モーダル */
-export function Modal({ open, onClose, children, dismissable = true }: { open: boolean; onClose?: () => void; children: ReactNode; dismissable?: boolean }) {
+export function Modal({ open, onClose, children, dismissable = true, tone = 'denim' }: { open: boolean; onClose?: () => void; children: ReactNode; dismissable?: boolean; tone?: 'denim' | 'paper' }) {
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -19,7 +19,7 @@ export function Modal({ open, onClose, children, dismissable = true }: { open: b
           <motion.div
             role="alertdialog"
             aria-modal
-            className="glass-strong relative w-full max-w-sm overflow-hidden rounded-[2rem]"
+            className={`relative w-full max-w-sm overflow-hidden rounded-[2rem] ${tone === 'paper' ? 'tex-canvas border border-ink/10 text-ink shadow-float' : 'glass-strong'}`}
             initial={{ opacity: 0, scale: 0.9, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 8 }}

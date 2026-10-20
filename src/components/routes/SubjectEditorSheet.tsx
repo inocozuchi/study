@@ -86,7 +86,7 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
                 className="relative h-9 w-9 rounded-full"
                 style={{ background: c, boxShadow: color === c ? `0 0 0 3px #0C1224, 0 0 0 5px ${c}` : 'none' }}
               >
-                {color === c && <motion.span layoutId="color-check" transition={spring} className="absolute inset-0 grid place-items-center text-night-950"><Check size={16} strokeWidth={3} /></motion.span>}
+                {color === c && <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={spring} className="absolute inset-0 grid place-items-center text-night-950"><Check size={16} strokeWidth={3} /></motion.span>}
               </motion.button>
             ))}
           </div>

@@ -1,4 +1,4 @@
-import type { ActiveTimer, AppData, FocusSession, PlanBlock, Settings, Subject } from '@/types';
+import type { ActiveTimer, AppData, DiaryEntry, FocusSession, Habit, PlanBlock, Settings, Subject, Todo } from '@/types';
 import type { FocusRepository } from './repository';
 import { DEFAULT_SETTINGS } from './defaults';
 import { createSampleData } from './sampleData';
@@ -11,6 +11,9 @@ const K = {
   plans: `${PREFIX}plans`,
   settings: `${PREFIX}settings`,
   timer: `${PREFIX}timer`,
+  diary: `${PREFIX}diary`,
+  todos: `${PREFIX}todos`,
+  habits: `${PREFIX}habits`,
 };
 
 function read<T>(key: string, fallback: T): T {
@@ -38,12 +41,26 @@ function upsert<T extends { id: string }>(list: T[], item: T): T[] {
   return next;
 }
 
+/** 旧バージョンの設定にも新しい項目を補う（再生状態は起動時に必ず停止） */
+function mergeSettings(stored: Partial<Settings>): Settings {
+  return {
+    ...DEFAULT_SETTINGS,
+    ...stored,
+    ambient: { ...DEFAULT_SETTINGS.ambient, ...(stored.ambient ?? {}) },
+    ambientPlaying: false,
+    bgmPlaying: false,
+  };
+}
+
 export class LocalStorageRepository implements FocusRepository {
   private persistAll(data: AppData) {
     write(K.subjects, data.subjects);
     write(K.sessions, data.sessions);
     write(K.plans, data.plans);
     write(K.settings, data.settings);
+    write(K.diary, data.diary);
+    write(K.todos, data.todos);
+    write(K.habits, data.habits);
     write(K.initialized, true);
   }
 
@@ -57,7 +74,10 @@ export class LocalStorageRepository implements FocusRepository {
       subjects: read<Subject[]>(K.subjects, []),
       sessions: read<FocusSession[]>(K.sessions, []),
       plans: read<PlanBlock[]>(K.plans, []),
-      settings: { ...DEFAULT_SETTINGS, ...read<Partial<Settings>>(K.settings, {}), ambientPlaying: false },
+      settings: mergeSettings(read<Partial<Settings>>(K.settings, {})),
+      diary: read<DiaryEntry[]>(K.diary, []),
+      todos: read<Todo[]>(K.todos, []),
+      habits: read<Habit[]>(K.habits, []),
     };
   }
 
@@ -91,6 +111,23 @@ export class LocalStorageRepository implements FocusRepository {
     write(K.settings, settings);
   }
 
+  async saveDiary(entry: DiaryEntry) {
+    const list = read<DiaryEntry[]>(K.diary, []).filter((d) => d.date !== entry.date);
+    write(K.diary, entry.text.trim() || entry.mood ? [...list, entry] : list);
+  }
+  async upsertTodo(todo: Todo) {
+    write(K.todos, upsert(read<Todo[]>(K.todos, []), todo));
+  }
+  async deleteTodo(id: string) {
+    write(K.todos, read<Todo[]>(K.todos, []).filter((t) => t.id !== id));
+  }
+  async upsertHabit(habit: Habit) {
+    write(K.habits, upsert(read<Habit[]>(K.habits, []), habit));
+  }
+  async deleteHabit(id: string) {
+    write(K.habits, read<Habit[]>(K.habits, []).filter((h) => h.id !== id));
+  }
+
   loadActiveTimer(): ActiveTimer | null {
     return read<ActiveTimer | null>(K.timer, null);
   }
@@ -107,7 +144,7 @@ export class LocalStorageRepository implements FocusRepository {
   }
 
   async clearAll() {
-    const empty: AppData = { subjects: [], sessions: [], plans: [], settings: DEFAULT_SETTINGS };
+    const empty: AppData = { subjects: [], sessions: [], plans: [], settings: DEFAULT_SETTINGS, diary: [], todos: [], habits: [] };
     this.persistAll(empty);
     this.saveActiveTimer(null);
     return empty;

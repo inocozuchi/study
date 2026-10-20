@@ -15,6 +15,11 @@ export default {
         moss: { DEFAULT: '#7FD1A8', soft: '#B2E6CB', deep: '#4FB284' },
         dusk: { DEFAULT: '#C3A6FF', soft: '#DCCBFF' },
         sun: { DEFAULT: '#FFD27A', soft: '#FFE3A8' },
+        // 紙（キャンバス地）とインク、デニム
+        paper: { DEFAULT: '#F5EEDC', 2: '#EDE3CC', 3: '#E2D5B8' },
+        ink: { DEFAULT: '#3A2E28', soft: '#6E5D52', faint: '#A39283' },
+        denim: { DEFAULT: '#24395A', deep: '#17253D', light: '#3B5683' },
+        crayon: { blue: '#3E86C9', green: '#3E8C68', red: '#D9573B', yellow: '#F2B33D', pink: '#E68FA8', brown: '#4A3A34' },
       },
       fontFamily: {
         sans: [
@@ -22,6 +27,8 @@ export default {
           '"Hiragino Sans"', '"Hiragino Kaku Gothic ProN"', '"Noto Sans JP"', '"Segoe UI"',
           'system-ui', 'sans-serif',
         ],
+        maru: ['"Zen Maru Gothic"', '"Hiragino Maru Gothic ProN"', '"SF Pro Rounded"', 'sans-serif'],
+        digits: ['Fredoka', '"SF Pro Rounded"', 'ui-rounded', 'sans-serif'],
         rounded: ['"SF Pro Rounded"', 'ui-rounded', '-apple-system', '"Hiragino Maru Gothic ProN"', 'sans-serif'],
       },
       boxShadow: {

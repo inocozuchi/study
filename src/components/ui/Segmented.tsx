@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useId, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { spring } from '@/lib/motion';
 
 interface Option<T extends string> {
@@ -7,7 +7,7 @@ interface Option<T extends string> {
   label: ReactNode;
 }
 
-/** iOS UISegmentedControl 風。選択ピルが layoutId でスライドする */
+/** iOS UISegmentedControl 風。選択ピルがスプリングでスライドする（layoutId は退場アニメーションを止めることがあるため使わない） */
 export function Segmented<T extends string>({
   value,
   options,
@@ -21,9 +21,16 @@ export function Segmented<T extends string>({
   className?: string;
   size?: 'sm' | 'md';
 }) {
-  const id = useId();
+  const idx = Math.max(0, options.findIndex((o) => o.value === value));
   return (
     <div role="tablist" className={`glass-thin relative flex rounded-2xl p-1 ${className}`}>
+      <motion.span
+        className="absolute bottom-1 left-1 top-1 rounded-xl bg-white/[0.16] shadow-[0_2px_10px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)]"
+        style={{ width: `calc((100% - 8px) / ${options.length})` }}
+        initial={false}
+        animate={{ x: `${idx * 100}%` }}
+        transition={spring}
+      />
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -34,13 +41,6 @@ export function Segmented<T extends string>({
             onClick={() => onChange(o.value)}
             className={`relative z-10 flex-1 whitespace-nowrap rounded-xl font-semibold transition-colors ${size === 'sm' ? 'px-1.5 py-1.5 text-[12px]' : 'px-3 py-2 text-[13px]'} ${active ? 'text-white' : 'text-white/50'}`}
           >
-            {active && (
-              <motion.span
-                layoutId={`seg-${id}`}
-                transition={spring}
-                className="absolute inset-0 -z-10 rounded-xl bg-white/[0.16] shadow-[0_2px_10px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)]"
-              />
-            )}
             {o.label}
           </button>
         );

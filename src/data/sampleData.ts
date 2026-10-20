@@ -1,4 +1,4 @@
-import type { AppData, FocusSession, PlanBlock, Subject } from '@/types';
+import type { AppData, DiaryEntry, FocusSession, Habit, PlanBlock, Subject, Todo } from '@/types';
 import { DEFAULT_SETTINGS } from './defaults';
 import { seeded } from '@/lib/id';
 import { DAY, MIN, dateKey, minutesOfDay, startOfDay } from '@/lib/time';
@@ -111,11 +111,34 @@ export function createSampleData(now = Date.now()): AppData {
       }
     }
   }
+  // ToDo・習慣・ノート
+  const todos: Todo[] = [
+    { id: 'todo-1', text: 'ミクロ経済の第4章を読む', done: true, createdAt: now - DAY, doneAt: now - 3 * 60 * MIN },
+    { id: 'todo-2', text: '簿記の過去問 第3回を解く', done: false, createdAt: now - DAY },
+    { id: 'todo-3', text: '英単語 50 個', done: false, createdAt: now - 2 * 60 * MIN },
+    { id: 'todo-4', text: 'ゼミの発表スライドを直す', done: false, createdAt: now - 60 * MIN },
+  ];
+  const habitLog = (rate: number, seed: number) => {
+    const r = seeded(seed);
+    return Array.from({ length: 21 }, (_, i) => dateKey(today0 - (i + 1) * DAY)).filter(() => r() < rate);
+  };
+  const habits: Habit[] = [
+    { id: 'hab-1', name: '朝の音読', emoji: '📖', color: '#199e70', createdAt: created, log: [todayKey, ...habitLog(0.8, 1)] },
+    { id: 'hab-2', name: '25分だけでも机に向かう', emoji: '⛰️', color: '#3987e5', createdAt: created, log: [todayKey, ...habitLog(0.9, 2)] },
+    { id: 'hab-3', name: 'ストレッチ', emoji: '🧘', color: '#d55181', createdAt: created, log: habitLog(0.5, 3) },
+  ];
+  const diary: DiaryEntry[] = [
+    { date: dateKey(today0 - DAY), text: '工業簿記の連結がやっと腑に落ちた。焚き火の音を流すと集中が続く気がする。', mood: 4, updatedAt: now - DAY },
+  ];
+
   return {
     subjects,
     sessions,
     plans,
-    settings: { ...DEFAULT_SETTINGS, selectedSubjectId: 'sub-econ' },
+    settings: { ...DEFAULT_SETTINGS, selectedSubjectId: 'sub-fp' },
+    diary,
+    todos,
+    habits,
   };
 }
 

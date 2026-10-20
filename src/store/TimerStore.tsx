@@ -27,6 +27,15 @@ export interface StrayEvent {
   focusedMs: number;
 }
 
+/** 長押しで旅を終えたときのリザルト */
+export interface JourneyResult {
+  startedAt: number;
+  endedAt: number;
+  focusMs: number;
+  subjectId: string | null;
+  cycles: number;
+}
+
 interface TimerContextValue {
   timer: ActiveTimer;
   now: number;
@@ -52,6 +61,12 @@ interface TimerContextValue {
   resolveStray: (action: 'resume' | 'break') => void;
   /** 予定ブロックから：科目と長さを指定してカウントダウンを開始 */
   startPlanned: (subjectId: string, minutes: number) => boolean;
+  /** 旅を始める（準備シートから） */
+  startJourney: (opts: { subjectId: string; mode: TimerMode; minutes: number }) => void;
+  /** 旅を終える（長押し）。集中中なら記録してリザルトを返す */
+  endJourney: () => JourneyResult | null;
+  /** 旅の累計集中（記録済み + 進行中） */
+  journeyFocusMs: number;
 }
 
 const TimerContext = createContext<TimerContextValue | null>(null);
@@ -122,15 +137,35 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         sessionStartedAt: null,
         cycle,
         longBreak,
+        journeyFocusMs: (t.journeyFocusMs ?? 0) + focusedMs,
       });
     },
     [addSession, setTimer],
   );
 
+  /** 次の登りを始める（休憩明け） */
+  const nextFocus = useCallback(
+    (at: number) => {
+      const t = timerRef.current;
+      setTimer({
+        ...t,
+        phase: 'focus',
+        running: true,
+        startedAt: at,
+        accumulatedMs: 0,
+        targetMs: t.mode === 'pomodoro' ? settingsRef.current.pomodoroFocus * MIN : t.mode === 'countdown' ? settingsRef.current.countdownMinutes * MIN : null,
+        sessionStartedAt: at,
+        longBreak: false,
+      });
+    },
+    [setTimer],
+  );
+
   const toIdle = useCallback(
     (keepCycle = true) => {
       const t = timerRef.current;
-      setTimer({ ...IDLE, mode: t.mode, subjectId: t.subjectId, cycle: keepCycle ? t.cycle : 0 });
+      // 旅の情報は残す（休憩明けに自動で続けない設定のとき、ここから再開できる）
+      setTimer({ ...IDLE, mode: t.mode, subjectId: t.subjectId, cycle: keepCycle ? t.cycle : 0, journeyStartedAt: t.journeyStartedAt, journeyFocusMs: t.journeyFocusMs });
     },
     [setTimer],
   );
@@ -151,10 +186,13 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         evaluate(at);
       } else if (t.phase === 'break') {
         if (settingsRef.current.chime) ambient.chime('break');
-        toIdle();
+        if (settingsRef.current.autoContinue && t.journeyStartedAt) {
+          nextFocus(doneAt);
+          evaluate(at);
+        } else toIdle();
       }
     },
-    [enterBreak, toIdle],
+    [enterBreak, toIdle, nextFocus],
   );
 
   // Worker tick
@@ -227,6 +265,8 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         subjectId,
         sessionStartedAt: n,
         longBreak: false,
+        journeyStartedAt: t.journeyStartedAt ?? n,
+        journeyFocusMs: t.journeyFocusMs ?? 0,
       });
     } else {
       setTimer({ ...t, running: true, startedAt: n });
@@ -252,8 +292,60 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     enterBreak(n, focused, { completed });
   }, [enterBreak]);
 
-  const discard = useCallback(() => toIdle(), [toIdle]);
-  const skipBreak = useCallback(() => toIdle(), [toIdle]);
+  const discard = useCallback(() => {
+    const t = timerRef.current;
+    setTimer({ ...IDLE, mode: t.mode, subjectId: t.subjectId });
+  }, [setTimer]);
+  /** 休憩を切り上げて次の登りへ */
+  const skipBreak = useCallback(() => {
+    if (timerRef.current.phase !== 'break') return;
+    const n = Date.now();
+    setNow(n);
+    nextFocus(n);
+  }, [nextFocus]);
+
+  const startJourney = useCallback(
+    ({ subjectId, mode, minutes }: { subjectId: string; mode: TimerMode; minutes: number }) => {
+      ambient.unlock();
+      const patch: Partial<typeof settingsRef.current> = { selectedSubjectId: subjectId, mode };
+      if (mode === 'pomodoro') patch.pomodoroFocus = minutes;
+      if (mode === 'countdown') patch.countdownMinutes = minutes;
+      updateSettings(patch);
+      const n = Date.now();
+      setNow(n);
+      setTimer({
+        ...IDLE,
+        phase: 'focus',
+        mode,
+        running: true,
+        startedAt: n,
+        targetMs: mode === 'stopwatch' ? null : minutes * MIN,
+        subjectId,
+        sessionStartedAt: n,
+        journeyStartedAt: n,
+        journeyFocusMs: 0,
+      });
+    },
+    [setTimer, updateSettings],
+  );
+
+  const endJourney = useCallback((): JourneyResult | null => {
+    const t = timerRef.current;
+    if (!t.journeyStartedAt && t.phase === 'idle') return null;
+    const n = Date.now();
+    let focusMs = t.journeyFocusMs ?? 0;
+    if (t.phase === 'focus') {
+      const focused = elapsedOf(t, n);
+      focusMs += focused;
+      const minutes = Math.round(focused / MIN);
+      if (minutes >= 1 && t.subjectId) {
+        addSession({ subjectId: t.subjectId, start: t.sessionStartedAt ?? n - focused, end: n, minutes, source: t.mode });
+      }
+    }
+    if (settingsRef.current.chime) ambient.chime('break');
+    setTimer({ ...IDLE, mode: t.mode, subjectId: t.subjectId });
+    return { startedAt: t.journeyStartedAt ?? n, endedAt: n, focusMs, subjectId: t.subjectId, cycles: t.cycle };
+  }, [addSession, setTimer]);
 
   const setMode = useCallback(
     (mode: TimerMode) => {
@@ -310,6 +402,8 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         targetMs: m * MIN,
         subjectId,
         sessionStartedAt: n,
+        journeyStartedAt: n,
+        journeyFocusMs: 0,
       });
       return true;
     },
@@ -357,8 +451,11 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       setSubject,
       resolveStray,
       startPlanned,
+      startJourney,
+      endJourney,
+      journeyFocusMs: (timer.journeyFocusMs ?? 0) + (timer.phase === 'focus' ? elapsedMs : 0),
     }),
-    [timer, now, elapsedMs, remainingMs, idleTarget, progress, isFocusing, isResting, wakeLockHeld, stray, start, pause, toggle, finishFocus, discard, skipBreak, setMode, setSubject, resolveStray, startPlanned],
+    [timer, now, elapsedMs, remainingMs, idleTarget, progress, isFocusing, isResting, wakeLockHeld, stray, start, pause, toggle, finishFocus, discard, skipBreak, setMode, setSubject, resolveStray, startPlanned, startJourney, endJourney],
   );
 
   return <TimerContext.Provider value={value}>{children}</TimerContext.Provider>;

@@ -37,7 +37,6 @@ export interface HikerPose {
   farHip: number; farKnee: number; farAnkle: number;
   nearShoulder: number; nearElbow: number;
   farShoulder: number; farElbow: number;
-  mug: number; // マグの不透明度
 }
 
 export const HIKER = { thigh: 24, shin: 21, ankle: 5, hipStand: 47.5 };
@@ -85,11 +84,10 @@ export function walkPose(phase: number, w: number, tan: number, t: number): Hike
     nearElbow: -18 - 14 * w * Math.max(0, -swing),
     farShoulder: -24 * w * swing + (1 - w) * 2,
     farElbow: -18 - 14 * w * Math.max(0, swing),
-    mug: 0,
   };
 }
 
-/** 丸太に腰かけ、焚き火の方を向いてコーヒーを飲む */
+/** 丸太に腰かけ、焚き火に両手をかざして温める */
 export function sitPose(tan: number, t: number): HikerPose {
   const slopeDeg = Math.atan(tan) * DEG;
   const hipY = 14;
@@ -99,23 +97,23 @@ export function sitPose(tan: number, t: number): HikerPose {
   };
   const near = leg(22);
   const far = leg(18);
-  // ときどきマグを口元へ
-  const sip = smooth(clamp01((Math.sin(t * 0.55) - 0.55) * 3));
+  // ときどき手をこすり合わせる
+  const rub = smooth(clamp01((Math.sin(t * 0.5) - 0.4) * 2.5));
+  const rr = Math.sin(t * 9) * rub;
   const breathe = Math.sin(t * 1.3);
   return {
     hipY,
-    lean: 10 + breathe * 0.8 - sip * 4,
+    lean: 14 + breathe * 0.8,
     torsoBob: 0,
-    head: 6 - sip * 10 + Math.sin(t * 0.4) * 2,
+    head: 4 + Math.sin(t * 0.4) * 2 - rub * 3,
     pack: 0,
     pom: Math.sin(t * 1.3) * 0.6,
     nearHip: near.hip, nearKnee: near.knee, nearAnkle: near.ankle,
     farHip: far.hip, farKnee: far.knee, farAnkle: far.ankle,
-    nearShoulder: -42 - sip * 22,
-    nearElbow: -98 - sip * 26,
-    farShoulder: -28,
-    farElbow: -62,
-    mug: 1,
+    nearShoulder: -62 + rr * 6 + rub * 8,
+    nearElbow: -28 - rub * 30,
+    farShoulder: -70 - rr * 6 + rub * 10,
+    farElbow: -22 - rub * 32,
   };
 }
 

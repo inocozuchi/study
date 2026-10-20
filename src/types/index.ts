@@ -50,10 +50,15 @@ export interface PlanBlock {
   title?: string;
 }
 
-export type AmbientChannel = 'rain' | 'fire' | 'wind' | 'river';
+export type AmbientChannel = 'rain' | 'fire' | 'wind' | 'river' | 'insects';
 export type AmbientMix = Record<AmbientChannel, number>;
 
 export type SkyOverride = 'auto' | 'dawn' | 'day' | 'sunset' | 'night';
+
+/** 旅の季節（シーンの配色・木々・舞うものが変わる） */
+export type Season = 'spring' | 'summer' | 'autumn' | 'winter' | 'sakura';
+
+export type StudyStyle = 'solo' | 'multi';
 
 export interface Settings {
   pomodoroFocus: number;
@@ -69,6 +74,21 @@ export interface Settings {
   ambientPlaying: boolean;
   selectedSubjectId: ID | null;
   sky: SkyOverride;
+  /** 挨拶で呼ぶ名前 */
+  userName: string;
+  season: Season;
+  style: StudyStyle;
+  /** マルチの部屋コード */
+  roomCode: string;
+  /** 休憩が終わったら自動で次の登りへ */
+  autoContinue: boolean;
+  /** 集中を始めたら BGM を流す */
+  bgmOnFocus: boolean;
+  bgmPlaying: boolean;
+  bgmTrack: number;
+  bgmVolume: number;
+  /** 集中開始時の深呼吸 */
+  breathing: boolean;
 }
 
 export type TimerPhase = 'idle' | 'focus' | 'break';
@@ -90,6 +110,36 @@ export interface ActiveTimer {
   /** ポモドーロで完了した集中回数 */
   cycle: number;
   longBreak: boolean;
+  /** 旅（集中開始〜長押しで終了まで）の開始時刻と、記録済みの集中 ms */
+  journeyStartedAt?: number | null;
+  journeyFocusMs?: number;
+}
+
+/** ノート（その日の振り返り） */
+export interface DiaryEntry {
+  /** YYYY-MM-DD */
+  date: string;
+  text: string;
+  mood?: 1 | 2 | 3 | 4 | 5;
+  updatedAt: number;
+}
+
+export interface Todo {
+  id: ID;
+  text: string;
+  done: boolean;
+  createdAt: number;
+  doneAt?: number;
+}
+
+export interface Habit {
+  id: ID;
+  name: string;
+  emoji: string;
+  color: string;
+  createdAt: number;
+  /** 達成した日（YYYY-MM-DD） */
+  log: string[];
 }
 
 export interface AppData {
@@ -97,4 +147,7 @@ export interface AppData {
   sessions: FocusSession[];
   plans: PlanBlock[];
   settings: Settings;
+  diary: DiaryEntry[];
+  todos: Todo[];
+  habits: Habit[];
 }

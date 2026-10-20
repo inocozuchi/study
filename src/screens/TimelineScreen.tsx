@@ -72,7 +72,14 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
         <button aria-label="前の週" onClick={() => shiftWeek(-1)} className="grid h-8 w-6 place-items-center text-white/40">
           <ChevronLeft size={18} />
         </button>
-        <div className="grid flex-1 grid-cols-7 gap-1">
+        <div className="relative grid flex-1 grid-cols-7">
+          {/* 選択ピル（layoutId を使わず位置を直接動かす） */}
+          <motion.span
+            className="absolute inset-y-0 left-0 w-[calc(100%/7)] rounded-2xl bg-white/[0.12] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
+            initial={false}
+            animate={{ x: `${Math.max(0, week.findIndex((d) => dateKey(d) === selected)) * 100}%`, opacity: week.some((d) => dateKey(d) === selected) ? 1 : 0 }}
+            transition={spring}
+          />
           {week.map((d) => {
             const k = dateKey(d);
             const active = k === selected;
@@ -81,7 +88,6 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
             const ring = Math.min(1, mins / 180);
             return (
               <motion.button key={k} whileTap={{ scale: 0.9 }} onClick={() => setSelected(k)} className="relative flex flex-col items-center gap-1 rounded-2xl py-2">
-                {active && <motion.span layoutId="day-pill" transition={spring} className="absolute inset-0 rounded-2xl bg-white/[0.12] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]" />}
                 <span className={`relative text-[11px] font-semibold ${today ? 'text-ember' : 'text-white/45'}`}>{weekdayJa(d)}</span>
                 <span className="relative grid h-8 w-8 place-items-center">
                   <svg viewBox="0 0 32 32" className="absolute inset-0 -rotate-90">

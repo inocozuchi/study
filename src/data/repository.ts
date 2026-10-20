@@ -1,4 +1,4 @@
-import type { ActiveTimer, AppData, FocusSession, PlanBlock, Settings, Subject } from '@/types';
+import type { ActiveTimer, AppData, DiaryEntry, FocusSession, Habit, PlanBlock, Settings, Subject, Todo } from '@/types';
 
 /**
  * データ層の抽象。UI/ストアはこのインターフェースだけに依存する。
@@ -19,6 +19,12 @@ export interface FocusRepository {
   deletePlan(id: string): Promise<void>;
 
   saveSettings(settings: Settings): Promise<void>;
+
+  saveDiary(entry: DiaryEntry): Promise<void>;
+  upsertTodo(todo: Todo): Promise<void>;
+  deleteTodo(id: string): Promise<void>;
+  upsertHabit(habit: Habit): Promise<void>;
+  deleteHabit(id: string): Promise<void>;
 
   /** タイマーは同期 API（リロード直後に即座に復元するため） */
   loadActiveTimer(): ActiveTimer | null;
