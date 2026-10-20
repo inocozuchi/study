@@ -4,7 +4,7 @@
  * - BGM の曲リスト（bgm/tracks.json）：ネットワーク優先（アップロードした曲がすぐ反映される）
  * - 同一オリジンの静的アセット（BGM の音声ファイルを含む）：キャッシュ優先 + 裏で更新（stale-while-revalidate）
  */
-const VERSION = 'focus-trail-v3';
+const VERSION = 'focus-trail-v4';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {

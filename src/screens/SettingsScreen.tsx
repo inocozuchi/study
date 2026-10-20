@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Bell, ChevronLeft, ChevronRight, Clock, Coffee, Database, Eye, Leaf, Mountain, Music, Repeat, RotateCcw, Smartphone, Sun, Timer, Trash2,
+  Bell, ChevronLeft, ChevronRight, Clock, Coffee, Database, Eye, Leaf, Mountain, Music, PlusSquare, Repeat, RotateCcw, Smartphone, Sun, Timer, Trash2,
   User, Volume2, Waves, Wind,
 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
@@ -10,6 +10,7 @@ import { Toggle } from '@/components/ui/Toggle';
 import { PickerModal, type PickerOption } from '@/components/ui/PickerModal';
 import { Sheet } from '@/components/ui/Sheet';
 import { Modal } from '@/components/ui/Modal';
+import { InstallSheet, isStandalone } from '@/components/home/InstallSheet';
 import { useBgmTracks } from '@/audio/bgmLibrary';
 import { SEASONS, SEASON_ORDER } from '@/designs/mountain/scene/palette';
 import { getDesign } from '@/designs';
@@ -67,6 +68,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
   const tracks = useBgmTracks();
   const [picker, setPicker] = useState<PickerKey | null>(null);
   const [nameOpen, setNameOpen] = useState(false);
+  const [installOpen, setInstallOpen] = useState(false);
   const [name, setName] = useState('');
   const [confirm, setConfirm] = useState<null | 'sample' | 'clear'>(null);
   const set = <K extends keyof Settings>(k: K) => (v: Settings[K]) => updateSettings({ [k]: v } as Partial<Settings>);
@@ -151,6 +153,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
               </Group>
 
               <Group title="システム設定">
+                <Row icon={<PlusSquare size={16} />} color="#5A9FEA" title="ホーム画面に追加" value={isStandalone() ? '追加済み' : undefined} onClick={() => setInstallOpen(true)} />
                 <Row
                   icon={<Smartphone size={16} />}
                   color="#3987e5"
@@ -178,6 +181,8 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
       </AnimatePresence>
 
       {p && <PickerModal open={!!picker} onClose={() => setPicker(null)} title={p.title} value={p.value} options={p.options} onSelect={p.onSelect} />}
+
+      <InstallSheet open={installOpen} onClose={() => setInstallOpen(false)} />
 
       <Sheet open={nameOpen} onClose={() => setNameOpen(false)} title="名前" subtitle="ホームの挨拶で呼ぶ名前です">
         <form

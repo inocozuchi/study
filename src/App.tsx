@@ -16,6 +16,7 @@ import { loadLibrary } from '@/audio/bgmLibrary';
 import { useMultiRoom } from '@/hooks/useMultiRoom';
 import { hourFor } from '@/lib/scene';
 import { getDesign } from '@/designs';
+import { hideBoot } from '@/lib/boot';
 import { useNow } from '@/hooks/useNow';
 import { springBouncy, springSoft } from '@/lib/motion';
 
@@ -29,6 +30,9 @@ export default function App() {
 
 function Gate() {
   const { ready } = useApp();
+  useEffect(() => {
+    if (ready) hideBoot();
+  }, [ready]);
   if (!ready) return <Splash />;
   return (
     <TimerProvider>
@@ -37,15 +41,9 @@ function Gate() {
   );
 }
 
+/** データの読み込み中。見た目は index.html の起動画面（#boot）が担うので、ここは同じ背景だけ */
 function Splash() {
-  return (
-    <div className="grid h-full place-items-center bg-night-950">
-      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
-        <div className="text-[40px]">⏱️</div>
-        <p className="mt-2 text-[13px] font-semibold tracking-[0.2em] text-white/50">FOCUS TRAIL</p>
-      </motion.div>
-    </div>
-  );
+  return <div className="h-full bg-night-950" />;
 }
 
 const TAB_KEY = 'focus-trail:tab';

@@ -73,7 +73,9 @@ src/
     …                   画面ごとの部品（timeline/ routes/ insights/ trail/）
   screens/              HomeScreen / TimelineScreen / RoutesScreen / InsightsScreen / SettingsScreen
 public/
-  manifest.webmanifest, sw.js, icons/
+  manifest.webmanifest, sw.js, icons/（icon.svg が元絵）, splash/（iOS 起動画像）
+scripts/generate-assets.mjs  icon.svg → アイコン PNG と iOS 起動画像（playwright-core を --no-save で入れて実行）
+.github/workflows/deploy.yml main への push で GitHub Pages に公開
 ```
 
 ## アーキテクチャ原則
@@ -188,6 +190,11 @@ interface TimerDesign {
 - シートは下からスプリング、ドラッグで閉じる。モーダルは scale 0.94→1 + fade。
 - タブ・セグメントの選択インジケータは index に合わせて x をスプリングで動かす（layoutId は使わない）。
 - `prefers-reduced-motion` を尊重（Canvas の粒子量・視差を削減）。
+
+## 起動画面
+- `index.html` の `#boot`（アイコン + iOS の読み込みインジケーター）が JS より先に描かれる。iOS の起動画像（`public/splash/`）と同じ位置・大きさ・背景色 `#070B17`。
+- アプリの準備ができたら `lib/boot.ts` の `hideBoot()` でフェードして消す（`App.tsx` の `Gate`）。
+- アイコンを変えたら `scripts/generate-assets.mjs` を実行し、`index.html` の #boot の SVG も同じ図柄に揃える。
 
 ## BGM のループ原則
 - 曲の継ぎ目にフェード・無音・クロスフェードを入れない。ループは `AudioBufferSourceNode.loop` に任せる（HTMLAudio の loop は使わない）。

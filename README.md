@@ -27,6 +27,20 @@ npm run preview  # ビルド成果物を確認（Service Worker 有効）
 - **データ**：Repository パターン（`src/data/`）。現在は LocalStorage 実装、Firestore 等へ差し替え可能
 - **PWA**：manifest / Service Worker / iOS メタタグ。ホーム画面に追加して全画面で動作
 
+## 公開してスマホのホーム画面に追加する（GitHub Pages）
+
+`main` に push（PR をマージ）すると、`.github/workflows/deploy.yml` が自動でビルドして GitHub Pages に公開します。
+URL は `https://<ユーザー名>.github.io/<リポジトリ名>/`（このリポジトリなら `https://inocozuchi.github.io/study/`）。
+
+最初に 1 回だけ：
+1. GitHub の無料プランでは Pages は**公開リポジトリ**でのみ使えます（Settings → General → Danger Zone → Change visibility）。
+2. Settings → Pages → Build and deployment → Source を **GitHub Actions** にする。
+
+iPhone でホーム画面に追加：Safari で URL を開く → 共有ボタン → 「ホーム画面に追加」→「Web アプリとして開く」がオンのまま「追加」。
+アプリ内の 設定 → ホーム画面に追加 にも同じ手順があります。Safari で使った記録とホーム画面のアプリの記録は別々に保存されます。
+
+アイコンと iOS の起動画像は `public/icons/icon.svg` から `scripts/generate-assets.mjs` で生成しています。
+
 ## BGM（自分の曲を追加する）
 
 1. 音声ファイルを `public/bgm/` に置く（GitHub なら「Add file → Upload files」で `public/bgm/` へ）

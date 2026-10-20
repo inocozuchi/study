@@ -7,9 +7,8 @@
     <meta name="description" content="集中は山を登る旅。休憩は焚き火のそばで。学習・集中記録アプリ Focus Trail" />
     <meta name="theme-color" content="#070B17" />
     <meta name="color-scheme" content="dark" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
+
+    <!-- ホーム画面に追加したときの設定（iOS / Android） -->
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
@@ -18,8 +17,77 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Focus Trail" />
     <meta name="format-detection" content="telephone=no" />
+
+    <!-- iOS の起動画像（ホーム画面から開いた瞬間に出る画面。下の #boot と同じ見た目） -->
+    <link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash/splash-1320x2868.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash/splash-1206x2622.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash/splash-1290x2796.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash/splash-1179x2556.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash/splash-1284x2778.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash/splash-1170x2532.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash/splash-1242x2688.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="./splash/splash-828x1792.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash/splash-1125x2436.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash/splash-1242x2208.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="./splash/splash-750x1334.png" />
+
+    <!-- 書体は登山デザインでだけ使う。読み込みを待たせない（起動画面を先に出す） -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" />
+
+    <!-- 起動画面：JavaScript より先に描かれる。iOS の起動画像と同じ位置・大きさ -->
+    <style>
+      html, body { margin: 0; background: #070b17; }
+      #boot {
+        position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center;
+        background: #070b17; transition: opacity 0.45s ease;
+      }
+      #boot.hide { opacity: 0; pointer-events: none; }
+      #boot .icon {
+        width: 112px; height: 112px; border-radius: 25px; overflow: hidden;
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 18px 40px rgba(0,0,0,0.45);
+        animation: boot-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+      #boot .icon svg { display: block; width: 100%; height: 100%; }
+      /* iOS の読み込みインジケーター（12 本の線が順に濃くなる）。読み込みが長いときだけ現れる */
+      #boot .spinner {
+        position: absolute; left: 50%; top: calc(50% + 112px); width: 20px; height: 20px; margin-left: -10px;
+        opacity: 0; animation: boot-fade 0.3s ease 0.9s forwards;
+      }
+      #boot .spinner i {
+        position: absolute; left: 50%; top: 0; width: 2px; height: 5.5px; margin-left: -1px; border-radius: 1px;
+        background: rgba(255,255,255,0.8); transform-origin: 1px 10px; opacity: 0.15;
+        animation: boot-spoke 1s linear infinite;
+      }
+      @keyframes boot-in { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+      @keyframes boot-fade { to { opacity: 1; } }
+      @keyframes boot-spoke { 0% { opacity: 1; } 100% { opacity: 0.15; } }
+      @media (prefers-reduced-motion: reduce) { #boot .icon { animation: none; } }
+    </style>
   </head>
   <body>
+    <div id="boot" role="status" aria-label="読み込み中">
+      <div class="icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true">
+          <defs>
+            <linearGradient id="boot-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22305A" /><stop offset="1" stop-color="#0A1022" /></linearGradient>
+          </defs>
+          <rect width="512" height="512" fill="url(#boot-bg)" />
+          <path d="M92 396 L256 138 L420 396 Z" fill="#F4F7FC" />
+          <path d="M256 138 L420 396 L292 396 Z" fill="#B7C6E4" />
+          <circle cx="378" cy="138" r="24" fill="#FF8A4C" />
+        </svg>
+      </div>
+      <div class="spinner" aria-hidden="true">
+        <i style="transform: rotate(0deg); animation-delay: -1s"></i><i style="transform: rotate(30deg); animation-delay: -0.9167s"></i>
+        <i style="transform: rotate(60deg); animation-delay: -0.8333s"></i><i style="transform: rotate(90deg); animation-delay: -0.75s"></i>
+        <i style="transform: rotate(120deg); animation-delay: -0.6667s"></i><i style="transform: rotate(150deg); animation-delay: -0.5833s"></i>
+        <i style="transform: rotate(180deg); animation-delay: -0.5s"></i><i style="transform: rotate(210deg); animation-delay: -0.4167s"></i>
+        <i style="transform: rotate(240deg); animation-delay: -0.3333s"></i><i style="transform: rotate(270deg); animation-delay: -0.25s"></i>
+        <i style="transform: rotate(300deg); animation-delay: -0.1667s"></i><i style="transform: rotate(330deg); animation-delay: -0.0833s"></i>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

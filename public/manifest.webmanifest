@@ -1,7 +1,8 @@
 {
-  "name": "Focus Trail — 集中旅行者",
+  "id": "./",
+  "name": "Focus Trail",
   "short_name": "Focus Trail",
-  "description": "集中は山を登る旅。休憩は焚き火のそばで。学習・集中記録アプリ",
+  "description": "ポモドーロタイマーで集中を記録する学習アプリ",
   "lang": "ja",
   "start_url": "./",
   "scope": "./",
