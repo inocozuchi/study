@@ -128,7 +128,7 @@ export function HikerRig({ refs, palette = HIKER_PALETTES[0] }: { refs: React.Mu
     refs.current[k] = el;
   };
   return (
-    <g filter="url(#crayon-boil)">
+    <g>
       <ellipse cx="2" cy="1.4" rx="17" ry="2.6" fill="#2A1A0A" opacity="0.2" />
       <g ref={r('hips')}>
         <Leg near={false} r={r} c={c} />

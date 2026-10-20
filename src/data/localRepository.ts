@@ -1,11 +1,12 @@
 import type { ActiveTimer, AppData, DiaryEntry, FocusSession, Habit, PlanBlock, Settings, Subject, Todo } from '@/types';
 import type { FocusRepository } from './repository';
 import { DEFAULT_SETTINGS } from './defaults';
-import { createSampleData } from './sampleData';
 
 const PREFIX = 'focus-trail:v1:';
 const K = {
   initialized: `${PREFIX}initialized`,
+  /** 試作版のサンプル記録を一度だけ消したしるし */
+  freshStart: `${PREFIX}fresh-start`,
   subjects: `${PREFIX}subjects`,
   sessions: `${PREFIX}sessions`,
   plans: `${PREFIX}plans`,
@@ -47,9 +48,14 @@ function mergeSettings(stored: Partial<Settings>): Settings {
     ...DEFAULT_SETTINGS,
     ...stored,
     ambient: { ...DEFAULT_SETTINGS.ambient, ...(stored.ambient ?? {}) },
+    ambientFiles: { ...(stored.ambientFiles ?? {}) },
     ambientPlaying: false,
     bgmPlaying: false,
   };
+}
+
+function emptyData(settings: Settings): AppData {
+  return { subjects: [], sessions: [], plans: [], settings, diary: [], todos: [], habits: [] };
 }
 
 export class LocalStorageRepository implements FocusRepository {
@@ -65,10 +71,21 @@ export class LocalStorageRepository implements FocusRepository {
   }
 
   async load(): Promise<AppData> {
+    // 初めて開いたとき：記録はすべて 0、科目もなし（科目は集中の準備で名前を入れると作られる）
     if (!read(K.initialized, false)) {
-      const sample = createSampleData();
-      this.persistAll(sample);
-      return sample;
+      const empty = emptyData(DEFAULT_SETTINGS);
+      this.persistAll(empty);
+      write(K.freshStart, true);
+      return empty;
+    }
+    // 試作版で入っていたサンプルの記録を一度だけ消す（設定は残す）
+    if (!read(K.freshStart, false)) {
+      const settings = { ...mergeSettings(read<Partial<Settings>>(K.settings, {})), selectedSubjectId: null };
+      const empty = emptyData(settings);
+      this.persistAll(empty);
+      this.saveActiveTimer(null);
+      write(K.freshStart, true);
+      return empty;
     }
     return {
       subjects: read<Subject[]>(K.subjects, []),
@@ -136,15 +153,8 @@ export class LocalStorageRepository implements FocusRepository {
     else localStorage.removeItem(K.timer);
   }
 
-  async resetToSample() {
-    const sample = createSampleData();
-    this.persistAll(sample);
-    this.saveActiveTimer(null);
-    return sample;
-  }
-
   async clearAll() {
-    const empty: AppData = { subjects: [], sessions: [], plans: [], settings: DEFAULT_SETTINGS, diary: [], todos: [], habits: [] };
+    const empty = emptyData(DEFAULT_SETTINGS);
     this.persistAll(empty);
     this.saveActiveTimer(null);
     return empty;

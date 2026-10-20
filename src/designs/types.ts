@@ -14,8 +14,6 @@ export interface DesignSceneProps {
   hour: number;
   /** 旅の終わり（リザルト表示中） */
   ended: boolean;
-  /** マルチで一緒にいる仲間の数 */
-  companions: number;
   /** 他のタブで覆われている間は描画を止める */
   paused: boolean;
 }
@@ -24,7 +22,6 @@ export interface DesignSessionProps {
   onMusic: () => void;
   /** 長押しなどで旅を終える */
   onEnd: () => void;
-  companions: string[];
 }
 
 export interface DesignResultProps {

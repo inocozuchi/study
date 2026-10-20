@@ -3,8 +3,10 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
 import { applyCachedFont } from './lib/fonts';
+import { watchViewport } from './lib/viewport';
 
 applyCachedFont();
+watchViewport();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,4 +1,5 @@
 import { forwardRef, memo, useMemo } from 'react';
+import { Baked } from '../Baked';
 import { seeded } from '@/lib/id';
 
 interface Band {
@@ -50,7 +51,7 @@ function makeBand(P: number, H: number, seed: number, topMin: number, topMax: nu
   return { ridge, facets, snow, snowSh };
 }
 
-/** Layer 2：空気遠近法で青く霞む遠景の山脈。トラックを translate して極めてゆっくり流す */
+/** Layer 2：空気遠近法で青く霞む遠景の山脈。一度キャンバスに焼き、トラックを translate して極めてゆっくり流す */
 export const MountainLayer = memo(
   forwardRef<HTMLDivElement, { W: number; H: number; snow: number }>(function MountainLayer({ W, H, snow }, ref) {
     const P = Math.max(W, 900);
@@ -88,9 +89,10 @@ export const MountainLayer = memo(
     );
     return (
       <div className="absolute inset-0 overflow-hidden">
-        <div ref={ref} className="flex h-full will-change-transform" style={{ width: P * 2 }}>
-          {tile}
-          {tile}
+        <div ref={ref} className="h-full will-change-transform" style={{ width: P * 2 }}>
+          <Baked width={P} height={H} repeat={2} bakeKey={snowAmt}>
+            {tile}
+          </Baked>
         </div>
       </div>
     );

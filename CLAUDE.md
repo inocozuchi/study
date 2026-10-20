@@ -34,47 +34,53 @@ src/
   data/
     repository.ts       FocusRepository インターフェース（非同期）。Firestore 実装はここを実装するだけ
     localRepository.ts  LocalStorage 実装（キー接頭辞 focus-trail:v1:）
-    sampleData.ts       初回起動用のサンプルデータ（現在日時から相対生成・シード付き乱数）
     index.ts            使用する repository の選択点
   store/
     AppStore.tsx        データ（科目/セッション/予定/設定）の Context + アクション
     TimerStore.tsx      タイマー状態機械（Worker tick + タイムスタンプ差分）+ ディープ集中 + Wake Lock
   timer/timer.worker.ts 250ms ごとの tick を投げるだけの Worker（時間計算は常に Date.now() 差分）
-  audio/ambient.ts      プロシージャル環境音シンセ（雨・焚き火・森の風・川・虫）+ チャイム
-  audio/bgm.ts          BGM エンジン（ファイル曲 → LoopPlayer / 合成曲 → プロシージャル Lo-Fi）
-  audio/loopPlayer.ts   音声ファイルのシームレス無限ループ（AudioBuffer + loopStart/loopEnd、無音の自動トリム）
-  audio/bgmLibrary.ts   曲リスト：public/bgm/tracks.json（実行時に読む）+ 合成曲 4 曲（synthTracks.ts）
+  audio/ambient.ts      内蔵の環境音シンセ（雨・焚き火・森の風・川・虫）+ チャイム。環境音のまとめ（output）を持つ
+  audio/ambientFiles.ts 追加した環境音（public/ambient）のミキサー。音ごとに LoopPlayer + GainNode
+  audio/ambientLibrary.ts 環境音リスト：public/ambient/sounds.json（実行時に読む。絵文字はファイル名から推測）
+  audio/bgm.ts          BGM エンジン（アップロードした曲を LoopPlayer で鳴らす。曲は ID で選ぶ）
+  audio/loopPlayer.ts   音声ファイルのシームレス無限ループ（AudioBuffer ループ、無音の自動トリム、継ぎ目のクロスフェードを焼き込む）
+  audio/bgmLibrary.ts   曲リスト：public/bgm/tracks.json（実行時に読む）。曲がなければ BGM は鳴らない
   lib/                  純粋関数：time / altitude（標高・ステージ）/ stats / scene（空の配色・旅の時間）/ id
   lib/fonts.ts          フォント設定（FONTS。選んだ書体を Google Fonts から読み込み、CSS 変数で全体に反映）
-  hooks/                useNow, useWakeLock, useMultiRoom（BroadcastChannel の部屋）など
+  hooks/                useNow, useWakeLock など
+  lib/viewport.ts       ホーム画面アプリで高さが短く報告される iOS の不具合対策（--app-h）
   designs/              ポモドーロタイマーのデザイン（下記「タイマーのデザイン」）
     types.ts            TimerDesign の契約（Scene / Session / Result / SetupOptions）
     index.ts            実装済みデザインの登録（鉄道・飛行機はここに追加）
     mountain/           登山デザイン（クレヨン × 布はこのフォルダの中だけ）
       index.ts          mountainDesign（mountain.css を読み込む）
       mountain.css      布の質感・クレヨンの部品（mt-paper / mt-ink-btn）・環境アニメーション
-      CrayonDefs.tsx    クレヨンの SVG フィルタ（#crayon / #crayon-soft / #crayon-boil）+ CrayonOutline
+      CrayonDefs.tsx    クレヨンの SVG フィルタ（#crayon / #crayon-soft。文字列 CRAYON_FILTERS）+ CrayonOutline
       MountainScene.tsx タイマー状態 → ハイカーの気分（歩く/立つ/座る/警告/眠る）に変換してシーンを描く
       MountainSession.tsx 集中・休憩中の HUD（音楽・時間・完了、長押しで終了、休憩カード）
       MountainResult.tsx  夜のキャンプのリザルト
       SeasonPicker.tsx / SeasonSwatch.tsx  支度シートに差し込む「シーズン」
       scene/            6 層シーン（下記「登山シーンの構成」）
         TrailStage.tsx  レイヤーの組み立て + 唯一の rAF ループ（関節・トラック・粒子を更新）
+        Baked.tsx       クレヨンの絵を一度だけ PNG に焼き込んで表示（Cache Storage に保存）
         rigMath.ts      歩行サイクル・2 ボーン IK・座りポーズ・犬の速歩/伏せ・ポーズ補間
         HikerRig.tsx / DogRig.tsx  関節分割されたクレヨン調のハイカーとコーギー
         layout.ts / palette.ts  画面サイズ→配置、時間帯の空・季節の配色
         layers/         Sky / Mountain / Tree / Meadow / Foreground / Light
   components/           アプリ本体（すべて iOS 風）
     ui/                 GlassCard, Sheet, Modal, Segmented, PickerModal, Toggle, CheckCircle, Pressable …
-    nav/                TabBar（フローティング）+ IslandPlayer（ダイナミックアイランド風）
+    nav/                TabBar（画面の最下部に固定。端から端まで）+ IslandPlayer（ダイナミックアイランド風）
     home/               SetupSheet（科目・時間 + デザイン固有の設定）
     focus/              BreathOverlay（深呼吸。Apple Watch の「呼吸」風）
-    audio/              CassettePlayer（カセット柄の再生カード + コントロールセンター風の環境音）
+    audio/              CassettePlayer（サウンドのシート：BGM / ミキサー）+ SoundMixer（音ごとの音量）
     tools/              ToolsPanel（ノート / ToDo / 習慣、縦のサイドタブ）
     …                   画面ごとの部品（timeline/ routes/ insights/ trail/）
   screens/              HomeScreen / TimelineScreen / RoutesScreen / InsightsScreen / SettingsScreen
 public/
   manifest.webmanifest, sw.js, icons/（icon.svg が元絵）, splash/（iOS 起動画像）
+  bgm/      BGM のフォルダ（tracks.json は任意。README.md に書き方）
+  ambient/  環境音のフォルダ（sounds.json は任意。README.md に書き方）
+vite.config.ts             audioManifests：ビルド時に bgm/・ambient/ の音声ファイルを一覧（json）へ自動で足す
 scripts/generate-assets.mjs  icon.svg → アイコン PNG と iOS 起動画像（playwright-core を --no-save で入れて実行）
 .github/workflows/deploy.yml main への push で GitHub Pages に公開
 ```
@@ -112,7 +118,7 @@ interface TimerDesign {
 ## ホームの流れ（どのデザインでも共通）
 
 `HomeScreen` が 1 つの画面の中で状態を切り替える（ホームタブのみ。没入中はタブバーを隠す）。
-1. **ホーム**（iOS）：「やあ！{名前}、前へ進む準備はいい？」、ソロ/マルチ、大きな「集中」、右端にツールの縦タブ
+1. **ホーム**（iOS）：「やあ！{名前}、前へ進む準備はいい？」、大きな「集中」、右端にツールの縦タブ
 2. **支度シート**（iOS）：科目名（新しい名前なら科目を自動作成）・時間（ポモドーロ/タイマー/フリー）・デザイン固有の設定
 3. **深呼吸**（iOS）：花びらの輪が 4 秒でふくらみ 4 秒でしぼむ。タップでスキップ
 4. **集中・休憩**：`design.Session`（登山：音楽・時間・完了、どこでも 1.1 秒の長押しで終了、休憩はテントと焚き火）
@@ -143,6 +149,14 @@ interface TimerDesign {
 6. **Light**：ゴッドレイ、焚き火（夜でも暗くならないようティントより上）、Canvas 粒子、紙の粒状感
    - 5 と 6 の間に時間帯ティント（夜：群青 multiply、朝夕：暖色 soft-light）
 
+**描画の重さ（iOS で固まらないために）**
+- iOS Safari は SVG フィルタを CPU で計算し、同じ描画レイヤーで何かが変わるたびに計算し直す。
+  **クレヨンのフィルタをかけた絵は必ず `Baked` で画像に焼き込む**（画面に filter 付きの SVG を出したまま動かさない）。
+  焼いた PNG は Cache Storage（`focus-trail-bake-v1`）に残り、2 回目以降の起動ではフィルタを計算しない。
+- 毎フレーム変えてよいのは transform と opacity だけ。値が変わったときだけ書き込む（TrailStage の setOpacity）。
+- 動く要素に CSS の `filter: blur()` をかけない（前景のぼかしも焼き込みの中で一度だけ）。たくさんの小さな要素を別々にアニメーションさせない（星は 3 群に分けて群ごと）。
+- タイマーの再描画は 1 秒に 1 回。ホーム以外の画面は遅延読み込み（起動後に先読み）。
+
 **骨格アニメーションの原則**
 - リグは階層 `<g>`。関節の原点が回転の支点。React は描画のみ、毎フレームは `setAttribute('transform')` だけ。
 - 脚は 2 ボーン IK で足首を斜面上の目標へ。接地中は足が後ろへ等速移動し、その速度＝地面の流れる速度（足が滑らない）。
@@ -152,7 +166,7 @@ interface TimerDesign {
 - 季節（春・夏・秋・冬・桜）は `palette.ts` の `SEASONS`。草原・葉・舞うもの・前景の花がまとめて変わる。
 
 ### 登山デザインの見た目（クレヨン × 布）
-- `#crayon`（静的な絵）、`#crayon-soft`（線）、`#crayon-boil`（キャラクター、乱数の種を 8fps で入れ替え線を震わせる）。
+- `#crayon`（静的な絵）、`#crayon-soft`（UI の線）。キャラクター（動く）にはフィルタをかけない。
   いずれも「輪郭の揺れ（displacement）」+「紙目でワックスが乗らない粒（noise → alpha）」。
 - キャラクター・小道具は焦げ茶 `#2E221C` の輪郭線 + 斜線の陰影で描く。
 - HUD は `.mt-ink-btn`（焦げ茶のフェルト）、休憩カードとリザルトのボタンは `.mt-paper`（生成りのキャンバス地）。
@@ -201,6 +215,8 @@ interface TimerDesign {
 ### 余白
 - 画面左右 20px（`px-5`）、カード内 16–20px、要素間 8/12/16/24 の 4 の倍数。
 - 下部はタブバー分 `pb-36`、上部は `pt-safe`（safe-area-inset）。
+- アプリの枠は `.app-frame`、全画面の重ね（シート・モーダル・設定）は `fixed inset-x-0 top-0 h-app`（`fixed inset-0` は使わない。iOS のホーム画面アプリで下に帯が残る）。
+- ステータスバーの下のぼかしは、画面をスクロールしたときだけ出す（一番上ではぼかさない）。
 
 ### アニメーション原則（`lib/motion.ts`）
 - 既定スプリング：`{ type: 'spring', stiffness: 380, damping: 32 }`（UI 全般）
@@ -215,12 +231,18 @@ interface TimerDesign {
 - アプリの準備ができたら `lib/boot.ts` の `hideBoot()` でフェードして消す（`App.tsx` の `Gate`）。
 - アイコンを変えたら `scripts/generate-assets.mjs` を実行し、`index.html` の #boot の SVG も同じ図柄に揃える。
 
-## BGM のループ原則
-- 曲の継ぎ目にフェード・無音・クロスフェードを入れない。ループは `AudioBufferSourceNode.loop` に任せる（HTMLAudio の loop は使わない）。
-- フェードはユーザーが再生/一時停止したときだけ。一時停止は位置を覚え、続きから再開する。
-- 追加の曲は `public/bgm/` + `tracks.json`（コード変更不要）。SW は tracks.json だけネットワーク優先。
+## 音のループ原則（BGM・環境音）
+- ループは `AudioBufferSourceNode.loop` に任せる（HTMLAudio の loop は使わない）。再生中に継ぎ目の処理をしない。
+- 継ぎ目は読み込み時に一度だけ作る（`seamlessBuffer`）：
+  - BGM（既定 crossfade 0）：ループ用の曲は長さを変えずにそのままつなぐ。波形が飛ぶときだけ 8ms 重ねて「プチッ」を消す。
+  - 環境音（既定 crossfade 1.5 秒）：録音をそのまま入れても鳴らないよう、終わりを頭に等パワーで重ねる（音量は下がらない）。
+  - 先頭・末尾の無音はエンコーダーのパディング（1.5ms 以上・各端 0.25 秒まで）だけを外す。
+- フェードはユーザーが再生/一時停止・音量を変えたときだけ。一時停止は位置を覚え、続きから再開する。
+- 音の追加は `public/bgm/`・`public/ambient/` にファイルを置くだけ（json は題名などを決めたいときだけ）。SW は一覧の json だけネットワーク優先。
+- 音量は設定に保存（`bgmVolume` / `ambient`（内蔵）/ `ambientFiles`（追加した音、ID ごと））。起動時は再生を止めた状態から（iOS はタップが必要）。
 
 ## 規約
 - 文言は日本語。コンポーネントは関数 + 名前付き export。
 - 新規の永続データは types → repository → localRepository → AppStore の順に追加。
+- 初めて開いたときは記録も科目も空（サンプルデータはない）。試作版のサンプル記録は `fresh-start` のしるしで一度だけ消している。
 - ビルド前に `npm run build` を通すこと。

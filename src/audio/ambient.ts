@@ -35,6 +35,12 @@ class AmbientEngine {
     return this.playing;
   }
 
+  /** 環境音のまとめ（合成音もファイルの環境音もここへ。再生/停止のフェードを共有する） */
+  output(): GainNode | null {
+    this.unlock();
+    return this.ctx ? this.master : null;
+  }
+
   /** BGM などと AudioContext を共有する（ユーザー操作の中で unlock 済みであること） */
   context(): AudioContext | null {
     this.unlock();

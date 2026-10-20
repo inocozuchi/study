@@ -7,7 +7,7 @@ import { TrailStage, type TravelerMood } from './scene/TrailStage';
 import type { DesignSceneProps } from '../types';
 
 /** 登山デザインの背景：タイマーの状態をハイカーの気分（歩く・立つ・座る・眠る）に変換して描く */
-export function MountainScene({ hour, ended, companions, paused }: DesignSceneProps) {
+export function MountainScene({ hour, ended, paused }: DesignSceneProps) {
   const { settings, subjectById, minutesBySubject } = useApp();
   const { timer, elapsedMs, stray } = useTimer();
   const subject = subjectById(timer.subjectId ?? settings.selectedSubjectId);
@@ -16,8 +16,8 @@ export function MountainScene({ hour, ended, companions, paused }: DesignScenePr
   const mood: TravelerMood = ended ? 'sleep' : stray ? 'alert' : timer.phase === 'break' ? 'rest' : timer.phase === 'focus' && timer.running ? 'walk' : 'stand';
   return (
     <>
-      <CrayonDefs paused={paused} />
-      <TrailStage hour={ended ? 21.6 : hour} stage={stage} mood={mood} season={settings.season} companions={companions} paused={paused} />
+      <CrayonDefs />
+      <TrailStage hour={ended ? 21.6 : hour} stage={stage} mood={mood} season={settings.season} paused={paused} />
     </>
   );
 }

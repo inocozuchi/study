@@ -23,8 +23,6 @@ export interface TrailStageProps {
   stage: number;
   mood: TravelerMood;
   season: Season;
-  /** 一緒に歩く仲間の数（0..2） */
-  companions?: number;
   /** 他の画面で覆われている間は描画を止める */
   paused?: boolean;
 }
@@ -39,7 +37,7 @@ const GROUND_SPEED = STRIDE / (0.6 * CYCLE);
  *   L1 空 / L2 遠景の山 / L3 両脇の木 / L4 草原の斜面とキャラクター / L5 前景ボケ / L6 光と粒子
  * 1 本の requestAnimationFrame で関節と各トラックの transform だけを書き換える。
  */
-export function TrailStage({ hour, stage, mood, season, companions = 0, paused = false }: TrailStageProps) {
+export function TrailStage({ hour, stage, mood, season, paused = false }: TrailStageProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ W: 0, H: 0 });
   const reduced = usePrefersReducedMotion();
@@ -55,7 +53,6 @@ export function TrailStage({ hour, stage, mood, season, companions = 0, paused =
   const look = SEASONS[season];
   const sky = useMemo(() => stageSky(hour, look.skyBlue), [hour, look]);
   const st = Math.max(0, Math.min(4, Math.round(stage)));
-  const comp = Math.max(0, Math.min(2, companions));
 
   const mountainRef = useRef<HTMLDivElement>(null);
   const fgRef = useRef<HTMLDivElement>(null);
@@ -64,14 +61,10 @@ export function TrailStage({ hour, stage, mood, season, companions = 0, paused =
   const hikerRefs = useRef<HikerRefs>({});
   const dogRefs = useRef<DogRefs>({});
   const lightRefs = useRef<LightRefs>({ fire: null, flames: [], glow: null, canvas: null, alert: null });
-  const comp0 = useRef<HikerRefs>({});
-  const comp1 = useRef<HikerRefs>({});
-  const companionRefs = useMemo(() => [comp0, comp1], []);
-  const companionBoxRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const kickRef = useRef<(() => void) | null>(null);
-  const live = useRef({ mood, look, night: sky.night, reduced, comp, paused });
-  live.current = { mood, look, night: sky.night, reduced, comp, paused };
+  const live = useRef({ mood, look, night: sky.night, reduced, paused });
+  live.current = { mood, look, night: sky.night, reduced, paused };
 
   useEffect(() => {
     if (!L) return;
@@ -87,7 +80,7 @@ export function TrailStage({ hour, stage, mood, season, companions = 0, paused =
     };
     const canvas = lightRefs.current.canvas;
     const ctx = canvas?.getContext('2d') ?? null;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     if (canvas) {
       canvas.width = L.W * dpr;
       canvas.height = L.H * dpr;
@@ -95,6 +88,15 @@ export function TrailStage({ hour, stage, mood, season, companions = 0, paused =
     const particles = createParticles(L);
     let last = performance.now();
     let raf = 0;
+    // 値が変わったときだけ書き込む（同じ値でも書くと再描画の対象になる）
+    const written = new WeakMap<Element, string>();
+    const setOpacity = (el: HTMLElement | SVGElement | null, v: number) => {
+      if (!el) return;
+      const str = v < 0.002 ? '0' : v > 0.998 ? '1' : v.toFixed(3);
+      if (written.get(el) === str) return;
+      written.set(el, str);
+      el.style.opacity = str;
+    };
 
     const frame = (now: number) => {
       // 他のタブで覆われている間はループごと止める（再開は kick から）
@@ -105,7 +107,7 @@ export function TrailStage({ hour, stage, mood, season, companions = 0, paused =
       raf = requestAnimationFrame(frame);
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      const { mood, night, reduced, look, comp } = live.current;
+      const { mood, night, reduced, look } = live.current;
       // 視差を減らす設定では、歩く速さと地面の流れを一緒に落とす（足は滑らない）
       const rate = reduced ? 0.45 : 1;
       s.t += dt;
@@ -133,16 +135,7 @@ export function TrailStage({ hour, stage, mood, season, companions = 0, paused =
       const pose = sitK > 0.001 ? blendPose(walk, sitPose(L.tan, s.t), sitK) : walk;
       pose.head += s.alert * -10 + s.alert * Math.sin(s.t * 3) * 6;
       applyHikerPose(hikerRefs.current, pose);
-      if (hikerBoxRef.current) hikerBoxRef.current.style.opacity = String(1 - s.sleep);
-      // 仲間：少し位相をずらして同じ動き
-      for (let i = 0; i < comp; i++) {
-        const ph = (s.phase + 0.31 + i * 0.27) % 1;
-        const cw = walkPose(ph, s.w, L.tan, s.t + i * 2);
-        const cp = sitK > 0.001 ? blendPose(cw, sitPose(L.tan, s.t + 3 + i * 5), sitK) : cw;
-        applyHikerPose(companionRefs[i].current, cp);
-        const box = companionBoxRefs.current[i];
-        if (box) box.style.opacity = String(1 - s.sleep);
-      }
+      setOpacity(hikerBoxRef.current, 1 - s.sleep);
 
       // ── 犬：少し手前を駆けていく / 焚き火のそばで伏せる ──
       const lie = smooth(clamp01(s.camp));
@@ -155,13 +148,14 @@ export function TrailStage({ hour, stage, mood, season, companions = 0, paused =
       if (m.dog) m.dog.style.transform = `translate3d(${dx}px,${dy}px,0)`;
 
       // ── キャンプ ──
-      if (m.camp) m.camp.setAttribute('opacity', String(clamp01((s.camp - 0.15) / 0.6)));
-      if (m.seat) m.seat.setAttribute('opacity', String(clamp01(s.camp * 2)));
+      setOpacity(m.camp, clamp01((s.camp - 0.15) / 0.6));
+      setOpacity(m.seat, clamp01(s.camp * 2));
       const lr = lightRefs.current;
       // 旅の終わりは燻る小さな火
       const fireK = clamp01((s.camp - 0.25) / 0.5) * (1 - s.sleep * 0.55);
-      if (lr.fire) lr.fire.setAttribute('opacity', String(fireK));
-      if (fireK > 0) {
+      // 火が消えている間は焚き火の SVG に触れない（触れると毎フレーム描き直しになる）
+      setOpacity(lr.fire, fireK);
+      if (fireK > 0.001) {
         lr.flames.forEach((f, i) => {
           if (!f) return;
           const sc = fireK * (0.9 + 0.12 * Math.sin(s.t * (9 + i * 3) + i) + 0.06 * Math.sin(s.t * 23 + i * 2));
@@ -198,7 +192,7 @@ export function TrailStage({ hour, stage, mood, season, companions = 0, paused =
     <div ref={rootRef} className={`ft-stage absolute inset-0 overflow-hidden ${reduced || paused ? 'ft-reduced' : ''}`}>
       {L && (
         <>
-          <SkyLayer sky={sky} stage={st} />
+          <SkyLayer sky={sky} stage={st} W={L.W} />
           <MountainLayer ref={mountainRef} W={L.W} H={L.H} snow={look.snow} />
           <TreeLayer W={L.W} H={L.H} look={look} />
           <MeadowLayer
@@ -208,14 +202,11 @@ export function TrailStage({ hour, stage, mood, season, companions = 0, paused =
             hikerRefs={hikerRefs}
             dogRefs={dogRefs}
             hikerBoxRef={hikerBoxRef}
-            companionRefs={companionRefs}
-            companionBoxRefs={companionBoxRefs}
-            companions={comp}
           />
           <ForegroundLayer ref={fgRef} W={L.W} H={L.H} look={look} />
           {/* 時間帯のティント：夜は群青、朝夕は暖色 */}
-          <div className="pointer-events-none absolute inset-0" style={{ background: '#16204A', mixBlendMode: 'multiply', opacity: sky.night * 0.82, transition: 'opacity 2s' }} />
-          <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, #FF9A5A, #FF7A6A)', mixBlendMode: 'soft-light', opacity: sky.glow * 0.6, transition: 'opacity 2s' }} />
+          <div className="pointer-events-none absolute inset-0" style={{ background: '#16204A', mixBlendMode: 'multiply', opacity: sky.night * 0.82, transition: 'opacity 2s', transform: 'translateZ(0)' }} />
+          <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, #FF9A5A, #FF7A6A)', mixBlendMode: 'soft-light', opacity: sky.glow * 0.6, transition: 'opacity 2s', transform: 'translateZ(0)' }} />
           <LightLayer L={L} day={1 - sky.night} refs={lightRefs} />
         </>
       )}

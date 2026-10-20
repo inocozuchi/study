@@ -1,4 +1,5 @@
 import { forwardRef, memo, useMemo } from 'react';
+import { Baked } from '../Baked';
 import { seeded } from '@/lib/id';
 import type { SeasonLook } from '../palette';
 
@@ -20,11 +21,18 @@ export const ForegroundLayer = memo(
       return items;
     }, []);
 
-    const tile = (key: number) => (
-      <svg key={key} width={FG_TILE} height={h} viewBox={`0 0 ${FG_TILE} ${h}`} className="block shrink-0 overflow-visible">
+    // 被写界深度のぼかしも焼き込みの中で一度だけかける（CSS の blur を動く要素にかけると毎フレーム計算になる）
+    const tile = (
+      <svg viewBox={`0 0 ${FG_TILE} ${h}`}>
+        <defs>
+          <filter id="ft-dof" x="-5%" y="-10%" width="110%" height="120%">
+            <feGaussianBlur stdDeviation="3" />
+          </filter>
+        </defs>
+        <g filter="url(#ft-dof)">
         {plants.map((p, i) => (
-          <g key={i} transform={`translate(${p.x} ${h + 6}) scale(${p.s})`}>
-            <g className="ft-sway-big" style={{ animationDuration: `${p.dur}s`, animationDelay: `${p.d}s` }}>
+          <g key={i} transform={`translate(${p.x} ${h + 6}) scale(${p.s}) rotate(${(p.d % 2) * 3})`}>
+            <g>
               {p.kind === 'daisy' && (
                 <>
                   <path d="M0 0 Q-4 -60 2 -110" stroke="#2F5A3C" strokeWidth="4" fill="none" />
@@ -55,13 +63,19 @@ export const ForegroundLayer = memo(
             </g>
           </g>
         ))}
+        </g>
       </svg>
     );
 
     return (
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 overflow-visible" style={{ height: h, filter: 'blur(3px)' }}>
-        <div ref={ref} className="flex h-full will-change-transform" style={{ width: FG_TILE * tiles }}>
-          {Array.from({ length: tiles }, (_, i) => tile(i))}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0" style={{ height: h }}>
+        <div ref={ref} className="h-full will-change-transform" style={{ width: FG_TILE * tiles }}>
+          {/* 風の揺れは帯ごと（合成レイヤーの transform だけ） */}
+          <div className="ft-fg-sway h-full">
+            <Baked width={FG_TILE} height={h} repeat={tiles} bakeKey={look.label}>
+              {tile}
+            </Baked>
+          </div>
         </div>
       </div>
     );

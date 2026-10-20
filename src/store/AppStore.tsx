@@ -12,7 +12,7 @@ export interface SummitEvent {
 
 interface AppContextValue extends AppData {
   ready: boolean;
-  /** サンプルに戻す・全消去のたびに増える（実行中タイマーを作り直す合図） */
+  /** 全消去のたびに増える（実行中タイマーを作り直す合図） */
   epoch: number;
   subjectById: (id: string | null | undefined) => Subject | undefined;
   minutesBySubject: Record<string, number>;
@@ -41,7 +41,6 @@ interface AppContextValue extends AppData {
   toggleHabit: (id: string, date: string) => void;
   deleteHabit: (id: string) => void;
 
-  resetToSample: () => Promise<void>;
   clearAll: () => Promise<void>;
 
   summit: SummitEvent | null;
@@ -233,11 +232,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     repository.deleteHabit(id);
   }, []);
 
-  // データを入れ替えたら epoch を進め、実行中のタイマー（メモリ上の状態）も作り直す
-  const resetToSample = useCallback(async () => {
-    setData(await repository.resetToSample());
-    setEpoch((e) => e + 1);
-  }, []);
+  // データを消したら epoch を進め、実行中のタイマー（メモリ上の状態）も作り直す
   const clearAll = useCallback(async () => {
     setData(await repository.clearAll());
     setEpoch((e) => e + 1);
@@ -268,7 +263,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addHabit,
     toggleHabit,
     deleteHabit,
-    resetToSample,
     clearAll,
     summit,
     dismissSummit: () => setSummit(null),

@@ -1,7 +1,7 @@
 /* Focus Trail Service Worker
  * - インストール時に index.html を取得し、参照しているハッシュ付きアセットも事前キャッシュ
  * - ナビゲーション：ネットワーク優先（オフライン時はキャッシュの index.html）
- * - BGM の曲リスト（bgm/tracks.json）：ネットワーク優先（アップロードした曲がすぐ反映される）
+ * - BGM・環境音の一覧（bgm/tracks.json・ambient/sounds.json）：ネットワーク優先（アップロードした音がすぐ反映される）
  * - Google Fonts（フォント設定で選んだ書体）：キャッシュ優先。版をまたいで残し、オフラインでも同じ書体で表示する
  * - 同一オリジンの静的アセット（BGM の音声ファイルを含む）：キャッシュ優先 + 裏で更新（stale-while-revalidate）
  */
@@ -32,7 +32,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
-      await Promise.all(keys.filter((k) => k !== VERSION && k !== FONT_CACHE).map((k) => caches.delete(k)));
+      await Promise.all(keys.filter((k) => k !== VERSION && k !== FONT_CACHE && !k.startsWith('focus-trail-bake')).map((k) => caches.delete(k)));
       await self.clients.claim();
     })(),
   );
@@ -73,7 +73,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.pathname.endsWith('/bgm/tracks.json')) {
+  if (url.pathname.endsWith('/bgm/tracks.json') || url.pathname.endsWith('/ambient/sounds.json')) {
     event.respondWith(
       (async () => {
         const cache = await caches.open(VERSION);
