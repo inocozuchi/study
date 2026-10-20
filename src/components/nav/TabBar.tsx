@@ -11,7 +11,7 @@ export const TABS: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: 'insights', label: 'インサイト', icon: ChartColumn },
 ];
 
-/** タブバーの高さ（ホームの「集中」ボタンなどの位置合わせに使う） */
+/** タブバーの高さ（index.css の --nav-space もこの値で計算している） */
 export const TAB_BAR_H = 60;
 
 /**
@@ -22,7 +22,7 @@ export const TAB_BAR_H = 60;
 export function TabBar({ tab, onChange }: { tab: TabKey; onChange: (t: TabKey) => void }) {
   const idx = Math.max(0, TABS.findIndex((t) => t.key === tab));
   return (
-    <div className="px-6 pb-[max(calc(env(safe-area-inset-bottom)-6px),14px)]">
+    <div className="tabbar-pad px-6">
       <nav
         className="relative mx-auto flex max-w-[340px] rounded-full border border-line bg-surface p-1.5 shadow-raised"
         style={{ height: TAB_BAR_H }}

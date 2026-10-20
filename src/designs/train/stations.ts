@@ -1,5 +1,14 @@
 import type { ActiveTimer, Settings } from '@/types';
-import type { StopInfo } from './scene/TrainStage';
+/** 止まる場所の種類：出発駅（ホーム）・途中の駅（休憩）・信号場（一時停止）・終着駅（旅の終わり） */
+export type StopKind = 'origin' | 'station' | 'signal' | 'terminal';
+
+export interface StopInfo {
+  kind: StopKind;
+  name: string;
+  roman: string;
+  prev: string;
+  next: string;
+}
 
 /** 途中の駅（休憩のたびに 1 駅ずつ進む） */
 const STATIONS: [string, string][] = [

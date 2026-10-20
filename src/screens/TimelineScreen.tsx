@@ -122,7 +122,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
   const shiftWeek = (d: number) => setSelected(dateKey(addDays(selDate, d * 7)));
 
   return (
-    <div className="mx-auto max-w-xl px-5 pb-40 pt-safe">
+    <div className="mx-auto max-w-xl px-5 pb-nav pt-safe">
       {/* ヘッダー */}
       <header className="flex items-end justify-between pt-3">
         <div>

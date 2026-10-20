@@ -3,8 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <!-- 全画面：viewport-fit=cover + black-translucent でシーンを時刻の帯の下まで広げる（上に帯を作らない）。
-         文字やボタンは pt-safe（env(safe-area-inset-top)）で時刻の下へ。
-         高さが短く報告されても、すき間は html の地の色（--edge＝シーンの地面の色）で塗る（lib/theme.ts）。 -->
+         文字やボタンは pt-safe（env(safe-area-inset-top)）で時刻の下へ。時刻の帯の下に何を敷くかは画面ごと（lib/chrome.ts）。
+         ホーム画面アプリでは iOS が高さを時刻の帯の分だけ短く渡すことがある（WebKit 301108）。
+         index.css の @media (display-mode: standalone) で html を画面の高さまで伸ばして、画面いっぱいの高さを受け取る。 -->
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <title>Focus Trail</title>
     <meta name="description" content="集中は山を登る旅。休憩は焚き火のそばで。学習・集中記録アプリ Focus Trail" />

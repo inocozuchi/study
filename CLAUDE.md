@@ -3,7 +3,7 @@
 学習・集中記録 PWA。**メイン機能はポモドーロタイマー**。タイムライン・ルート・インサイトはサブ機能。
 タイマーには複数の「デザイン」＝**旅のモード**がある：
 - **登山**（集中＝山を登る旅、休憩＝焚き火、終わり＝キャンプの夜）
-- **列車**（集中＝国鉄の客車の車窓の旅、休憩＝途中の駅、一時停止＝信号場、終わり＝目標の駅）
+- **列車**（集中＝客車の車窓の旅。アニメ美術の画像を重ねた車窓。休憩＝途中の駅、一時停止＝信号場、終わり＝目標の駅）
 - **航空**は準備中（Coming Soon。搭乗券のカードだけ）
 各デザインは別物として作る（登山の複製にしない）。
 
@@ -54,6 +54,7 @@ src/
   hooks/                useNow, useWakeLock など
   lib/theme.ts          外観（ライト / ダーク / 端末）を <html data-theme> に。画面の外の帯の色（theme-color・--edge）
   lib/sceneHold.ts      全画面の画面（設定など）がシーンを覆っている間、シーンの描画を止める
+  lib/chrome.ts         画面ごとの枠（全画面のシーン・時刻の帯の下・タブバー）の表
   lib/googleCalendar.ts Google カレンダー（読み取りのみ・OAuth のブラウザ向けの流れ）
   designs/              ポモドーロタイマーのデザイン＝旅のモード（下記「タイマーのデザイン」）
     types.ts            TimerDesign の契約（Scene / Session / Result / SetupOptions / ProfileCard …）
@@ -62,7 +63,7 @@ src/
     train/              列車デザイン（下記「列車シーンの構成」。クラス名は tr-）
       TrainScene / TrainSession / TrainResult / ClassPicker（普通・特急）/ Ticket（指定席券のカード）
       stations.ts       止まる場所（出発駅・途中の駅・信号場・終着駅）と駅名
-      scene/            TrainStage（rAF・速さ・停車）/ outside（L1〜L4 の絵）/ Interior（L5 車内）/ layout
+      scene/            TrainStage（rAF・速さ・画像の層）/ views（景色の組・窓の位置）/ assets.json（素材の寸法）
     mountain/           登山デザイン（クレヨン × 布はこのフォルダの中だけ）
       index.ts          mountainDesign（mountain.css を読み込む）
       mountain.css      布の質感・クレヨンの部品（mt-paper / mt-ink-btn）・環境アニメーション
@@ -97,6 +98,7 @@ public/
   manifest.webmanifest, sw.js, icons/（icon.svg が元絵）, splash/（iOS 起動画像）
   bgm/      BGM のフォルダ（tracks.json は任意。README.md に書き方）
   ambient/  環境音のフォルダ（sounds.json は任意。README.md に書き方）
+  train/    列車の車窓の素材（WebP。仕上げは scripts/process-train-assets.py、元の画像は assets-src/train/）
   sounds/   モードの音：train.*＝列車の走行音、それ以外（river / rain / festival …）は環境音のミキサーに並ぶ
 vite.config.ts             audioManifests：ビルド時に bgm/・ambient/・sounds/ の音声ファイルを一覧（json）へ自動で足す
 scripts/generate-assets.mjs  icon.svg → アイコン PNG と iOS 起動画像（playwright-core を --no-save で入れて実行）
@@ -129,7 +131,7 @@ interface TimerDesign {
   Scene           // いつも背景にあるシーン（ホームでも集中中でも）
   Session         // 集中・休憩中の全画面 UI（HUD）
   Result          // 旅の終わりの画面
-  SetupOptions?   // 支度シートに差し込む固有の設定（登山：シーズン、列車：普通・特急と走行音）
+  SetupOptions?   // 支度シートに差し込む固有の設定（登山：シーズン、列車：普通・特急・天気・時間帯・走行音）
   ProfileCard     // 旅のパスのカード（登山者 ID カード / 指定席券）
   ProfileOptions? // 旅のパスに差し込むカスタマイズ（登山：ハイカーの服・テント）
   edgeColors?     // ホームで画面の外の帯（ステータスバー・ホームバー）を塗る色
@@ -160,15 +162,18 @@ interface TimerDesign {
   - 航空：搭乗券（PASSENGER NAME・DESTINATION＝目標・バーコード・GATE）。Coming Soon
 
 ## 列車シーンの構成（src/designs/train/scene）
-- 窓の外は 5 層の視差（下から）。動かすのは各層の transform だけ。時間帯の色は層を描き直さず、半透明を重ねる。
-  1. **L1 空と雲**：`skyAt(hour)` のグラデーション + ゆっくり流れる雲
-  2. **L2 遠くの山**：とがった連峰（高い峰に雪）と手前の丘
-  3. **L3 田園**：田んぼ・麦畑・あぜ道・集落・ビニールハウス・小川・鎮守の森と鳥居（夜は家の窓に明かり）
-  4. **L4 線路ぎわ**：電柱と架線・土手の草・バラスト（いちばん速い）、ときどき踏切。停車時は駅のホーム（駅名標）か信号場
-  5. **L5 車内**（固定）：木の窓枠・ロールカーテン・窓辺のテーブル（コーヒーと参考書）・網棚・青いモケットの座席・暖房。走行中は小さく上下に揺れ、レールの継ぎ目でガタンゴトン
-- 速さ v（普通の巡航 = 1、特急 = 1.65）：発車でゆっくり加速し、止まるときは**止まれる距離の先に駅（信号場）を置いて**、窓の真ん中にぴたりと止める。
-- 休憩＝途中の駅（休憩のたびに 1 駅進む：ひだまり → こもれび → …）、一時停止＝信号場、旅の終わり＝目標の駅（終着）、ホーム＝出発駅。
-- 走行音は TrainStage が速さを `trainSound.setMotion()` に伝える。
+- 車窓は**アニメ美術の画像**（`public/train/`。WebP）を重ねた視差スクロール。SVG で描いた景色は使わない。
+  - 最前面：車内の絵 `frame-table`（窓ガラスが透過）を画面いっぱいに置く（cover）。窓の位置は `assets.json` の割合から計算（`views.ts` の `trainLayout`）。
+  - 窓の形に切り抜いた中（下から）：遠景 `sky` / 中景 `mid`（窓の下 64%、上端は空へ溶ける）/ フェンス `fence` / 電柱 `pole`
+  - 流れる速さ（巡航 = 1）：中景 60 px/秒 : 遠景 9 px/秒（10 : 1.5）、フェンス 150 px/秒。電柱は 2〜5 秒ごとに右から現れ 0.4 秒で駆け抜ける。
+  - 動かすのは transform だけ（1 本の rAF）。各画像は横に並べた帯を「1 枚の幅で割った余り」だけ動かしてつなぎ目なく流す。
+- 景色の組（`day` / `sunset` / `night` / `rain`）は時刻（空の時間の設定）と天気（`Settings.trainWeather`）から選ぶ（`viewFor`）。
+  変わったら新しい組を 1.6 秒でふわっと重ね、古い組を外す。ほかの組の画像は起動 4 秒後に先読みする。
+- 車内の色：夕方は茜色、夜は `brightness(0.4)` + 群青、雨は `grayscale(0.15) brightness(0.85)` + 青い影。
+  色の重ねは車内の絵の形（`mask-image`）にだけ乗せる（窓の外には乗らない）。フェンスの色は時間帯ごとの画像に焼き込み済み（動く層にフィルタをかけない）。
+- 雨は窓の外に雨のすじ（CSS の繰り返し画像を流すだけ）を重ねる。
+- 速さ v（普通の巡航 = 1、特急 = 1.65）：発車でゆっくり加速し、休憩・一時停止・旅の終わりでブレーキをかけて止まる。走行音は `trainSound.setMotion()` に速さを伝える。
+- 素材の仕上げ（透過・ループ・圧縮）は `scripts/process-train-assets.py`。元の画像は `assets-src/train/`。
 
 ## 空の時間（Settings.sky）
 - `auto`＝**旅の時間（既定）**：集中を始めると朝（6.1 時）、集中の進み具合に合わせて昼・夕方（18.4 時）へ進み、
@@ -265,8 +270,15 @@ interface TimerDesign {
 ### 余白・レイアウト（iPhone のホーム画面アプリ）
 - 画面左右 16–20px、カード内 16–20px、要素間 8/12/16/24。
 - **全画面**：`viewport-fit=cover` + `black-translucent`。シーンは時刻の帯の下まで広がり、上に帯を作らない。文字・ボタンは `pt-safe` で時刻の下へ。
-  高さが短く報告されても、すき間は html の背景（`--edge`＝ホームではシーンの地面の色）で塗る。
-  時刻の文字は白なので、ライトモードのホーム以外（と設定）だけ上端に `.status-scrim`（うすい暗がり）を敷く。
+- **iOS 26 のホーム画面アプリの高さ**（WebKit 301108）：cover + black-translucent で文書が画面より低いと、iOS は高さを時刻の帯の分だけ短く渡す
+  （fixed の枠・タブバーが短い下端で止まり、下に地の色の帯が残る）。`index.css` の `@media (display-mode: standalone)` で
+  `html { min-height: min(100lvh, calc(100% + env(safe-area-inset-top))) }` として文書を画面の高さまで伸ばす。この規則は消さない。
+- **画面ごとの枠は `lib/chrome.ts` の `chromeFor`**（App.tsx はこれを読むだけ）：
+  `fullscreen`（シーンを全画面に敷くか）/ `statusArea`（時刻の帯の下：`scene` 何も敷かない・`solid` 地の色・`scrim` うすい暗がり。`.status-band`）/ `bottomNav`（タブバー）。
+  設定（全画面の重ね）は `OVERLAY_CHROME` で自分の `.status-band` を持つ。ぼかし（backdrop-filter）はどの画面にも使わない。
+- タブバーの下の余白は `--tabbar-pb`、タブバーが占める高さは `--nav-space`（index.css）。スクロールする画面の最後は `.pb-nav`、ホームの「集中」は `--nav-space` から。
+- 時刻の文字の色（`apple-mobile-web-app-status-bar-style`）は起動時に一度だけ読まれ、画面ごとには変えられない（iOS の制約）。
+- **表示の診断**：設定 → データ →「表示の診断」（または `?layout-probe`）。高さ・安全域・100dvh/lvh/svh・枠/シーン/時刻の帯/タブバーの位置を表示（`components/debug/LayoutProbe.tsx`）。
 - アプリの枠は `.app-frame`（`fixed` + `100dvh`）。全画面の重ね（シート・モーダル・設定）は `fixed inset-x-0 top-0 h-app`（`fixed inset-0` は使わない）。
 - タブバーは**画面の下に浮いたカプセル**（左右と下に余白。iPhone の角で欠けない）。**アイコンだけ**で文字は出さない（名前は aria-label）。
   集中・休憩・リザルトの間は下へ隠す（シーンが最下部まで見える）。

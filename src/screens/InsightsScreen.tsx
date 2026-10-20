@@ -29,7 +29,7 @@ export function InsightsScreen() {
   const delta = sum.today - sum.yesterday;
 
   return (
-    <div className="mx-auto max-w-xl px-5 pb-40 pt-safe">
+    <div className="mx-auto max-w-xl px-5 pb-nav pt-safe">
       <header className="pt-2">
         <p className="text-[13px] font-semibold text-fg-2">{fmtDateJa(now)}</p>
         <h1 className="text-[32px] font-bold leading-tight tracking-tight">インサイト</h1>

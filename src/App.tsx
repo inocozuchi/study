@@ -26,6 +26,8 @@ import { applyAppearance, setEdgeColors } from '@/lib/theme';
 import { useSceneHeld } from '@/lib/sceneHold';
 import { useNow } from '@/hooks/useNow';
 import { springSoft } from '@/lib/motion';
+import { chromeFor } from '@/lib/chrome';
+import { LayoutProbe } from '@/components/debug/LayoutProbe';
 
 export default function App() {
   return (
@@ -114,12 +116,15 @@ function Shell() {
   const onHome = tab === 'trail';
   const sceneHeld = useSceneHeld();
   const immersive = onHome && (journeying || !!result);
+  // 画面ごとの枠（全画面のシーン・時刻の帯の下・タブバー）は lib/chrome.ts の表で決める
+  const chrome = chromeFor({ home: onHome, immersive });
+  const sceneShown = chrome.fullscreen && !sceneHeld;
 
   return (
-    <div className="app-frame overflow-hidden bg-page">
-      {/* タイマーのシーンはホームでだけ見せる。ほかの画面では止めて隠す（地の色の上にカードを並べる） */}
-      <div className="absolute inset-0" style={{ visibility: onHome && !sceneHeld ? 'visible' : 'hidden' }}>
-        <SceneLayer ended={!!result} paused={!onHome || sceneHeld} />
+    <div className="app-frame overflow-hidden bg-page" data-probe="root">
+      {/* 背景の層：全画面の画面でだけシーンを見せる。ほかの画面では止めて隠す（地の色の上にカードを並べる） */}
+      <div className="absolute inset-0" style={{ visibility: sceneShown ? 'visible' : 'hidden' }} data-probe={sceneShown ? 'scene' : undefined}>
+        <SceneLayer ended={!!result} paused={!sceneShown} />
       </div>
 
       <AnimatePresence mode="popLayout" initial={false} custom={direction}>
@@ -137,7 +142,7 @@ function Shell() {
           exit="exit"
           transition={springSoft}
           layoutScroll
-          className={`absolute inset-0 ${onHome ? 'overflow-hidden' : 'no-scrollbar overflow-y-auto overscroll-contain'}`}
+          className={`absolute inset-0 ${chrome.fullscreen ? 'overflow-hidden' : 'no-scrollbar overflow-y-auto overscroll-contain'}`}
         >
           {tab === 'trail' && <HomeScreen result={result} setResult={setResult} />}
           <Suspense fallback={null}>
@@ -150,8 +155,9 @@ function Shell() {
 
       {/* タブバー：画面の最下部に固定。集中中は画面の外へ隠し、シーンを一番下まで見せる */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-50 transition-[transform,opacity] duration-300 ease-out ${immersive ? 'pointer-events-none translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}
-        aria-hidden={immersive}
+        className={`fixed inset-x-0 bottom-0 z-50 transition-[transform,opacity] duration-300 ease-out ${chrome.bottomNav ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-full opacity-0'}`}
+        aria-hidden={!chrome.bottomNav}
+        data-probe="nav"
       >
         <div className="pointer-events-none absolute inset-x-0 bottom-full flex justify-center pb-2">
           <div className="pointer-events-auto">
@@ -161,10 +167,11 @@ function Shell() {
         <TabBar tab={tab} onChange={setTab} />
       </div>
 
-      {/* 時刻の帯（白い文字）が明るい画面で読めるよう、ホーム以外のライトモードだけ上端をうっすら暗くする */}
-      <div className={`status-scrim pointer-events-none fixed inset-x-0 top-0 z-[80] ${!onHome || sceneHeld ? '' : 'hidden'}`} aria-hidden />
+      {/* 時刻の帯の下に敷くもの（全画面のシーンでは何も敷かない） */}
+      <div className="status-band z-[80]" data-area={chrome.statusArea} data-probe="status" aria-hidden />
 
       <SummitModal />
+      <LayoutProbe />
     </div>
   );
 }

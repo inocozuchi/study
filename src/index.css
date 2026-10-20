@@ -70,6 +70,21 @@
   }
   /* 文書そのものはスクロールさせない（スクロールは各画面の中だけ） */
   html, body { overflow: hidden; }
+  /*
+   * ホーム画面アプリ（iOS 26 で確認されている WebKit の不具合 301108）：
+   * viewport-fit=cover + black-translucent のとき、文書が画面より低いと「見えている高さ」を
+   * 時刻の帯の分だけ短く渡す。fixed の枠もタブバーもその短い下端で止まり、下に地の色の帯が残る。
+   * 文書（html）を画面の高さまで伸ばすと、WebKit は画面いっぱいの高さを渡す（100dvh・fixed の下端が画面の下端になる）。
+   * min() で上限を付けるのは、時刻の帯が透けない設定（inset-top = 0）のときに伸ばしすぎてずれないため。
+   */
+  @media (display-mode: standalone) {
+    html { min-height: min(100lvh, calc(100% + env(safe-area-inset-top))); }
+  }
+  :root {
+    /* タブバー（浮いたカプセル）の下の余白と、タブバーが占める高さ。ホームのボタン位置・各画面の下の余白はこれから決める */
+    --tabbar-pb: max(calc(env(safe-area-inset-bottom) - 6px), 14px);
+    --nav-space: calc(60px + var(--tabbar-pb));
+  }
   body {
     @apply font-sans antialiased;
     -webkit-font-smoothing: antialiased;
@@ -153,12 +168,23 @@
 }
 
 @layer utilities {
-  /* アプリの枠。見えている高さ（100dvh）にそろえ、文書そのものはスクロールさせない */
+  /* アプリの枠。画面の上端から下端まで（高さは上の html の規則で画面いっぱいになる）。文書そのものはスクロールさせない */
   .app-frame { position: fixed; left: 0; right: 0; top: 0; height: 100dvh; overflow: hidden; }
-  /* 時刻の帯の下：ライトモードの明るい画面でだけ、白い時刻が読める濃さを敷く */
-  .status-scrim { height: env(safe-area-inset-top); display: none; }
-  [data-theme='light'] .status-scrim:not(.hidden) { display: block; background: linear-gradient(180deg, rgba(20, 24, 34, 0.62), rgba(20, 24, 34, 0.5) 70%, rgba(20, 24, 34, 0)); }
+  /*
+   * 時刻の帯の下（高さ＝env(safe-area-inset-top)）。画面ごとに lib/chrome.ts の statusArea で選ぶ：
+   *  - scene：何も敷かない（全画面のシーンが透けて見える）
+   *  - solid：画面の地の色で塗る（スクロールした中身が時刻の下に入り込まない。ぼかしは使わない）
+   *  - scrim：うすい暗がり（白い時刻を明るい面の上で読ませたいとき）
+   */
+  .status-band { position: fixed; left: 0; right: 0; top: 0; height: env(safe-area-inset-top); pointer-events: none; }
+  .status-band[data-area='scene'] { display: none; }
+  .status-band[data-area='solid'] { background: rgb(var(--c-page)); }
+  .status-band[data-area='scrim'] { background: linear-gradient(180deg, rgba(20, 24, 34, 0.62), rgba(20, 24, 34, 0.5) 70%, rgba(20, 24, 34, 0)); }
   .h-app { height: 100dvh; }
+  /* タブバーの下の余白（タブバー自身が使う） */
+  .tabbar-pad { padding-bottom: var(--tabbar-pb); }
+  /* スクロールする画面の最後の余白：浮いたタブバーと、その上の小さなプレーヤー（48px + 間 24px）に隠れないだけ空ける */
+  .pb-nav { padding-bottom: calc(var(--nav-space) + 72px); }
   .pt-safe { padding-top: max(env(safe-area-inset-top), 16px); }
   .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 12px); }
   .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -187,3 +213,8 @@ input[type='range'].ios-range::-moz-range-thumb { width: 0; height: 0; border: 0
   .hit { position: relative; }
   .hit::after { content: ''; position: absolute; inset: -6px; }
 }
+
+/* 表示の診断（設定 → 表示の診断）：枠・シーン・タブバー・時刻の帯の位置を点線で見せる */
+html.layout-probe [data-probe] { outline: 2px dashed rgba(255, 0, 170, 0.9); outline-offset: -2px; }
+html.layout-probe [data-probe='nav'] { outline-color: rgba(0, 200, 255, 0.95); }
+html.layout-probe [data-probe='status'] { outline-color: rgba(255, 200, 0, 0.95); }

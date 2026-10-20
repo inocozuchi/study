@@ -1,16 +1,20 @@
-# 列車モードの背景素材（public/train/）
+# 列車モードの車窓の素材（public/train/）
 
-画像を置くと、列車モードの車窓の絵として使われる予定です（いまは置き場だけで、アプリはまだ読み込みません）。
-ファイル名は下の表のとおりにしてください（PNG）。
+アプリが読み込むのはこのフォルダの **WebP** です。元の画像は `assets-src/train/` にあり、
+`python3 scripts/process-train-assets.py`（Pillow と numpy が必要）で、ここへ仕上げて書き出します。
 
-| 場所 | ファイル | 内容 | 比率 |
-|---|---|---|---|
-| `public/train/` | `frame-table.png` | 最前面の固定の窓枠・テーブル | 9:16 |
-| `public/train/` | `fence.png` | 手前の線路沿いのフェンス | 16:9 |
-| `day/` 昼・晴れ | `sky.png` / `mid.png` / `pole.png` | 遠景 / 中景 / 近景 | — |
-| `sunset/` 夕方 | 同上 | 同上 | — |
-| `night/` 夜 | 同上 | 同上 | — |
-| `rain/` 雨 | 同上 | 同上 | — |
+| ファイル | 内容 | 仕上げ |
+|---|---|---|
+| `frame-table.webp` | 最前面の車内（窓枠・テーブル。9:16） | 窓ガラスの白を透過に |
+| `{day,sunset,night,rain}/sky.webp` | 遠景（空・雲） | 黒い帯を切り、左右の端を重ねてループに |
+| `{day,sunset,night,rain}/mid.webp` | 中景（田園・集落） | 黒い帯を切り、左右反転をつないでループに。上端を空へ溶かす |
+| `{day,sunset,night,rain}/fence.webp` | 近景（線路沿いのフェンス・ガードレール） | 白を透過に。左右反転でループに。時間帯・天気の色に合わせる |
+| `{day,sunset,night,rain}/pole.webp` | 近景（電柱） | 白を透過に。電線の端を薄く。夕方は昼の電柱を夕日の色に |
+| `layout.json` | 窓の位置・画像の大きさ | アプリ用に `src/designs/train/scene/assets.json` にも同じものを書く |
 
-- 各フォルダの `.gitkeep` は空のフォルダを Git に残すためのものです。画像を置いたあとは消して構いません。
-- 横にスクロールさせる層（`sky` `mid` `pole` `fence`）は、左右の端がつながる（シームレスな）絵だと継ぎ目が出ません。
+## 素材を差し替えるとき
+
+1. `assets-src/train/` の同じ名前の JPEG / PNG を置き換える（白い背景のままで大丈夫）
+   - `frame-table.jpeg` / `fence.jpeg`
+   - `day/` `sunset/` `night/` `rain/` の `sky.jpeg` `mid.jpeg` `pole.jpeg`（夕方の電柱は昼のものを使う）
+2. `python3 scripts/process-train-assets.py` を実行し、できた `public/train/` と `assets.json` をコミット

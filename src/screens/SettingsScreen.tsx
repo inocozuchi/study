@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bell, CalendarDays, ChevronLeft, ChevronRight, Clock, Coffee, Database, Leaf, Mountain, Music, PlusSquare, Repeat, Smartphone, Sun, Timer, Trash2,
   Bug, CloudRain, Compass, Disc3, Flame, Flower2, Snowflake, Sprout, Sunrise, Sunset, TrainFrontTunnel, Trees, VolumeX,
-  Contrast, IdCard, Moon, TrainFront, Type, User, Volume2, Waves, Wind,
+  Contrast, IdCard, Moon, Ruler, TrainFront, Type, User, Volume2, Waves, Wind,
 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { Toggle } from '@/components/ui/Toggle';
@@ -26,6 +26,8 @@ import { ModeSheet } from '@/components/profile/ModeSheet';
 import { DayHoursSheet } from '@/components/timeline/DayHoursSheet';
 import { fmtClock } from '@/lib/time';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
+import { setLayoutProbe, useLayoutProbe } from '@/components/debug/LayoutProbe';
+import { OVERLAY_CHROME } from '@/lib/chrome';
 import type { AmbientChannel, AmbientMix, Appearance, FontId, Season, Settings, SkyOverride, TrainClass } from '@/types';
 
 /**
@@ -193,6 +195,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
     return () => unloadFontPreviews();
   }, [picker]);
   const skyLabel = SKY_LABEL[settings.sky];
+  const probe = useLayoutProbe();
 
   return createPortal(
     <>
@@ -200,7 +203,9 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
         {open && (
           <motion.div
             className="fixed inset-x-0 top-0 h-app z-40 overflow-y-auto bg-page text-fg" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springSheet}>
-            <div className="mx-auto max-w-xl px-4 pb-16 pt-safe">
+            {/* 時刻の帯の下は地の色で塗る（スクロールした項目が時刻に重ならない）。この画面と一緒に動く */}
+            <div className="status-band z-10" data-area={OVERLAY_CHROME.statusArea} aria-hidden />
+            <div className="mx-auto max-w-xl px-4 pb-[calc(env(safe-area-inset-bottom)+40px)] pt-safe">
               {/* 見出しの行：「戻る」はいつも左上の同じ位置 */}
               <div className="mt-2 flex items-center gap-1.5">
                 <button onClick={onClose} className="-ml-2 flex min-h-[40px] min-w-[76px] items-center gap-px rounded-card py-2 pl-1.5 pr-2.5 text-[15px] font-semibold text-accent-ink active:bg-accent-soft">
@@ -267,6 +272,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                 <Row icon={<IdCard size={21} />} title="旅のパス" value={`${settings.userName} · ${settings.goal.trim() || '目標を決める'}`} onClick={() => setProfileOpen(true)} />
                 <Row icon={<SeasonIcon season={settings.season} size={21} />} title="登山：シーズン" value={SEASONS[settings.season].label} onClick={() => setPicker('season')} />
                 <Row icon={<TrainFront size={21} />} title="列車：種別" value={settings.trainClass === 'express' ? '特急' : '普通'} onClick={() => setPicker('trainClass')} />
+                <Row icon={<CloudRain size={19} />} title="列車：雨の景色" right={<Toggle checked={settings.trainWeather === 'rain'} onChange={(v) => updateSettings({ trainWeather: v ? 'rain' : 'clear' })} label="雨の景色" />} />
                 <Row icon={<Volume2 size={19} />} title="列車：走行音" right={<Toggle checked={settings.trainSound} onChange={set('trainSound')} label="走行音" />} />
               </Group>
 
@@ -277,6 +283,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
               <Group title="データ" footer="記録はこの端末のブラウザ内に保存されます。ホーム画面に追加するとアプリとして全画面で使えます。">
                 <Row icon={<Trash2 size={21} />} title="すべての記録を消去" onClick={() => setConfirm(true)} danger />
                 <Row icon={<Database size={21} />} title="Focus Trail" value="v2.1" />
+                <Row icon={<Ruler size={19} />} title="表示の診断" detail="画面の高さ・安全域・タブバーの位置を表示" right={<Toggle checked={probe} onChange={setLayoutProbe} label="表示の診断" />} />
               </Group>
             </div>
           </motion.div>

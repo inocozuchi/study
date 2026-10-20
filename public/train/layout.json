@@ -1,0 +1,78 @@
+{
+  "frame": {
+    "width": 1290,
+    "height": 2311,
+    "window": {
+      "x": 0.18098958333333334,
+      "y": 0.19113372093023256,
+      "w": 0.6380208333333334,
+      "h": 0.38117732558139533
+    },
+    "edge": {
+      "top": "#3A3430",
+      "bottom": "#2C2422"
+    }
+  },
+  "fence": {
+    "width": 2087,
+    "height": 320
+  },
+  "sets": {
+    "day": {
+      "sky": {
+        "width": 1129,
+        "height": 900
+      },
+      "mid": {
+        "width": 2824,
+        "height": 760
+      },
+      "pole": {
+        "width": 805,
+        "height": 1400
+      }
+    },
+    "sunset": {
+      "sky": {
+        "width": 1129,
+        "height": 900
+      },
+      "mid": {
+        "width": 2723,
+        "height": 760
+      },
+      "pole": {
+        "width": 805,
+        "height": 1400
+      }
+    },
+    "night": {
+      "sky": {
+        "width": 1159,
+        "height": 900
+      },
+      "mid": {
+        "width": 2824,
+        "height": 760
+      },
+      "pole": {
+        "width": 815,
+        "height": 1400
+      }
+    },
+    "rain": {
+      "sky": {
+        "width": 1129,
+        "height": 900
+      },
+      "mid": {
+        "width": 2723,
+        "height": 760
+      },
+      "pole": {
+        "width": 805,
+        "height": 1400
+      }
+    }
+  }
+}
