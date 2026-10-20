@@ -29,7 +29,7 @@ export function RoutesScreen() {
   const summited = activeSubjects.filter((s) => s.summitedAt).sort((a, b) => (b.summitedAt ?? 0) - (a.summitedAt ?? 0));
 
   return (
-    <div className="mx-auto max-w-xl px-5 pb-40 pt-safe">
+    <div className="mx-auto max-w-xl px-5 pb-nav pt-safe">
       <header className="flex items-end justify-between pt-2">
         <div>
           <p className="text-[13px] font-semibold text-fg-2">{activeSubjects.length} ルート · 登頂 {summited.length}</p>

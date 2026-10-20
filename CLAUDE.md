@@ -54,6 +54,7 @@ src/
   hooks/                useNow, useWakeLock など
   lib/theme.ts          外観（ライト / ダーク / 端末）を <html data-theme> に。画面の外の帯の色（theme-color・--edge）
   lib/sceneHold.ts      全画面の画面（設定など）がシーンを覆っている間、シーンの描画を止める
+  lib/chrome.ts         画面ごとの枠（全画面のシーン・時刻の帯の下・タブバー）の表
   lib/googleCalendar.ts Google カレンダー（読み取りのみ・OAuth のブラウザ向けの流れ）
   designs/              ポモドーロタイマーのデザイン＝旅のモード（下記「タイマーのデザイン」）
     types.ts            TimerDesign の契約（Scene / Session / Result / SetupOptions / ProfileCard …）
@@ -269,8 +270,15 @@ interface TimerDesign {
 ### 余白・レイアウト（iPhone のホーム画面アプリ）
 - 画面左右 16–20px、カード内 16–20px、要素間 8/12/16/24。
 - **全画面**：`viewport-fit=cover` + `black-translucent`。シーンは時刻の帯の下まで広がり、上に帯を作らない。文字・ボタンは `pt-safe` で時刻の下へ。
-  高さが短く報告されても、すき間は html の背景（`--edge`＝ホームではシーンの地面の色）で塗る。
-  時刻の文字は白なので、ライトモードのホーム以外（と設定）だけ上端に `.status-scrim`（うすい暗がり）を敷く。
+- **iOS 26 のホーム画面アプリの高さ**（WebKit 301108）：cover + black-translucent で文書が画面より低いと、iOS は高さを時刻の帯の分だけ短く渡す
+  （fixed の枠・タブバーが短い下端で止まり、下に地の色の帯が残る）。`index.css` の `@media (display-mode: standalone)` で
+  `html { min-height: min(100lvh, calc(100% + env(safe-area-inset-top))) }` として文書を画面の高さまで伸ばす。この規則は消さない。
+- **画面ごとの枠は `lib/chrome.ts` の `chromeFor`**（App.tsx はこれを読むだけ）：
+  `fullscreen`（シーンを全画面に敷くか）/ `statusArea`（時刻の帯の下：`scene` 何も敷かない・`solid` 地の色・`scrim` うすい暗がり。`.status-band`）/ `bottomNav`（タブバー）。
+  設定（全画面の重ね）は `OVERLAY_CHROME` で自分の `.status-band` を持つ。ぼかし（backdrop-filter）はどの画面にも使わない。
+- タブバーの下の余白は `--tabbar-pb`、タブバーが占める高さは `--nav-space`（index.css）。スクロールする画面の最後は `.pb-nav`、ホームの「集中」は `--nav-space` から。
+- 時刻の文字の色（`apple-mobile-web-app-status-bar-style`）は起動時に一度だけ読まれ、画面ごとには変えられない（iOS の制約）。
+- **表示の診断**：設定 → データ →「表示の診断」（または `?layout-probe`）。高さ・安全域・100dvh/lvh/svh・枠/シーン/時刻の帯/タブバーの位置を表示（`components/debug/LayoutProbe.tsx`）。
 - アプリの枠は `.app-frame`（`fixed` + `100dvh`）。全画面の重ね（シート・モーダル・設定）は `fixed inset-x-0 top-0 h-app`（`fixed inset-0` は使わない）。
 - タブバーは**画面の下に浮いたカプセル**（左右と下に余白。iPhone の角で欠けない）。**アイコンだけ**で文字は出さない（名前は aria-label）。
   集中・休憩・リザルトの間は下へ隠す（シーンが最下部まで見える）。

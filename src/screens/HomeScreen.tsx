@@ -154,7 +154,7 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: {
       </motion.nav>
 
       {/* 下部：集中ボタン */}
-      <div className="absolute inset-x-0 bottom-[calc(max(env(safe-area-inset-bottom)-6px,14px)+84px)] flex flex-col items-center px-6">
+      <div className="absolute inset-x-0 bottom-[calc(var(--nav-space)+24px)] flex flex-col items-center px-6">
         <FocusButton onClick={onFocus} />
       </div>
     </div>
