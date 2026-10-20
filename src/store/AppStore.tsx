@@ -12,6 +12,8 @@ export interface SummitEvent {
 
 interface AppContextValue extends AppData {
   ready: boolean;
+  /** サンプルに戻す・全消去のたびに増える（実行中タイマーを作り直す合図） */
+  epoch: number;
   subjectById: (id: string | null | undefined) => Subject | undefined;
   minutesBySubject: Record<string, number>;
   activeSubjects: Subject[];
@@ -46,6 +48,11 @@ interface AppContextValue extends AppData {
   dismissSummit: () => void;
 }
 
+function persistSettings(settings: Settings) {
+  repository.saveSettings(settings);
+  return settings;
+}
+
 const AppContext = createContext<AppContextValue | null>(null);
 
 const EMPTY: AppData = {
@@ -61,6 +68,7 @@ const EMPTY: AppData = {
 export function AppProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData>(EMPTY);
   const [ready, setReady] = useState(false);
+  const [epoch, setEpoch] = useState(0);
   const [summit, setSummit] = useState<SummitEvent | null>(null);
   const dataRef = useRef(data);
   dataRef.current = data;
@@ -103,7 +111,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       subjects: d.subjects.filter((s) => s.id !== id),
       sessions: d.sessions.filter((s) => s.subjectId !== id),
       plans: d.plans.filter((p) => p.subjectId !== id),
-      settings: d.settings.selectedSubjectId === id ? { ...d.settings, selectedSubjectId: null } : d.settings,
+      settings: d.settings.selectedSubjectId === id ? persistSettings({ ...d.settings, selectedSubjectId: null }) : d.settings,
     }));
     repository.deleteSubject(id);
   }, []);
@@ -225,14 +233,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     repository.deleteHabit(id);
   }, []);
 
-  const resetToSample = useCallback(async () => setData(await repository.resetToSample()), []);
-  const clearAll = useCallback(async () => setData(await repository.clearAll()), []);
+  // データを入れ替えたら epoch を進め、実行中のタイマー（メモリ上の状態）も作り直す
+  const resetToSample = useCallback(async () => {
+    setData(await repository.resetToSample());
+    setEpoch((e) => e + 1);
+  }, []);
+  const clearAll = useCallback(async () => {
+    setData(await repository.clearAll());
+    setEpoch((e) => e + 1);
+  }, []);
 
   const activeSubjects = useMemo(() => data.subjects.filter((s) => !s.archived), [data.subjects]);
 
   const value: AppContextValue = {
     ...data,
     ready,
+    epoch,
     subjectById,
     minutesBySubject,
     activeSubjects,

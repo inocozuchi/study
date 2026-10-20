@@ -88,7 +88,35 @@ export function skyAt(hour: number): SkyPalette {
   };
 }
 
-export function hourFor(sky: SkyOverride, now = new Date()): number {
+/** 旅の時間：集中を始めると朝焼け、進むほど昼・夕方へ。休憩に入ると夜になる */
+export const JOURNEY_DAWN = 6.1;
+export const JOURNEY_DUSK = 18.4;
+export const JOURNEY_NIGHT = 21.6;
+
+export interface JourneyClock {
+  phase: 'idle' | 'focus' | 'break';
+  elapsedMs: number;
+  /** 集中の長さ。フリー（時間なし）は null */
+  targetMs: number | null;
+  /** フリーのときに朝から夕方までにかける時間 */
+  freeSpanMs: number;
+}
+
+export function journeyHour(c: JourneyClock): number | null {
+  if (c.phase === 'focus') {
+    const span = c.targetMs ?? c.freeSpanMs;
+    const p = Math.min(1, Math.max(0, c.elapsedMs / span));
+    return JOURNEY_DAWN + p * (JOURNEY_DUSK - JOURNEY_DAWN);
+  }
+  if (c.phase === 'break') {
+    // 休憩の最初の 40 秒で夕方から夜へ暮れていく
+    const p = Math.min(1, c.elapsedMs / 40_000);
+    return JOURNEY_DUSK + p * (JOURNEY_NIGHT - JOURNEY_DUSK);
+  }
+  return null;
+}
+
+export function hourFor(sky: SkyOverride, now = new Date(), journey?: JourneyClock): number {
   switch (sky) {
     case 'dawn':
       return 6.1;
@@ -98,6 +126,12 @@ export function hourFor(sky: SkyOverride, now = new Date()): number {
       return 18.1;
     case 'night':
       return 22.5;
+    case 'auto': {
+      const h = journey ? journeyHour(journey) : null;
+      // 0.05 時間（実時間で数秒）刻みにして、シーンの再計算を抑える
+      if (h != null) return Math.round(h * 20) / 20;
+      return now.getHours() + now.getMinutes() / 60;
+    }
     default:
       return now.getHours() + now.getMinutes() / 60;
   }

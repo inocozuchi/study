@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useIsPresent } from 'framer-motion';
 import { Check, Flame, Music, Pointer } from 'lucide-react';
 import { useTimer } from '@/store/TimerStore';
 import { useApp } from '@/store/AppStore';
@@ -27,6 +27,11 @@ export function MountainSession({ onMusic, onEnd, companions }: DesignSessionPro
     return () => clearTimeout(id);
   }, [hint]);
 
+  // 長押しの途中で画面が切り替わっても onEnd を呼ばない
+  useEffect(() => () => {
+    if (holdTimer.current) clearTimeout(holdTimer.current);
+  }, []);
+
   const cancel = () => {
     if (holdTimer.current) clearTimeout(holdTimer.current);
     holdTimer.current = null;
@@ -50,8 +55,13 @@ export function MountainSession({ onMusic, onEnd, companions }: DesignSessionPro
     cancel();
   };
 
-  const rest = timer.phase === 'break';
-  const waiting = timer.phase === 'idle';
+  // 旅を終えて HUD が消えていく間は、表示を終了直前のまま固定する（中身が入れ替わると退場が止まる）
+  const present = useIsPresent();
+  const frozen = useRef({ phase: timer.phase, hint });
+  if (present) frozen.current = { phase: timer.phase, hint };
+  const rest = frozen.current.phase === 'break';
+  const waiting = frozen.current.phase === 'idle';
+  const showHint = frozen.current.hint;
   const shown = waiting ? 0 : t.remainingMs ?? t.elapsedMs;
   const label = rest ? (timer.longBreak ? '長い休憩' : '休息') : waiting ? '小休止' : timer.running ? subject?.name ?? '集中' : '一時停止中';
 
@@ -112,7 +122,7 @@ export function MountainSession({ onMusic, onEnd, companions }: DesignSessionPro
               </motion.button>
             </motion.div>
           ) : (
-            hint && (
+            showHint && (
               <motion.div key="hint" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 30, opacity: 0 }} transition={springBouncy} className="mx-auto flex max-w-md items-center gap-3 rounded-full bg-crayon-blue/85 p-2 pr-5 text-paper shadow-float backdrop-blur-md" style={{ backgroundImage: 'var(--noise-light), var(--twill)' }}>
                 <span className="grid h-11 w-11 place-items-center rounded-full bg-paper text-crayon-blue">
                   <Pointer size={20} />

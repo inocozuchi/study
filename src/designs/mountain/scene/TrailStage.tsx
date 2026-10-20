@@ -69,6 +69,7 @@ export function TrailStage({ hour, stage, mood, season, companions = 0, paused =
   const companionRefs = useMemo(() => [comp0, comp1], []);
   const companionBoxRefs = useRef<(HTMLDivElement | null)[]>([]);
 
+  const kickRef = useRef<(() => void) | null>(null);
   const live = useRef({ mood, look, night: sky.night, reduced, comp, paused });
   live.current = { mood, look, night: sky.night, reduced, comp, paused };
 
@@ -96,20 +97,26 @@ export function TrailStage({ hour, stage, mood, season, companions = 0, paused =
     let raf = 0;
 
     const frame = (now: number) => {
+      // 他のタブで覆われている間はループごと止める（再開は kick から）
+      if (live.current.paused) {
+        raf = 0;
+        return;
+      }
       raf = requestAnimationFrame(frame);
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      if (live.current.paused) return;
       const { mood, night, reduced, look, comp } = live.current;
+      // 視差を減らす設定では、歩く速さと地面の流れを一緒に落とす（足は滑らない）
+      const rate = reduced ? 0.45 : 1;
       s.t += dt;
       s.w = lerp(s.w, mood === 'walk' ? 1 : 0, Math.min(1, dt * 2.6));
       s.camp = lerp(s.camp, mood === 'rest' || mood === 'sleep' ? 1 : 0, Math.min(1, dt * 1.5));
       s.sleep = lerp(s.sleep, mood === 'sleep' ? 1 : 0, Math.min(1, dt * 1.2));
       s.alert = lerp(s.alert, mood === 'alert' ? 1 : 0, Math.min(1, dt * 7));
-      s.phase = (s.phase + dt / CYCLE) % 1;
-      s.dogPhase = (s.dogPhase + dt / 0.46) % 1;
+      s.phase = (s.phase + (dt * rate) / CYCLE) % 1;
+      s.dogPhase = (s.dogPhase + (dt * rate) / 0.46) % 1;
       // 地面は足の接地速度と同じ速さで流れる → 足が滑らない
-      const speed = GROUND_SPEED * s.w * (1 - s.camp) * L.k;
+      const speed = GROUND_SPEED * s.w * (1 - s.camp) * L.k * rate;
       s.scroll += speed * dt;
 
       // ── トラック（合成レイヤーの translate だけ） ──
@@ -172,8 +179,20 @@ export function TrailStage({ hour, stage, mood, season, companions = 0, paused =
       if (ctx) drawParticles(ctx, dpr, L, particles, dt, s, { night, look, reduced, fire: fireK, smoke: s.sleep });
     };
     raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+    kickRef.current = () => {
+      if (raf) return;
+      last = performance.now();
+      raf = requestAnimationFrame(frame);
+    };
+    return () => {
+      cancelAnimationFrame(raf);
+      kickRef.current = null;
+    };
   }, [L]);
+
+  useEffect(() => {
+    if (!paused) kickRef.current?.();
+  }, [paused]);
 
   return (
     <div ref={rootRef} className={`ft-stage absolute inset-0 overflow-hidden ${reduced || paused ? 'ft-reduced' : ''}`}>

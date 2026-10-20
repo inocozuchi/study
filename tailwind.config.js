@@ -22,13 +22,10 @@ export default {
         crayon: { blue: '#3E86C9', green: '#3E8C68', red: '#D9573B', yellow: '#F2B33D', pink: '#E68FA8', brown: '#4A3A34' },
       },
       fontFamily: {
-        sans: [
-          '-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"SF Pro Display"',
-          '"Hiragino Sans"', '"Hiragino Kaku Gothic ProN"', '"Noto Sans JP"', '"Segoe UI"',
-          'system-ui', 'sans-serif',
-        ],
-        maru: ['"Zen Maru Gothic"', '"Hiragino Maru Gothic ProN"', '"SF Pro Rounded"', 'sans-serif'],
-        digits: ['Fredoka', '"SF Pro Rounded"', 'ui-rounded', 'sans-serif'],
+        sans: ['var(--font-text)'],
+        // 登山デザインの文字もフォント設定に従う
+        maru: ['var(--font-text)'],
+        digits: ['var(--font-digits)'],
         rounded: ['"SF Pro Rounded"', 'ui-rounded', '-apple-system', '"Hiragino Maru Gothic ProN"', 'sans-serif'],
       },
       boxShadow: {

@@ -8,18 +8,19 @@ import { useEffect, useRef, useState } from 'react';
  * アニメーションする要素をこのフィルタの内側に置くと毎フレーム再計算になるため、
  * 動く絵は小さな箱（キャラクター）だけにかける。
  */
-export function CrayonDefs() {
+export function CrayonDefs({ paused = false }: { paused?: boolean }) {
   const boilRef = useRef<SVGFETurbulenceElement>(null);
   useEffect(() => {
     let seed = 1;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) return;
+    // 見えていない間は線の震えを止める（毎回フィルタの再計算になるため）
+    if (reduced || paused) return;
     const id = setInterval(() => {
       seed = (seed % 4) + 1;
       boilRef.current?.setAttribute('seed', String(seed));
     }, 125);
     return () => clearInterval(id);
-  }, []);
+  }, [paused]);
 
   return (
     <svg width="0" height="0" className="pointer-events-none absolute" aria-hidden>

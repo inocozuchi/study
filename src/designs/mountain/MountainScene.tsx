@@ -16,7 +16,7 @@ export function MountainScene({ hour, ended, companions, paused }: DesignScenePr
   const mood: TravelerMood = ended ? 'sleep' : stray ? 'alert' : timer.phase === 'break' ? 'rest' : timer.phase === 'focus' && timer.running ? 'walk' : 'stand';
   return (
     <>
-      <CrayonDefs />
+      <CrayonDefs paused={paused} />
       <TrailStage hour={ended ? 21.6 : hour} stage={stage} mood={mood} season={settings.season} companions={companions} paused={paused} />
     </>
   );

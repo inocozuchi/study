@@ -82,7 +82,12 @@ function RouteCard({ subject, minutes, delay, onClick }: { subject: Subject; min
   const stage = subject.summitedAt ? STAGES[4] : stageFor(prog);
   const remain = Math.max(0, subject.targetMinutes - minutes);
   return (
-    <GlassCard delay={delay} className="overflow-hidden" whileTap={{ scale: 0.985 }} onClick={onClick} role="button" tabIndex={0}>
+    <GlassCard delay={delay} className="overflow-hidden" whileTap={{ scale: 0.985 }} onClick={onClick} role="button" tabIndex={0} onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}>
       <div className="relative h-36">
         <MountainArt stage={stage.index} color={subject.color} progress={prog} summited={!!subject.summitedAt} className="absolute inset-0 h-full w-full" />
         <div className="absolute inset-0 bg-gradient-to-t from-night-950/80 via-night-950/10 to-transparent" />
@@ -159,7 +164,7 @@ function RouteDetailSheet({ subject, onClose, onEdit }: { subject: Subject | nul
                   <div className="min-w-0 pt-0.5">
                     <p className={`text-[15px] font-semibold ${reached ? '' : 'text-white/45'}`}>
                       {st.name}
-                      {current && <span className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: alpha(live.color, 0.2), color: live.color }}>現在地</span>}
+                      {current && <span className="ml-2 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: alpha(live.color, 0.2), color: live.color }}>現在地</span>}
                     </p>
                     <p className="mt-0.5 text-[12px] text-white/45">{st.description}</p>
                     <p className="tabular mt-0.5 text-[11px] text-white/35">{i === 4 ? `登頂 ${fmtDuration(live.targetMinutes)}` : `${fmtDuration(needMin)} から`} · {fmtMeters(needMin * METERS_PER_MINUTE)}</p>

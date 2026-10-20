@@ -139,7 +139,7 @@ function BarsCard({ bars, subjects, period }: { bars: ReturnType<typeof dailyBar
         {[0, 0.5, 1].map((f) => (
           <div key={f} className="pointer-events-none absolute inset-x-0 flex items-center gap-2" style={{ top: H - H * f }}>
             <div className="h-px flex-1 bg-white/[0.07]" />
-            <span className="tabular w-7 text-right text-[10px] text-white/35">{Math.round((top * f) / 60)}h</span>
+            <span className="tabular w-7 text-right text-[11px] text-white/50">{Math.round((top * f) / 60)}h</span>
           </div>
         ))}
         <div className="absolute bottom-[22px] left-0 right-9 flex items-end" style={{ height: H, gap: period === 'week' ? 10 : 3 }}>
@@ -166,7 +166,7 @@ function BarsCard({ bars, subjects, period }: { bars: ReturnType<typeof dailyBar
                   ))}
                 </motion.div>
                 {(period === 'week' || i % 5 === 4 || isToday) && (
-                  <span className={`absolute -bottom-[20px] left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold ${isToday ? 'text-white' : 'text-white/40'}`}>
+                  <span className={`absolute -bottom-[20px] left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold ${isToday ? 'text-white' : 'text-white/55'}`}>
                     {period === 'week' ? weekdayJa(b.date) : b.date.getDate()}
                   </span>
                 )}
@@ -310,7 +310,7 @@ function HeatmapCard({ grid }: { grid: number[][] }) {
       <div className="flex gap-2" onMouseLeave={() => setCell(null)}>
         <div className="grid grid-rows-7 gap-[3px] pt-px">
           {WEEK.map((w) => (
-            <span key={w} className="flex h-full items-center text-[10px] font-semibold text-white/40">{w}</span>
+            <span key={w} className="flex h-full items-center text-[11px] font-semibold text-white/55">{w}</span>
           ))}
         </div>
         <div className="flex-1">
@@ -333,14 +333,17 @@ function HeatmapCard({ grid }: { grid: number[][] }) {
               }),
             )}
           </div>
-          <div className="mt-1.5 flex justify-between text-[10px] text-white/35">
+          {/* 時刻ラベルは各列の中央に置く */}
+          <div className="relative mt-1.5 h-3.5 text-[11px] text-white/50">
             {[6, 9, 12, 15, 18, 21].map((h) => (
-              <span key={h} className="tabular">{h}</span>
+              <span key={h} className="tabular absolute -translate-x-1/2" style={{ left: `${((HOURS.indexOf(h) + 0.5) / HOURS.length) * 100}%` }}>
+                {h}
+              </span>
             ))}
           </div>
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-end gap-1.5 text-[10px] text-white/40">
+      <div className="mt-3 flex items-center justify-end gap-1.5 text-[11px] text-white/50">
         少 {[0.18, 0.4, 0.6, 0.8, 1].map((a) => <span key={a} className="h-2.5 w-2.5 rounded-[3px]" style={{ background: `rgba(57,135,229,${a})` }} />)} 多
       </div>
     </GlassCard>

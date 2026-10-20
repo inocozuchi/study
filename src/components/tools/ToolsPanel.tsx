@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, ChevronLeft, ChevronRight, ListTodo, NotebookPen, Plus, Sprout, Trash2, X } from 'lucide-react';
+import { useNow } from '@/hooks/useNow';
 import { useApp } from '@/store/AppStore';
 import { CheckCircle } from '@/components/ui/CheckCircle';
 import { addDays, dateKey, fmtDateJa, parseDateKey, startOfWeek, weekdayJa, DAY } from '@/lib/time';
@@ -57,7 +58,7 @@ export function ToolsPanel({ tab, onTab, onClose }: { tab: ToolTab | null; onTab
                 );
               })}
               <div className="flex-1" />
-              <button onClick={onClose} aria-label="閉じる" className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white/70">
+              <button onClick={onClose} aria-label="閉じる" className="hit grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white/70">
                 <X size={16} />
               </button>
             </nav>
@@ -114,14 +115,14 @@ function DiaryView() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between">
-        <button aria-label="前の日" onClick={() => setDate(dateKey(addDays(parseDateKey(date), -1)))} className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.08]">
+        <button aria-label="前の日" onClick={() => setDate(dateKey(addDays(parseDateKey(date), -1)))} className="hit grid h-8 w-8 place-items-center rounded-full bg-white/[0.08]">
           <ChevronLeft size={16} />
         </button>
         <div className="text-center">
           <p className="text-[17px] font-bold">{isToday ? '今日のノート' : 'ノート'}</p>
           <p className="text-[12px] text-white/50">{fmtDateJa(parseDateKey(date))}</p>
         </div>
-        <button aria-label="次の日" disabled={isToday} onClick={() => setDate(dateKey(addDays(parseDateKey(date), 1)))} className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.08] disabled:opacity-30">
+        <button aria-label="次の日" disabled={isToday} onClick={() => setDate(dateKey(addDays(parseDateKey(date), 1)))} className="hit grid h-8 w-8 place-items-center rounded-full bg-white/[0.08] disabled:opacity-30">
           <ChevronRight size={16} />
         </button>
       </div>
@@ -216,7 +217,7 @@ function TodoRow({ text, done, onToggle, onDelete }: { text: string; done: boole
           </motion.svg>
         )}
       </span>
-      <button onClick={onDelete} aria-label="削除" className="grid h-8 w-8 place-items-center rounded-full text-white/35 active:bg-white/10">
+      <button onClick={onDelete} aria-label="削除" className="hit grid h-8 w-8 place-items-center rounded-full text-white/50 active:bg-white/10">
         <Trash2 size={15} />
       </button>
     </motion.li>
@@ -246,7 +247,9 @@ function HabitView() {
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState(HABIT_EMOJI[0]);
   const today = dateKey(Date.now());
-  const week = useMemo(() => Array.from({ length: 7 }, (_, i) => new Date(startOfWeek(Date.now()) + i * DAY)), []);
+  // 週が変わったら（月曜になったら）作り直す
+  const weekStart = startOfWeek(useNow(60_000));
+  const week = useMemo(() => Array.from({ length: 7 }, (_, i) => new Date(weekStart + i * DAY)), [weekStart]);
 
   return (
     <div>
@@ -290,7 +293,7 @@ function HabitView() {
                     const future = k > today;
                     return (
                       <button key={k} disabled={future} onClick={() => toggleHabit(h.id, k)} className="flex flex-col items-center gap-0.5 disabled:opacity-30" aria-label={`${weekdayJa(d)} ${on ? '達成' : '未達成'}`}>
-                        <span className={`text-[10px] font-bold ${k === today ? 'text-white' : 'text-white/35'}`}>{weekdayJa(d)}</span>
+                        <span className={`text-[11px] font-bold ${k === today ? 'text-white' : 'text-white/50'}`}>{weekdayJa(d)}</span>
                         <motion.span className="relative block h-6 w-6 rounded-full" animate={{ scale: on ? 1 : 0.86 }} transition={springBouncy} style={{ background: on ? h.color : 'rgba(255,255,255,0.08)' }} />
                       </button>
                     );
@@ -302,7 +305,7 @@ function HabitView() {
         </AnimatePresence>
       </div>
 
-      <AnimatePresence mode="wait" initial={false}>
+      <AnimatePresence mode="popLayout" initial={false}>
         {adding ? (
           <motion.form
             key="form"
