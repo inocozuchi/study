@@ -117,7 +117,7 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
       </div>
 
       {/* 下部：停車中のカード / ヒント */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 px-5 pb-[calc(env(safe-area-inset-bottom)+24px)]">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 px-5 pb-[calc(env(safe-area-inset-bottom)+16px)]">
         <AnimatePresence mode="wait">
           {rest || waiting ? (
             <motion.div key="rest" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} transition={springBouncy} className="pointer-events-auto mx-auto flex max-w-md items-center overflow-hidden rounded-[10px] bg-[#FCFBF7] text-[#1F2328] shadow-[0_14px_30px_-12px_rgba(0,0,0,0.6)]">

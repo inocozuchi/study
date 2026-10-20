@@ -161,12 +161,6 @@ export function TrailStage({ hour, stage, mood, season, paused = false, hikerLoo
       // 火が消えている間は焚き火の SVG に触れない（触れると毎フレーム描き直しになる）
       setOpacity(lr.fire, fireK);
       if (fireK > 0.001) {
-        lr.flames.forEach((f, i) => {
-          if (!f) return;
-          const sc = fireK * (0.9 + 0.12 * Math.sin(s.t * (9 + i * 3) + i) + 0.06 * Math.sin(s.t * 23 + i * 2));
-          const sk = 6 * Math.sin(s.t * (4 + i) + i * 1.7);
-          f.setAttribute('transform', `scale(${(0.95 + 0.06 * Math.sin(s.t * 7 + i)) * fireK} ${sc}) skewX(${sk})`);
-        });
         if (lr.glow) lr.glow.setAttribute('r', String(L.k * (80 + night * 60) * (0.94 + 0.06 * Math.sin(s.t * 11))));
       }
       if (lr.alert) {
@@ -246,7 +240,35 @@ function createParticles(L: StageLayout) {
     snow: mk(70, () => ({ r: 0.7 + rnd() * 1.8 })),
     flies: mk(16, () => ({ y: L.H * (0.5 + rnd() * 0.35), r: 1.4 + rnd() })),
     embers: [] as P[],
+    flames: [] as P[],
   };
+}
+
+/**
+ * 炎のスプライト（中心ほど白く明るい丸）。毎フレーム グラデーションを作らないよう、最初に 3 色ぶん描いておく。
+ *  0：芯（白〜黄）、1：中（橙）、2：外（赤〜すす）
+ */
+let flameSprites: HTMLCanvasElement[] | null = null;
+function getFlameSprites() {
+  if (flameSprites) return flameSprites;
+  const stops: [string, string, string][] = [
+    ['rgba(255,252,232,1)', 'rgba(255,226,140,0.75)', 'rgba(255,190,90,0)'],
+    ['rgba(255,196,92,0.95)', 'rgba(255,128,40,0.5)', 'rgba(240,90,20,0)'],
+    ['rgba(255,104,32,0.75)', 'rgba(190,44,14,0.32)', 'rgba(90,20,10,0)'],
+  ];
+  flameSprites = stops.map(([a, b, cc]) => {
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 64;
+    const x = cv.getContext('2d')!;
+    const g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, a);
+    g.addColorStop(0.45, b);
+    g.addColorStop(1, cc);
+    x.fillStyle = g;
+    x.fillRect(0, 0, 64, 64);
+    return cv;
+  });
+  return flameSprites;
 }
 
 function drawParticles(
@@ -361,6 +383,49 @@ function drawParticles(
       c.fillStyle = g;
       c.fillRect(x - 9, y - 9, 18, 18);
     }
+    c.globalCompositeOperation = 'source-over';
+  }
+
+  // 炎：根元から湧いて、上へ行くほど細く・赤く・薄くなる粒を重ねる（加算合成）
+  if (env.fire > 0.02 || ps.flames.length) {
+    const k = L.k;
+    const fx = L.fireX;
+    const base = L.ground(fx) - 4 * k;
+    const sprites = getFlameSprites();
+    if (env.fire > 0.02) {
+      const rate = 95 * env.fire * (0.85 + 0.3 * Math.sin(s.t * 6.3) * Math.sin(s.t * 2.1));
+      let n = rate * dt;
+      while (n > 0) {
+        if (n < 1 && Math.random() > n) break;
+        n -= 1;
+        const spread = (Math.random() - 0.5) * 2;
+        ps.flames.push({ x: fx + spread * 8 * k, y: base - Math.random() * 2 * k, vx: -spread * 5 * k, vy: -(34 + Math.random() * 30) * k * (0.7 + 0.3 * env.fire), r: (4.6 + Math.random() * 3.2) * k * (0.6 + 0.4 * env.fire), a: 0, rot: 0, life: 0, max: 0.4 + Math.random() * 0.42, hue: Math.random() });
+      }
+    }
+    c.globalCompositeOperation = 'lighter';
+    // 根元の明るいおき火
+    const pulse = 0.75 + 0.25 * Math.sin(s.t * 13) * Math.sin(s.t * 5.7);
+    c.globalAlpha = 0.42 * env.fire * pulse;
+    c.drawImage(sprites[1], fx - 16 * k, base - 7 * k, 32 * k, 13 * k);
+    for (let i = ps.flames.length - 1; i >= 0; i--) {
+      const f = ps.flames[i];
+      f.life += dt;
+      const age = f.life / f.max;
+      if (age >= 1) {
+        ps.flames.splice(i, 1);
+        continue;
+      }
+      // 中心へ寄りながら上る → しずくの形。風でゆらぐ
+      f.vx += (fx - f.x) * 7 * dt + Math.sin(s.t * 9 + f.hue * 12) * (10 + 40 * age) * k * dt;
+      f.x += f.vx * dt;
+      f.y += f.vy * dt;
+      const r = f.r * (1 - age * 0.7);
+      const sp = sprites[age < 0.16 ? 0 : age < 0.5 ? 1 : 2];
+      c.globalAlpha = 0.5 * Math.pow(1 - age, 1.4) * Math.min(1, env.fire * 1.4);
+      // 縦に長いしずく：幅 2r・高さ 3.4r
+      c.drawImage(sp, f.x - r, f.y - r * 2.2, r * 2, r * 3.4);
+    }
+    c.globalAlpha = 1;
     c.globalCompositeOperation = 'source-over';
   }
 

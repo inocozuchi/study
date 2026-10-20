@@ -104,7 +104,7 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
       </div>
 
       {/* 下部：休憩カード / 長押しヒント */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 px-5 pb-[calc(env(safe-area-inset-bottom)+24px)]">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 px-5 pb-[calc(env(safe-area-inset-bottom)+16px)]">
         <AnimatePresence mode="wait">
           {rest || waiting ? (
             <motion.div key="rest" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} transition={springBouncy} className="mt-paper pointer-events-auto relative mx-auto flex max-w-md items-center gap-3 rounded-full p-2 pr-3 text-ink shadow-float">

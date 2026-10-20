@@ -18,13 +18,13 @@
 ## そのほかの音（river.mp3・rain.mp3・festival.mp3 …）
 
 `train` 以外のファイルは、**サウンド → ミキサー → 環境音** に並びます（`public/ambient/` と同じ扱い）。
-題名や絵文字を決めたいときは `sounds.json` に書きます（書き方は `public/ambient/README.md` と同じ）。
+題名や音量を決めたいときは `sounds.json` に書きます（書き方は `public/ambient/README.md` と同じ）。
 
 ```json
 {
   "sounds": [
-    { "file": "river.mp3", "title": "川のせせらぎ", "emoji": "🏞️" },
-    { "file": "festival.mp3", "title": "夏祭り", "emoji": "🏮", "gain": 0.7 }
+    { "file": "river.mp3", "title": "川のせせらぎ" },
+    { "file": "festival.mp3", "title": "夏祭り", "gain": 0.7 }
   ]
 }
 ```

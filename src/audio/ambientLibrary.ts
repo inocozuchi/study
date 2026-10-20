@@ -11,7 +11,8 @@ export interface AmbientSound {
   id: string;
   url: string;
   title: string;
-  emoji: string;
+  /** ミキサーのアイコンの種類 */
+  kind: AmbientKind;
   /** 0..2（音ごとの音量差をそろえる） */
   gain: number;
   /** 継ぎ目を重ねる秒数（ループ用に作られていない録音でもプチッと鳴らない） */
@@ -25,7 +26,6 @@ export interface AmbientSound {
 interface ManifestSound {
   file: string;
   title?: string;
-  emoji?: string;
   gain?: number;
   crossfade?: number;
   loopStart?: number;
@@ -44,27 +44,30 @@ function fileName(path: string) {
   return decodeURIComponent(path.split('/').pop() ?? path).replace(/\.[a-z0-9]+$/i, '');
 }
 
-/** ファイル名から絵文字を推測する（sounds.json で emoji を書けばそちらが優先） */
-function guessEmoji(name: string) {
+/** 音の種類（ミキサーのアイコン）。ファイル名・題名から推測する */
+export type AmbientKind = 'storm' | 'rain' | 'river' | 'sea' | 'fire' | 'insects' | 'birds' | 'wind' | 'forest' | 'snow' | 'cafe' | 'train' | 'book' | 'clock' | 'keyboard' | 'festival' | 'other';
+
+function guessKind(name: string): AmbientKind {
   const n = name.toLowerCase();
-  const table: [RegExp, string][] = [
-    [/雷|thunder|storm/, '⛈️'],
-    [/雨|rain/, '🌧️'],
-    [/川|river|stream|brook|水|water/, '🏞️'],
-    [/海|波|sea|ocean|wave/, '🌊'],
-    [/焚|火|fire|camp/, '🔥'],
-    [/虫|insect|cricket|cicada|蝉|セミ/, '🦗'],
-    [/鳥|bird/, '🐦'],
-    [/風|wind/, '🍃'],
-    [/森|forest|wood/, '🌲'],
-    [/雪|snow/, '❄️'],
-    [/カフェ|cafe|café|coffee/, '☕'],
-    [/電車|train|rail/, '🚃'],
-    [/図書|library|page|ページ/, '📚'],
-    [/時計|clock|tick/, '🕰️'],
-    [/キーボード|keyboard|typing/, '⌨️'],
+  const table: [RegExp, AmbientKind][] = [
+    [/雷|thunder|storm/, 'storm'],
+    [/雨|rain/, 'rain'],
+    [/川|river|stream|brook|水|water/, 'river'],
+    [/海|波|sea|ocean|wave/, 'sea'],
+    [/焚|火|fire|camp/, 'fire'],
+    [/虫|insect|cricket|cicada|蝉|セミ/, 'insects'],
+    [/鳥|bird/, 'birds'],
+    [/風|wind/, 'wind'],
+    [/森|forest|wood/, 'forest'],
+    [/雪|snow/, 'snow'],
+    [/カフェ|cafe|café|coffee/, 'cafe'],
+    [/電車|train|rail/, 'train'],
+    [/祭|festival|matsuri/, 'festival'],
+    [/図書|library|page|ページ/, 'book'],
+    [/時計|clock|tick/, 'clock'],
+    [/キーボード|keyboard|typing/, 'keyboard'],
   ];
-  return table.find(([re]) => re.test(n))?.[1] ?? '🎧';
+  return table.find(([re]) => re.test(n))?.[1] ?? 'other';
 }
 
 export function getAmbientSounds() {
@@ -88,7 +91,7 @@ async function readFolder(dir: 'ambient' | 'sounds'): Promise<AmbientSound[]> {
           id: dir === 'ambient' ? `amb-${t.file}` : `snd-${t.file}`,
           url,
           title,
-          emoji: t.emoji?.trim() || guessEmoji(`${title} ${t.file}`),
+          kind: guessKind(`${title} ${t.file}`),
           gain: Math.max(0, Math.min(2, t.gain ?? 1)),
           crossfade: Math.max(0, Math.min(10, t.crossfade ?? DEFAULT_CROSSFADE)),
           loopStart: t.loopStart,

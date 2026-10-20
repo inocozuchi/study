@@ -155,6 +155,9 @@
 @layer utilities {
   /* アプリの枠。見えている高さ（100dvh）にそろえ、文書そのものはスクロールさせない */
   .app-frame { position: fixed; left: 0; right: 0; top: 0; height: 100dvh; overflow: hidden; }
+  /* 時刻の帯の下：ライトモードの明るい画面でだけ、白い時刻が読める濃さを敷く */
+  .status-scrim { height: env(safe-area-inset-top); display: none; }
+  [data-theme='light'] .status-scrim:not(.hidden) { display: block; background: linear-gradient(180deg, rgba(20, 24, 34, 0.62), rgba(20, 24, 34, 0.5) 70%, rgba(20, 24, 34, 0)); }
   .h-app { height: 100dvh; }
   .pt-safe { padding-top: max(env(safe-area-inset-top), 16px); }
   .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 12px); }

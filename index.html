@@ -2,11 +2,10 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <!-- viewport-fit=cover は使わない。ホーム画面から起動したとき、iPhone は時刻やホームバーの帯を避けた範囲を
-         画面として渡してくれる。cover にすると端末によって高さの計算が食い違い、下に何もない帯が残ったり、
-         上の帯の下に潜った文字がぼやけたりする（泰山木POS で実機確認済みの方針）。
-         帯の色は theme-color（上）と html の地の色（下）で塗る（lib/theme.ts）。 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <!-- 全画面：viewport-fit=cover + black-translucent でシーンを時刻の帯の下まで広げる（上に帯を作らない）。
+         文字やボタンは pt-safe（env(safe-area-inset-top)）で時刻の下へ。
+         高さが短く報告されても、すき間は html の地の色（--edge＝シーンの地面の色）で塗る（lib/theme.ts）。 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <title>Focus Trail</title>
     <meta name="description" content="集中は山を登る旅。休憩は焚き火のそばで。学習・集中記録アプリ Focus Trail" />
     <meta name="theme-color" content="#F2F3F7" />

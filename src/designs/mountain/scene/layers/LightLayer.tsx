@@ -34,16 +34,9 @@ export const LightLayer = memo(function LightLayer({ L, refs }: { L: StageLayout
             ))}
             <path d="M-12 -1 L11 -6" stroke="#5B3A26" strokeWidth="3.6" strokeLinecap="round" />
             <path d="M12 -1 L-10 -6.5" stroke="#6E472E" strokeWidth="3.6" strokeLinecap="round" />
-            {/* 炎（毎フレーム揺らぐ 3 層） */}
-            {[
-              { c: '#FF6A2A', d: 'M-9 -3 Q-11 -16 -3 -24 Q-4 -30 0 -36 Q4 -28 7 -22 Q12 -14 9 -3 Z' },
-              { c: '#FFA640', d: 'M-6 -3 Q-8 -13 -1 -19 Q0 -25 2 -28 Q4 -21 6 -16 Q8 -10 6 -3 Z' },
-              { c: '#FFE6A0', d: 'M-3.4 -3 Q-4.4 -9 0 -13 Q3 -10 3.6 -6.4 Q4 -4 3.2 -3 Z' },
-            ].map((f, i) => (
-              <g key={i} ref={(el) => { refs.current.flames[i] = el; }}>
-                <path d={f.d} fill={f.c} />
-              </g>
-            ))}
+            {/* 燃えている薪の赤いおき（炎そのものは粒子でキャンバスに描く） */}
+            <path d="M-8 -3.2 L7 -5.4" stroke="#FF7A2E" strokeWidth="1.3" strokeLinecap="round" opacity="0.9" />
+            <path d="M8 -3.4 L-6 -5.8" stroke="#FFB04A" strokeWidth="1" strokeLinecap="round" opacity="0.8" />
           </g>
         </g>
       </svg>

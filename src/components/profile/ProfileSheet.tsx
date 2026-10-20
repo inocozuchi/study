@@ -36,7 +36,7 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
   return (
     <Sheet open={open} onClose={onClose} title="旅のパス" subtitle="ニックネームと目標はすべてのモードで共通です">
       <div className="space-y-5 pb-6">
-        <Segmented value={view} onChange={setView} options={TRAVEL_MODES.map((m) => ({ value: m.id, label: `${m.emoji} ${m.mode.name}` }))} />
+        <Segmented value={view} onChange={setView} options={TRAVEL_MODES.map((m) => ({ value: m.id, label: (<span className="flex items-center justify-center gap-1.5"><m.Icon size={16} />{m.mode.name}</span>) }))} />
 
         <div className="px-1">
           <Card info={info} />

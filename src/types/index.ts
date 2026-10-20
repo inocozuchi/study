@@ -106,6 +106,9 @@ export interface Settings {
   goal: string;
   /** 出発駅（列車のきっぷ）。空なら「はじまり」 */
   departure: string;
+  /** 1 日の始まり（起床）と終わり（就寝）。0 時からの分。就寝は 24 時を過ぎてもよい（25:00 = 翌 1 時） */
+  wakeMin: number;
+  sleepMin: number;
   /** 列車：普通 / 特急 */
   trainClass: TrainClass;
   /** 列車の走行音（public/sounds/train.*） */

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bell, CalendarDays, ChevronLeft, ChevronRight, Clock, Coffee, Database, Leaf, Mountain, Music, PlusSquare, Repeat, Smartphone, Sun, Timer, Trash2,
+  Bug, CloudRain, Compass, Disc3, Flame, Flower2, Snowflake, Sprout, Sunrise, Sunset, TrainFrontTunnel, Trees, VolumeX,
   Contrast, IdCard, Moon, TrainFront, Type, User, Volume2, Waves, Wind,
 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
@@ -22,6 +23,8 @@ import { FONTS, fontById, loadFontPreviews, unloadFontPreviews } from '@/lib/fon
 import { GoogleCalendarSheet, googleStatusLabel } from '@/components/settings/GoogleCalendarSheet';
 import { isConnected, useGoogleCalendar } from '@/lib/googleCalendar';
 import { ModeSheet } from '@/components/profile/ModeSheet';
+import { DayHoursSheet } from '@/components/timeline/DayHoursSheet';
+import { fmtClock } from '@/lib/time';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import type { AmbientChannel, AmbientMix, Appearance, FontId, Season, Settings, SkyOverride, TrainClass } from '@/types';
 
@@ -72,18 +75,24 @@ const FONT_SAMPLE = Array.from(new Set(FONTS.map((f) => `${f.label}${f.detail}�
 
 type PickerKey = 'focus' | 'short' | 'long' | 'every' | 'bgm' | 'ambient' | 'sky' | 'season' | 'font' | 'appearance' | 'trainClass';
 
-const AMBIENT_PRESETS: { key: string; label: string; mix: AmbientMix; icon: string }[] = [
-  { key: 'none', label: 'なし', icon: '🔇', mix: { rain: 0, fire: 0, wind: 0, river: 0, insects: 0 } },
-  { key: 'wind', label: '森', icon: '🌲', mix: { rain: 0, fire: 0, wind: 0.6, river: 0, insects: 0 } },
-  { key: 'river', label: '川', icon: '🏞', mix: { rain: 0, fire: 0, wind: 0.2, river: 0.65, insects: 0 } },
-  { key: 'rain', label: '雨', icon: '🌧', mix: { rain: 0.7, fire: 0, wind: 0.1, river: 0, insects: 0 } },
-  { key: 'insects', label: '虫の音', icon: '🦗', mix: { rain: 0, fire: 0, wind: 0.15, river: 0, insects: 0.6 } },
-  { key: 'fire', label: '焚き火', icon: '🔥', mix: { rain: 0, fire: 0.7, wind: 0.15, river: 0, insects: 0.2 } },
+const AMBIENT_PRESETS: { key: string; label: string; mix: AmbientMix; icon: ReactNode }[] = [
+  { key: 'none', label: 'なし', icon: <VolumeX size={18} />, mix: { rain: 0, fire: 0, wind: 0, river: 0, insects: 0 } },
+  { key: 'wind', label: '森', icon: <Trees size={18} />, mix: { rain: 0, fire: 0, wind: 0.6, river: 0, insects: 0 } },
+  { key: 'river', label: '川', icon: <Waves size={18} />, mix: { rain: 0, fire: 0, wind: 0.2, river: 0.65, insects: 0 } },
+  { key: 'rain', label: '雨', icon: <CloudRain size={18} />, mix: { rain: 0.7, fire: 0, wind: 0.1, river: 0, insects: 0 } },
+  { key: 'insects', label: '虫の音', icon: <Bug size={18} />, mix: { rain: 0, fire: 0, wind: 0.15, river: 0, insects: 0.6 } },
+  { key: 'fire', label: '焚き火', icon: <Flame size={18} />, mix: { rain: 0, fire: 0.7, wind: 0.15, river: 0, insects: 0.2 } },
 ];
 
 function ambientKey(mix: AmbientMix) {
   const top = (Object.keys(mix) as AmbientChannel[]).sort((a, b) => mix[b] - mix[a])[0];
   return mix[top] > 0.01 ? top : 'none';
+}
+
+const SEASON_ICONS: Record<Season, typeof Sun> = { spring: Sprout, summer: Sun, autumn: Leaf, winter: Snowflake, sakura: Flower2 };
+function SeasonIcon({ season, size = 18 }: { season: Season; size?: number }) {
+  const I = SEASON_ICONS[season] ?? Leaf;
+  return <I size={size} />;
 }
 
 /** iOS 設定アプリ風。ホームの歯車から右へスライドして開く */
@@ -97,6 +106,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
   const [modeOpen, setModeOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [googleOpen, setGoogleOpen] = useState(false);
+  const [hoursOpen, setHoursOpen] = useState(false);
   const google = useGoogleCalendar();
   // 設定は画面全体を覆うので、開いて少したったら下のシーンを止める（スライドの間は見えている）
   const [covered, setCovered] = useState(false);
@@ -116,7 +126,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
     short: { title: '休憩時間', value: settings.pomodoroShortBreak, options: minutes([3, 5, 7, 10, 15]), onSelect: (v) => updateSettings({ pomodoroShortBreak: Number(v) }) },
     long: { title: '長い休憩', value: settings.pomodoroLongBreak, options: minutes([10, 15, 20, 25, 30]), onSelect: (v) => updateSettings({ pomodoroLongBreak: Number(v) }) },
     every: { title: '長い休憩の間隔', value: settings.longBreakEvery, options: [2, 3, 4, 5, 6].map((n) => ({ value: n, label: `${n}回の登りごと` })), onSelect: (v) => updateSettings({ longBreakEvery: Number(v) }) },
-    bgm: { title: 'BGM', value: currentTrack?.id ?? '', options: tracks.map((t) => ({ value: t.id, label: t.title, detail: t.subtitle, icon: '🎵' })), onSelect: (v) => updateSettings({ bgmTrackId: String(v) }) },
+    bgm: { title: 'BGM', value: currentTrack?.id ?? '', options: tracks.map((t) => ({ value: t.id, label: t.title, detail: t.subtitle, icon: <Music size={18} /> })), onSelect: (v) => updateSettings({ bgmTrackId: String(v) }) },
     ambient: {
       title: '環境音',
       value: ambientKey(settings.ambient),
@@ -132,12 +142,12 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
       title: '空の時間',
       value: settings.sky,
       options: [
-        { value: 'auto', label: '旅の時間', detail: '集中を始めると朝。進むほど昼・夕方になり、休憩は夜', icon: '🧭' },
-        { value: 'clock', label: '今の時刻', detail: '現在時刻に合わせてうつろう', icon: '🕰' },
-        { value: 'dawn', label: '朝', icon: '🌅' },
-        { value: 'day', label: '昼', icon: '☀️' },
-        { value: 'sunset', label: '夕', icon: '🌇' },
-        { value: 'night', label: '夜', icon: '🌙' },
+        { value: 'auto', label: '旅の時間', detail: '集中を始めると朝。進むほど昼・夕方になり、休憩は夜', icon: <Compass size={18} /> },
+        { value: 'clock', label: '今の時刻', detail: '現在時刻に合わせてうつろう', icon: <Clock size={18} /> },
+        { value: 'dawn', label: '朝', icon: <Sunrise size={18} /> },
+        { value: 'day', label: '昼', icon: <Sun size={18} /> },
+        { value: 'sunset', label: '夕', icon: <Sunset size={18} /> },
+        { value: 'night', label: '夜', icon: <Moon size={18} /> },
       ],
       onSelect: (v) => updateSettings({ sky: v as SkyOverride }),
     },
@@ -165,12 +175,12 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
       title: '列車の種別',
       value: settings.trainClass,
       options: [
-        { value: 'local', label: '普通', detail: '各駅にのんびり', icon: '🚃' },
-        { value: 'express', label: '特急', detail: '景色が約 1.6 倍の速さで流れる', icon: '🚄' },
+        { value: 'local', label: '普通', detail: '各駅にのんびり', icon: <TrainFront size={18} /> },
+        { value: 'express', label: '特急', detail: '景色が約 1.6 倍速', icon: <TrainFrontTunnel size={18} /> },
       ],
       onSelect: (v) => updateSettings({ trainClass: v as TrainClass }),
     },
-    season: { title: 'シーズン', value: settings.season, options: SEASON_ORDER.map((s) => ({ value: s, label: SEASONS[s].label, icon: SEASONS[s].emoji })), onSelect: (v) => updateSettings({ season: v as Season }) },
+    season: { title: 'シーズン', value: settings.season, options: SEASON_ORDER.map((s) => ({ value: s, label: SEASONS[s].label, icon: <SeasonIcon season={s} /> })), onSelect: (v) => updateSettings({ season: v as Season }) },
   };
   // 閉じるアニメーションの間も中身を表示しておく
   const lastPicker = useRef<PickerKey | null>(null);
@@ -217,13 +227,14 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                 <Row icon={<Coffee size={21} />} title="休憩時間" value={`${settings.pomodoroShortBreak}分`} onClick={() => setPicker('short')} />
                 <Row icon={<Clock size={21} />} title="長い休憩" value={`${settings.pomodoroLongBreak}分`} onClick={() => setPicker('long')} />
                 <Row icon={<Repeat size={21} />} title="長い休憩の間隔" value={`${settings.longBreakEvery}回ごと`} onClick={() => setPicker('every')} />
+                <Row icon={<Sunrise size={21} />} title="起床と就寝" value={`${fmtClock(settings.wakeMin)} 起床 · ${fmtClock(settings.sleepMin)} 就寝（タイムラインの始まりと終わり）`} onClick={() => setHoursOpen(true)} />
                 <Row icon={<Waves size={19} />} title="休憩のあと自動で出発" right={<Toggle checked={settings.autoContinue} onChange={set('autoContinue')} label="自動で出発" />} />
                 <Row icon={<Wind size={19} />} title="集中前の深呼吸" right={<Toggle checked={settings.breathing} onChange={set('breathing')} label="深呼吸" />} />
               </Group>
 
               <Group title="音楽設定" footer="BGM は public/bgm、環境音は public/ambient に置いた音が流れ、途切れずに繰り返します。音ごとの音量はホームの音符ボタン → ミキサーで変えられます。">
                 <Row icon={<Music size={19} />} title="集中を始めたら音楽を流す" right={<Toggle checked={settings.bgmOnFocus} onChange={set('bgmOnFocus')} label="音楽を流す" />} />
-                <Row icon={<span className="text-[15px]">📼</span>} title="BGM" value={currentTrack?.title ?? 'まだありません'} onClick={tracks.length ? () => setPicker('bgm') : undefined} />
+                <Row icon={<Disc3 size={21} />} title="BGM" value={currentTrack?.title ?? 'まだありません'} onClick={tracks.length ? () => setPicker('bgm') : undefined} />
                 <Row
                   icon={<Volume2 size={16} />}
                  
@@ -254,7 +265,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
               <Group title="旅のモード" footer="航空モードは準備中です。列車の走行音は public/sounds/train.mp3 を置くと鳴ります。">
                 <Row icon={<Mountain size={21} />} title="モード" value={getDesign(settings.timerDesign).name} onClick={() => setModeOpen(true)} />
                 <Row icon={<IdCard size={21} />} title="旅のパス" value={`${settings.userName} · ${settings.goal.trim() || '目標を決める'}`} onClick={() => setProfileOpen(true)} />
-                <Row icon={<span className="text-[15px]">{SEASONS[settings.season].emoji}</span>} title="登山：シーズン" value={SEASONS[settings.season].label} onClick={() => setPicker('season')} />
+                <Row icon={<SeasonIcon season={settings.season} size={21} />} title="登山：シーズン" value={SEASONS[settings.season].label} onClick={() => setPicker('season')} />
                 <Row icon={<TrainFront size={21} />} title="列車：種別" value={settings.trainClass === 'express' ? '特急' : '普通'} onClick={() => setPicker('trainClass')} />
                 <Row icon={<Volume2 size={19} />} title="列車：走行音" right={<Toggle checked={settings.trainSound} onChange={set('trainSound')} label="走行音" />} />
               </Group>
@@ -278,6 +289,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
       <ModeSheet open={modeOpen} onClose={() => setModeOpen(false)} />
       <ProfileSheet open={profileOpen} onClose={() => setProfileOpen(false)} />
       <GoogleCalendarSheet open={googleOpen} onClose={() => setGoogleOpen(false)} />
+      <DayHoursSheet open={hoursOpen} onClose={() => setHoursOpen(false)} />
 
       <Sheet open={nameOpen} onClose={() => setNameOpen(false)} title="名前" subtitle="ホームの挨拶で呼ぶ名前です">
         <form

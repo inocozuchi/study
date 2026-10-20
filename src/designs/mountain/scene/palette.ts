@@ -14,7 +14,6 @@ export interface MeadowPalette {
 
 export interface SeasonLook {
   label: string;
-  emoji: string;
   meadow: MeadowPalette;
   /** 広葉樹の葉（null で冬の裸木） */
   foliage: { base: string; sh: string; hi: string } | null;
@@ -33,35 +32,35 @@ export interface SeasonLook {
 
 export const SEASONS: Record<Season, SeasonLook> = {
   spring: {
-    label: '春', emoji: '🌱',
+    label: '春',
     meadow: { base: '#A9CB5E', lt: '#C8E07E', sh: '#7FA545', strokeLt: '#E2F0A8', strokeDk: '#5E8636', back: '#8FB35A', backSh: '#6E9446' },
     foliage: { base: '#9BCB5A', sh: '#6F9E3E', hi: '#C9E68A' },
     coniferLit: '#9BC25A', snow: 0, particle: 'seed',
     flower: { petal: '#FFFFFF', center: '#F2B632' }, dots: ['#FFFFFF', '#F5D04E', '#F3A6C0'], skyBlue: 0.65,
   },
   summer: {
-    label: '夏', emoji: '☀️',
+    label: '夏',
     meadow: { base: '#6FAE4A', lt: '#93C962', sh: '#4C8836', strokeLt: '#B8DE86', strokeDk: '#356A27', back: '#5E9A48', backSh: '#467A38' },
     foliage: { base: '#4E9A44', sh: '#2F6E30', hi: '#7DBF5C' },
     coniferLit: '#7FB04A', snow: 0, particle: 'seed',
     flower: { petal: '#FFFFFF', center: '#F2B632' }, dots: ['#FFFFFF', '#F2C94C'], skyBlue: 0.9,
   },
   autumn: {
-    label: '秋', emoji: '🍁',
+    label: '秋',
     meadow: { base: '#E3B043', lt: '#F4CF68', sh: '#C08A2C', strokeLt: '#FBE29A', strokeDk: '#A87320', back: '#C99A3A', backSh: '#A97B2B' },
     foliage: { base: '#E4B23A', sh: '#BE8A22', hi: '#F6D86A' },
     coniferLit: '#D98A2E', snow: 0, particle: 'leaf',
     flower: { petal: '#FFFFFF', center: '#F2B632' }, dots: ['#FFFFFF', '#F08A3C'], skyBlue: 0.75,
   },
   winter: {
-    label: '冬', emoji: '❄️',
+    label: '冬',
     meadow: { base: '#EEF1F4', lt: '#FFFFFF', sh: '#C6D0DC', strokeLt: '#FFFFFF', strokeDk: '#A9B5C5', back: '#D7DEE6', backSh: '#B5C2D1' },
     foliage: null,
     coniferLit: '#5E8A6A', snow: 0.95, particle: 'snow',
     flower: { petal: '#E8EEF6', center: '#C9D4E2' }, dots: ['#FFFFFF'], skyBlue: 0.55,
   },
   sakura: {
-    label: '桜', emoji: '🌸',
+    label: '桜',
     meadow: { base: '#B8CF6A', lt: '#D4E38E', sh: '#8DAA4E', strokeLt: '#EEF3BC', strokeDk: '#6C8A3C', back: '#A6BE70', backSh: '#869E58' },
     foliage: { base: '#F2A9C0', sh: '#D97F9F', hi: '#FBD3E0' },
     coniferLit: '#9BC25A', snow: 0, particle: 'sakura',

@@ -83,10 +83,11 @@ src/
         layers/         Sky / Mountain / Tree / Meadow / Foreground / Light
   components/           アプリ本体（泰山木POS と同じデザイン言語）
     ui/                 GlassCard（＝.card）, Sheet, Modal, Segmented, PickerModal, Toggle, CheckCircle, Pressable …
-    nav/                TabBar（画面の最下部に固定。帆布の質感）+ IslandPlayer（ダイナミックアイランド風）
+    nav/                TabBar（下に浮いたカプセル・アイコンだけ）+ IslandPlayer（ダイナミックアイランド風）
+    icons/              Pictograms（旅のモードのピクトグラム。絵文字の代わり）
     home/               SetupSheet（科目・時間 + デザイン固有の設定）
     profile/            ModeSheet（旅のモードの切り替え）/ ProfileSheet（旅のパス：カード・ニックネーム・目標）
-    timeline/           MonthCalendar（月のカレンダー）など
+    timeline/           EntrySheet（予定・記録の入力）/ DayHoursSheet（起床・就寝）/ MonthCalendar（月のカレンダー）
     focus/              BreathOverlay（深呼吸。Apple Watch の「呼吸」風）
     audio/              CassettePlayer（サウンドのシート：BGM / ミキサー）+ SoundMixer（音ごとの音量）
     tools/              ToolsPanel（ノート / ToDo / 習慣、縦のサイドタブ）
@@ -113,6 +114,10 @@ scripts/generate-assets.mjs  icon.svg → アイコン PNG と iOS 起動画像�
 - 集中中は**画面をタップすると休憩、1.1 秒の長押しで旅を終える**（どのデザインでも同じ操作）。
 - 休憩明けの自動出発は、休憩が終わって 1 分以内に気づいたときだけ。長く閉じていた間の集中を作り出さない。
 - 時刻は epoch ms（number）、日付キーは `YYYY-MM-DD`（ローカル）、予定は「0時からの分」。
+- タイムラインは **起床（`wakeMin`）から就寝（`sleepMin`。25:00 のように 24 時を越えてよい）まで**。始まり・終わりの印を押すか、設定で変える。
+- 予定の入力：科目はその場で新しく作れる（`ensureSubject`）。時刻は「開始 + 長さ」（終わりは自動）。いまから / 前の予定のあと / 起床、
+  よく使う長さ・ポモドーロ ×n、前に使ったタイトル、くり返し（毎日 7 日・平日 5 日・毎週 4 回）、重なりの警告。
+- 予定の並べ替え：「予定を並べ替え」→ つまみをドラッグ（framer-motion の Reorder）。時刻は最初の予定の開始から、元の空き時間を保って詰め直す。
 - 標高換算：**1 分 = 10 m**。科目ルートは `targetMinutes` で登頂、進捗で 5 ステージ。
 
 ## タイマーのデザイン
@@ -143,7 +148,7 @@ interface TimerDesign {
 2. **支度シート**（iOS）：科目名（新しい名前なら科目を自動作成）・時間（ポモドーロ/タイマー/フリー）・デザイン固有の設定
 3. **深呼吸**（iOS）：花びらの輪が 4 秒でふくらみ 4 秒でしぼむ。タップでスキップ
 4. **集中・休憩**：`design.Session`（音楽・時間・完了。タップで休憩、どこでも 1.1 秒の長押しで終了。登山の休憩はテントと焚き火、列車は駅に停車）
-5. **リザルト**：`design.Result`（登山：夜のキャンプに日付・時間・科目を日記のように）
+5. **リザルト**：`design.Result`（登山：夜のキャンプに日付・時間・科目を日記のように。共有ボタンはない）
 
 タイマーは「旅（journey）」単位：`startJourney` → 集中/休憩を繰り返す → `endJourney`（長押し）。
 
@@ -151,7 +156,7 @@ interface TimerDesign {
 - モードはホームの上の「登山 ▾」か、設定 → 旅のモードで切り替える（`Settings.timerDesign`）。記録・科目はモード共通。
 - **旅のパス**（ホームの ID カードのボタン）：モードごとのカード + 共通の **ニックネーム**（`userName`）と **目標**（`goal`）。
   - 登山：登山者 ID カード（累計の登山時間・現在の標高＝累計分 × 10 m）。ハイカーの服（`hikerLook`）とテント（`tentStyle`）を選べる
-  - 列車：国鉄のマルス指定席券ふう（地紋・改札鋏の切り欠き・日付印）。〇〇様・**出発駅**（`departure`）→ **行き先**（＝目標）
+  - 列車：JR のマルス券（乗車券・特急券）ふう：うすい緑の地紋・全角の印字・水色の帯・発券の行。〇〇様・**出発駅**（`departure`）→ **行き先**（＝目標）
   - 航空：搭乗券（PASSENGER NAME・DESTINATION＝目標・バーコード・GATE）。Coming Soon
 
 ## 列車シーンの構成（src/designs/train/scene）
@@ -185,7 +190,8 @@ interface TimerDesign {
 3. **Tree**：左右からフレームインする針葉樹と白樺（CSS で根元を支点に揺れる）
 4. **Meadow**：右上がりの草原斜面。草の質感は斜面に沿って回転したストリップを流す。ハイカー・犬・テント
 5. **Foreground**：`blur(3px)` の草花（被写界深度）。草原より速く流れ、風で大きく揺れる
-6. **Light**：ゴッドレイ、焚き火（夜でも暗くならないようティントより上）、Canvas 粒子、紙の粒状感
+6. **Light**：焚き火（夜でも暗くならないようティントより上）、Canvas 粒子
+   - 炎は Canvas の粒子（芯・中・外の 3 色のスプライトを最初に描いておき、加算合成で重ねる）。根元から湧き、中心へ寄りながら細く・赤く・薄くなる
    - 5 と 6 の間に時間帯ティント（夜：群青 multiply、朝夕：暖色 soft-light）
 
 **描画の重さ（iOS で固まらないために）**
@@ -247,7 +253,8 @@ interface TimerDesign {
 - `.card`（浮いた白いカード `rounded-card` 13px + `shadow-card`）、`.group-box`、`.field`（入力）、`.btn-primary` / `.btn-secondary`
 - `.page-title`（大見出し）、`.section-label`（13px の小見出し）
 - 設定の 1 項目＝1 枚のカード（開く項目は青いアイコン + 値 + 「>」、スイッチの項目はへこんだアイコン + スイッチ）
-- ホームの上のボタン・チップ・ツールの縦タブは `.fabric-denim.stitch`（インディゴのデニム + ステッチ）、タブバーは `.fabric-canvas`（帆布 + 破線の縁）
+- ホームの上のボタン・チップ・ツールの縦タブは `.fabric-denim.stitch`（インディゴのデニム + ステッチ）
+- **絵文字は使わない**。アイコンは Lucide と、独自のピクトグラム（`components/icons/Pictograms.tsx`：登山・列車・航空）。文字は少なめ・小さめ
 - `.hit`：見た目は小さいまま、押せる範囲を四方 6px 広げる
 - 角丸：チップ `rounded-chip` 9px、カード `rounded-card` 13px、シート `rounded-t-sheet` 20px
 
@@ -257,10 +264,12 @@ interface TimerDesign {
 
 ### 余白・レイアウト（iPhone のホーム画面アプリ）
 - 画面左右 16–20px、カード内 16–20px、要素間 8/12/16/24。
-- `viewport-fit=cover` は**使わない**（泰山木POS の実機での結論）。ステータスバーの帯は theme-color、ホームバーの帯は html の背景（`--edge`）で塗る。
-  ホームではシーンの空・地面の色に合わせる（`design.edgeColors`）。
+- **全画面**：`viewport-fit=cover` + `black-translucent`。シーンは時刻の帯の下まで広がり、上に帯を作らない。文字・ボタンは `pt-safe` で時刻の下へ。
+  高さが短く報告されても、すき間は html の背景（`--edge`＝ホームではシーンの地面の色）で塗る。
+  時刻の文字は白なので、ライトモードのホーム以外（と設定）だけ上端に `.status-scrim`（うすい暗がり）を敷く。
 - アプリの枠は `.app-frame`（`fixed` + `100dvh`）。全画面の重ね（シート・モーダル・設定）は `fixed inset-x-0 top-0 h-app`（`fixed inset-0` は使わない）。
-- タブバーは画面の最下部に固定（`fixed bottom-0`、セーフエリア分の下余白）。集中・休憩・リザルトの間は下へ隠す（シーンが最下部まで見える）。
+- タブバーは**画面の下に浮いたカプセル**（左右と下に余白。iPhone の角で欠けない）。**アイコンだけ**で文字は出さない（名前は aria-label）。
+  集中・休憩・リザルトの間は下へ隠す（シーンが最下部まで見える）。
 - 上部のぼかしはどこにも置かない。
 
 ### アニメーション原則（`lib/motion.ts`）
