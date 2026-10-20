@@ -87,6 +87,45 @@ function loadSvg(markup: string): Promise<HTMLImageElement> {
   });
 }
 
+/**
+ * SVG の文字列を PNG に焼き、object URL を返す（同じ絵は Cache Storage とメモリから使い回す）。
+ * pxW × pxH は焼く画像のピクセル数。焼けない環境では null。
+ */
+const baked = new Map<string, Promise<string | null>>();
+export function bakeSvg(markup: string, pxW: number, pxH: number): Promise<string | null> {
+  const key = `/bake/${hash(markup)}-${pxW}x${pxH}.png`;
+  const hit = baked.get(key);
+  if (hit) return hit;
+  const job = (async () => {
+    const blob =
+      (await cached(key)) ??
+      (await loadSvg(markup).then(
+        (img) =>
+          new Promise<Blob | null>((resolve) =>
+            enqueue(() => {
+              const canvas = document.createElement('canvas');
+              canvas.width = pxW;
+              canvas.height = pxH;
+              const ctx = canvas.getContext('2d');
+              if (!ctx) return resolve(null);
+              ctx.drawImage(img, 0, 0, pxW, pxH);
+              try {
+                canvas.toBlob((b) => {
+                  if (b) void store(key, b);
+                  resolve(b);
+                }, 'image/png');
+              } catch {
+                resolve(null);
+              }
+            }),
+          ),
+      ));
+    return blob ? URL.createObjectURL(blob) : null;
+  })().catch(() => null);
+  baked.set(key, job);
+  return job;
+}
+
 export function Baked({
   width,
   height,

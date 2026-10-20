@@ -8,12 +8,14 @@ const AUDIO = /\.(mp3|m4a|aac|wav|flac|ogg|oga|opus|webm|caf)$/i;
 const FOLDERS = [
   { dir: 'bgm', file: 'tracks.json', key: 'tracks' },
   { dir: 'ambient', file: 'sounds.json', key: 'sounds' },
+  // 列車の走行音（train.*）と、モードの音（川・雨・祭り…）
+  { dir: 'sounds', file: 'sounds.json', key: 'sounds' },
 ] as const;
 type Folder = (typeof FOLDERS)[number];
 type Entry = { file?: unknown; [k: string]: unknown };
 
 /**
- * public/bgm・public/ambient の一覧（tracks.json・sounds.json）に、フォルダの中の音声ファイルを足す。
+ * public/bgm・public/ambient・public/sounds の一覧（tracks.json・sounds.json）に、フォルダの中の音声ファイルを足す。
  * json に書いた順番・題名・設定が優先され、書かれていないファイルは後ろにファイル名順で並ぶ。
  * json にあってもファイルがない音（URL 以外）は外す。→ 音声ファイルをアップロードするだけで一覧に出る。
  */

@@ -4,7 +4,7 @@
  *   npm i --no-save playwright-core
  *   CHROME_PATH=/path/to/chrome node scripts/generate-assets.mjs
  *
- * 起動画像は index.html の起動画面（#boot）と同じ見た目（背景 #070B17、中央にアイコン）に合わせてある。
+ * 起動画像は index.html の起動画面（#boot）と同じ見た目（地の色の上、中央にアイコン）。ライト／ダークの 2 通りを作る。
  */
 import { chromium } from 'playwright-core';
 import fs from 'node:fs';
@@ -12,7 +12,10 @@ import path from 'node:path';
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const svg = fs.readFileSync(path.join(root, 'public/icons/icon.svg'), 'utf8');
-const BG = '#070B17';
+const THEMES = [
+  { suffix: '', scheme: 'light', bg: '#F2F3F7', shadow: '0 0 0 1px rgba(28,29,34,0.06),0 12px 30px rgba(28,29,34,0.16)' },
+  { suffix: '-dark', scheme: 'dark', bg: '#0E1015', shadow: '0 0 0 1px rgba(255,255,255,0.06),0 18px 40px rgba(0,0,0,0.45)' },
+];
 
 /** [CSS 幅, CSS 高さ, 倍率] — 縦向きの iPhone */
 export const IPHONES = [
@@ -46,20 +49,24 @@ await page.setContent(`<body style="margin:0"><div style="width:512px;height:512
 await page.screenshot({ path: path.join(root, 'public/icons/icon-maskable-512.png') });
 
 // iOS 起動画像
-for (const [w, h, r] of IPHONES) {
-  const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: r });
-  const p = await ctx.newPage();
-  await p.setContent(`<body style="margin:0;background:${BG};width:${w}px;height:${h}px;display:grid;place-items:center">
-    <div style="width:112px;height:112px;border-radius:25px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,0.06),0 18px 40px rgba(0,0,0,0.45)">${icon(112)}</div></body>`);
-  await p.screenshot({ path: path.join(root, `public/splash/splash-${w * r}x${h * r}.png`) });
-  await ctx.close();
+for (const t of THEMES) {
+  for (const [w, h, r] of IPHONES) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: r });
+    const p = await ctx.newPage();
+    await p.setContent(`<body style="margin:0;background:${t.bg};width:${w}px;height:${h}px;display:grid;place-items:center">
+      <div style="width:112px;height:112px;border-radius:25px;overflow:hidden;box-shadow:${t.shadow}">${icon(112)}</div></body>`);
+    await p.screenshot({ path: path.join(root, `public/splash/splash-${w * r}x${h * r}${t.suffix}.png`) });
+    await ctx.close();
+  }
 }
 await browser.close();
 
 // index.html に貼る <link> を出力
 console.log(
-  IPHONES.map(
-    ([w, h, r]) =>
-      `    <link rel="apple-touch-startup-image" media="(device-width: ${w}px) and (device-height: ${h}px) and (-webkit-device-pixel-ratio: ${r}) and (orientation: portrait)" href="./splash/splash-${w * r}x${h * r}.png" />`,
+  THEMES.flatMap((t) =>
+    IPHONES.map(
+      ([w, h, r]) =>
+        `    <link rel="apple-touch-startup-image" media="(device-width: ${w}px) and (device-height: ${h}px) and (-webkit-device-pixel-ratio: ${r}) and (orientation: portrait) and (prefers-color-scheme: ${t.scheme})" href="./splash/splash-${w * r}x${h * r}${t.suffix}.png" />`,
+    ),
   ).join('\n'),
 );

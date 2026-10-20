@@ -26,15 +26,15 @@ export function SeasonPicker({ draft, onChange }: DesignSetupProps) {
           const active = s === season;
           return (
             <motion.button key={s} whileTap={{ scale: 0.9 }} transition={springBouncy} onClick={() => onChange({ season: s })} className="flex flex-col items-center gap-1.5" aria-pressed={active} aria-label={`${SEASONS[s].label}の山`}>
-              <span className={`relative block w-full overflow-hidden rounded-2xl transition-shadow ${active ? 'shadow-[0_0_0_2.5px_#fff]' : 'shadow-[0_0_0_1px_rgba(255,255,255,0.12)]'}`}>
+              <span className={`relative block w-full overflow-hidden rounded-card transition-shadow ${active ? 'shadow-[0_0_0_2.5px_rgb(var(--c-accent))]' : 'shadow-[0_0_0_1px_rgb(var(--c-line))]'}`}>
                 <SeasonSwatch season={s} className="block aspect-[4/3] w-full" />
                 {active && (
-                  <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={springBouncy} className="absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-white text-night-950">
+                  <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={springBouncy} className="absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-accent text-white">
                     <Check size={10} strokeWidth={3.5} />
                   </motion.span>
                 )}
               </span>
-              <span className={`text-[12px] font-semibold ${active ? 'text-white' : 'text-white/50'}`}>{SEASONS[s].label}</span>
+              <span className={`text-[12px] font-bold ${active ? 'text-accent-ink' : 'text-fg-2'}`}>{SEASONS[s].label}</span>
             </motion.button>
           );
         })}
@@ -51,14 +51,14 @@ export function SeasonPicker({ draft, onChange }: DesignSetupProps) {
               transition={springBouncy}
               onClick={() => onChange({ sky: o.value })}
               aria-pressed={active}
-              className={`rounded-full px-4 py-2 text-[13px] font-semibold transition-colors ${active ? 'bg-white text-night-950' : 'bg-white/[0.08] text-white/70'}`}
+              className={`rounded-full px-4 py-2 text-[13px] font-bold transition-colors ${active ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}
             >
               {o.label}
             </motion.button>
           );
         })}
       </div>
-      <p className="mt-1.5 text-[12px] text-white/45">
+      <p className="mt-1.5 text-[12px] text-fg-2">
         {sky === 'auto' ? '集中を始めると朝。時間が進むほど昼・夕方になり、休憩で夜になります' : sky === 'clock' ? '今の時刻の空で登ります' : '空の時間をこのままにします'}
       </p>
     </>

@@ -4,6 +4,17 @@ export default {
   theme: {
     extend: {
       colors: {
+        // アプリ本体の配色（index.css の変数。ライト／ダークで入れ替わる）
+        page: 'rgb(var(--c-page) / <alpha-value>)',
+        surface: 'rgb(var(--c-surface) / <alpha-value>)',
+        sunken: 'rgb(var(--c-sunken) / <alpha-value>)',
+        fill: 'rgb(var(--c-fill) / <alpha-value>)',
+        line: { DEFAULT: 'rgb(var(--c-line) / <alpha-value>)', strong: 'rgb(var(--c-line-strong) / <alpha-value>)' },
+        fg: { DEFAULT: 'rgb(var(--c-fg) / <alpha-value>)', 2: 'rgb(var(--c-fg2) / <alpha-value>)', 3: 'rgb(var(--c-fg3) / <alpha-value>)' },
+        accent: { DEFAULT: 'rgb(var(--c-accent) / <alpha-value>)', ink: 'rgb(var(--c-accent-ink) / <alpha-value>)', soft: 'rgb(var(--c-accent-soft) / <alpha-value>)' },
+        danger: { DEFAULT: 'rgb(var(--c-danger) / <alpha-value>)', ink: 'rgb(var(--c-danger-ink) / <alpha-value>)', soft: 'rgb(var(--c-danger-soft) / <alpha-value>)' },
+        display: { DEFAULT: 'rgb(var(--c-display) / <alpha-value>)', on: 'rgb(var(--c-on-display) / <alpha-value>)' },
+        // ここから下はシーン・登山デザイン用（テーマで変わらない）
         night: {
           950: '#070B17',
           900: '#0C1224',
@@ -29,11 +40,14 @@ export default {
         rounded: ['"SF Pro Rounded"', 'ui-rounded', '-apple-system', '"Hiragino Maru Gothic ProN"', 'sans-serif'],
       },
       boxShadow: {
+        card: 'var(--shadow-card)',
+        raised: 'var(--shadow-raised)',
         glass: '0 20px 60px -20px rgba(0,0,0,0.55), inset 0 1px 0 0 rgba(255,255,255,0.10)',
         float: '0 24px 48px -12px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08)',
         glow: '0 0 40px -6px var(--glow, rgba(255,138,76,0.6))',
       },
-      borderRadius: { '4xl': '2rem' },
+      // 角丸は 3 段階 + ピル：小さな部品 9px / カード・ボタン 13px / 重ねて出す窓 20px
+      borderRadius: { '4xl': '2rem', chip: '9px', card: '13px', sheet: '20px' },
       spacing: {
         'safe-t': 'env(safe-area-inset-top)',
         'safe-b': 'env(safe-area-inset-bottom)',

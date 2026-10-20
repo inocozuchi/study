@@ -31,7 +31,7 @@ export function SetupSheet({ open, onClose, onStarted }: { open: boolean; onClos
     setName(subjectById(settings.selectedSubjectId)?.name ?? activeSubjects[0]?.name ?? '');
     setMode(settings.mode);
     setMinutes(settings.mode === 'countdown' ? settings.countdownMinutes : settings.pomodoroFocus);
-    setDraft({ season: settings.season, sky: settings.sky });
+    setDraft({ season: settings.season, sky: settings.sky, trainClass: settings.trainClass, trainSound: settings.trainSound });
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const changeMode = (m: TimerMode) => {
@@ -73,8 +73,8 @@ export function SetupSheet({ open, onClose, onStarted }: { open: boolean; onClos
                   onClick={() => setName(s.name)}
                   className="flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors"
                   style={{
-                    background: active ? alpha(s.color, 0.22) : 'rgba(255,255,255,0.06)',
-                    color: active ? s.color : 'rgba(255,255,255,0.65)',
+                    background: active ? alpha(s.color, 0.22) : 'rgb(var(--c-fill))',
+                    color: active ? s.color : 'rgb(var(--c-fg2))',
                     boxShadow: active ? `inset 0 0 0 1.5px ${alpha(s.color, 0.6)}` : 'none',
                   }}
                 >
@@ -84,7 +84,7 @@ export function SetupSheet({ open, onClose, onStarted }: { open: boolean; onClos
               );
             })}
           </div>
-          {isNew && <p className="mt-1.5 text-[12px] text-white/45">「{trimmed}」を新しい科目として追加します</p>}
+          {isNew && <p className="mt-1.5 text-[12px] text-fg-2">「{trimmed}」を新しい科目として追加します</p>}
         </section>
 
         {/* 時間 */}
@@ -100,32 +100,32 @@ export function SetupSheet({ open, onClose, onStarted }: { open: boolean; onClos
             ]}
           />
           {mode !== 'stopwatch' ? (
-            <div className="glass-thin mt-3 rounded-2xl p-4">
+            <div className="group-box mt-3 rounded-2xl p-4">
               <div className="flex items-center justify-between">
-                <motion.button whileTap={{ scale: 0.85 }} transition={springBouncy} aria-label="5分減らす" onClick={() => setMinutes((m) => Math.max(5, m - 5))} className="grid h-11 w-11 place-items-center rounded-full bg-white/10">
+                <motion.button whileTap={{ scale: 0.85 }} transition={springBouncy} aria-label="5分減らす" onClick={() => setMinutes((m) => Math.max(5, m - 5))} className="grid h-11 w-11 place-items-center rounded-full bg-fill">
                   <Minus size={18} />
                 </motion.button>
                 <div className="text-center">
                   <motion.p key={minutes} initial={{ y: -6, opacity: 0.4 }} animate={{ y: 0, opacity: 1 }} transition={springBouncy} className="tabular text-[44px] font-light leading-none tracking-tight">
                     {minutes}
-                    <span className="ml-1 text-[15px] font-medium text-white/50">分</span>
+                    <span className="ml-1 text-[15px] font-medium text-fg-2">分</span>
                   </motion.p>
-                  <p className="mt-1 text-[12px] text-white/45">{mode === 'pomodoro' ? `集中のあと ${settings.pomodoroShortBreak}分 休憩` : '時間がきたら休憩へ'}</p>
+                  <p className="mt-1 text-[12px] text-fg-2">{mode === 'pomodoro' ? `集中のあと ${settings.pomodoroShortBreak}分 休憩` : '時間がきたら休憩へ'}</p>
                 </div>
-                <motion.button whileTap={{ scale: 0.85 }} transition={springBouncy} aria-label="5分増やす" onClick={() => setMinutes((m) => Math.min(180, m + 5))} className="grid h-11 w-11 place-items-center rounded-full bg-white/10">
+                <motion.button whileTap={{ scale: 0.85 }} transition={springBouncy} aria-label="5分増やす" onClick={() => setMinutes((m) => Math.min(180, m + 5))} className="grid h-11 w-11 place-items-center rounded-full bg-fill">
                   <Plus size={18} />
                 </motion.button>
               </div>
               <div className="mt-3 flex gap-2">
                 {PRESETS[mode].map((m) => (
-                  <button key={m} onClick={() => setMinutes(m)} className={`flex-1 rounded-xl py-1.5 text-[13px] font-semibold transition-colors ${minutes === m ? 'bg-white text-night-950' : 'bg-white/[0.06] text-white/60'}`}>
+                  <button key={m} onClick={() => setMinutes(m)} className={`flex-1 rounded-xl py-1.5 text-[13px] font-semibold transition-colors ${minutes === m ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}>
                     {m}分
                   </button>
                 ))}
               </div>
             </div>
           ) : (
-            <p className="glass-thin mt-3 rounded-2xl p-4 text-[13px] text-white/55">時間を決めずに計ります。画面を長押しすると終了できます。</p>
+            <p className="group-box mt-3 rounded-2xl p-4 text-[13px] text-fg-2">時間を決めずに計ります。画面を長押しすると終了できます。</p>
           )}
         </section>
 
@@ -137,7 +137,7 @@ export function SetupSheet({ open, onClose, onStarted }: { open: boolean; onClos
           </section>
         )}
 
-        <motion.button whileTap={{ scale: 0.96 }} transition={springBouncy} disabled={!valid} onClick={start} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-4 text-[17px] font-bold text-night-950 disabled:opacity-40">
+        <motion.button whileTap={{ scale: 0.96 }} transition={springBouncy} disabled={!valid} onClick={start} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-accent py-4 text-[17px] font-bold text-white disabled:opacity-40">
           <Play size={18} fill="currentColor" strokeWidth={0} /> 集中を始める
         </motion.button>
       </div>

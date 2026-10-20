@@ -1,0 +1,49 @@
+/* 列車デザイン専用（クラス名は tr-） */
+
+/* 踏切の警報灯：左右が交互に点滅 */
+@keyframes tr-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.15; }
+}
+.tr-blink { animation: tr-blink 1s steps(1) infinite; }
+.tr-blink-b { animation-delay: -0.5s; }
+
+/* コーヒーの湯気 */
+@keyframes tr-steam {
+  0% { transform: translateY(4px); opacity: 0; }
+  30% { opacity: 0.7; }
+  100% { transform: translateY(-6px); opacity: 0; }
+}
+.tr-steam { animation: tr-steam 3s ease-out infinite; transform-box: fill-box; }
+.tr-reduced .tr-blink, .tr-reduced .tr-steam { animation-play-state: paused; }
+
+/* HUD のボタン：深緑の革に真鍮の縁 */
+.tr-btn {
+  @apply rounded-full font-bold;
+  color: #f6ecd2;
+  background: radial-gradient(120% 120% at 30% 20%, #3f5a4a, #233a2f);
+  box-shadow: inset 0 0 0 2px #c9a86a, inset 0 0 0 3.5px rgba(0, 0, 0, 0.35), 0 6px 14px -6px rgba(0, 0, 0, 0.6);
+}
+
+/* 方向幕（白地の巻き取り幕） */
+.tr-roll {
+  background: linear-gradient(180deg, #f9f7f0, #ece7da);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12), 0 0 0 4px #1d1f22, 0 8px 18px -8px rgba(0, 0, 0, 0.7);
+}
+
+/* マルスの指定席券：うすい緑の地紋 */
+.tr-ticket {
+  background-color: #dcefdc;
+  background-image: repeating-linear-gradient(45deg, rgba(46, 125, 91, 0.09) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(-45deg, rgba(46, 125, 91, 0.09) 0 1px, transparent 1px 5px),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.5), transparent 70%);
+  color: #1f2a24;
+}
+
+/* 硬券：厚紙の生成り */
+.tr-hard {
+  background-color: #f1e3c4;
+  background-image: repeating-linear-gradient(90deg, rgba(150, 110, 60, 0.07) 0 1px, transparent 1px 4px),
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.45), transparent 70%);
+  color: #2d241c;
+}

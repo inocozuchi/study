@@ -2,18 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * 配色（アプリ本体）。泰山木POS と同じ考え方：
+ *   青みのグレーの濃淡を土台に、色は意味のあるところだけ（操作＝青 1 色、危険＝紅 1 色、科目＝科目の色）。
+ *   ライト／ダークは同じ「役割」の変数を置き換えるだけ。値は RGB の 3 つの数（Tailwind で透明度を付けられる）。
+ * 登山デザイン（src/designs/mountain）はシーンの上なので、この変数を使わない。
+ */
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
     -webkit-tap-highlight-color: transparent;
     /* フォント設定（lib/fonts.ts の applyFont）で上書きされる */
     --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", system-ui, sans-serif;
     --font-digits: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+
+    --c-page: 242 243 247;        /* 画面の地。白い面を浮かせる青みのごく薄いグレー */
+    --c-surface: 255 255 255;     /* 浮いている面（カード・シート） */
+    --c-sunken: 247 248 251;      /* 一段へこんだ面（シートの中のまとまり・入力欄） */
+    --c-fill: 239 241 246;        /* 補助ボタン・アイコンの下地 */
+    --c-line: 227 229 236;
+    --c-line-strong: 199 202 212;
+    --c-fg: 28 29 34;             /* 本文（ほぼ黒） */
+    --c-fg2: 107 110 122;         /* 補助の文字 */
+    --c-fg3: 150 154 166;         /* さらに控えめな文字・使えない項目 */
+    --c-accent: 10 108 224;       /* 操作の色（青 1 色） */
+    --c-accent-ink: 10 95 196;    /* 小さい文字・アイコン用の青 */
+    --c-accent-soft: 232 240 253; /* 選択中の淡い面 */
+    --c-danger: 200 50 74;
+    --c-danger-ink: 179 38 60;
+    --c-danger-soft: 252 234 238;
+    --c-display: 28 29 34;        /* いちばん見てほしい数字の濃い面 */
+    --c-on-display: 158 197 255;
+    --scrim: rgba(28, 29, 34, 0.38);
+    --shadow-card: 0 1px 2px rgba(28, 28, 30, 0.04), 0 6px 18px rgba(28, 28, 30, 0.05);
+    --shadow-raised: 0 2px 5px rgba(28, 28, 30, 0.06), 0 12px 28px rgba(28, 28, 30, 0.08);
+  }
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+    --c-page: 14 16 21;
+    --c-surface: 27 30 38;
+    --c-sunken: 20 23 30;
+    --c-fill: 37 41 53;
+    --c-line: 46 50 61;
+    --c-line-strong: 67 73 88;
+    --c-fg: 237 239 244;
+    --c-fg2: 169 176 191;
+    --c-fg3: 112 118 134;
+    --c-accent: 29 111 208;
+    --c-accent-ink: 116 182 255;
+    --c-accent-soft: 30 59 94;
+    --c-danger: 198 59 85;
+    --c-danger-ink: 255 143 162;
+    --c-danger-soft: 51 26 34;
+    --c-display: 5 7 12;
+    --c-on-display: 158 197 255;
+    --scrim: rgba(0, 0, 0, 0.58);
+    /* 暗い面では影が見えないので、ふちにごく細い明るい線を添える */
+    --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.055), 0 1px 2px rgba(0, 0, 0, 0.45), 0 6px 18px rgba(0, 0, 0, 0.38);
+    --shadow-raised: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 2px 5px rgba(0, 0, 0, 0.5), 0 12px 30px rgba(0, 0, 0, 0.45);
   }
   html, body, #root {
     height: 100%;
-    background: #070b17;
-    color: #fff;
+    /* 画面の外側（ホームバーのまわり）もこの色で塗られる。ホームではシーンの色に合わせて変える（lib/theme.ts） */
+    background: var(--edge, rgb(var(--c-page)));
+    color: rgb(var(--c-fg));
     overscroll-behavior: none;
   }
   /* 文書そのものはスクロールさせない（スクロールは各画面の中だけ） */
@@ -21,6 +73,7 @@
   body {
     @apply font-sans antialiased;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
@@ -30,44 +83,79 @@
     user-select: text;
   }
   button { -webkit-tap-highlight-color: transparent; }
-  ::selection { background: rgba(142, 197, 255, 0.35); }
+  ::selection { background: rgb(var(--c-accent) / 0.25); }
+  :focus-visible { outline: 3px solid rgb(var(--c-accent)); outline-offset: 2px; border-radius: 6px; }
 }
 
 @layer components {
-  .glass {
-    @apply border border-white/[0.12] bg-white/[0.07] shadow-glass;
-    backdrop-filter: blur(28px) saturate(170%);
-    -webkit-backdrop-filter: blur(28px) saturate(170%);
+  /* 画面の中に並ぶカード（1 項目＝1 枚の浮いた面） */
+  .card {
+    @apply rounded-card bg-surface shadow-card;
   }
-  .glass-strong {
-    @apply border border-white/[0.12] bg-night-900/75 shadow-float;
-    backdrop-filter: blur(40px) saturate(180%);
-    -webkit-backdrop-filter: blur(40px) saturate(180%);
+  /* シートの中のまとまり（一段へこんだ面） */
+  .group-box {
+    @apply rounded-card bg-sunken;
   }
-  /* シーンの上に直接浮かぶボタン用。明るい昼の空でも沈まないよう暗めに敷く */
-  .glass-scene {
-    @apply border border-white/[0.16] bg-night-950/40 shadow-glass;
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
+  /* 大きな見出し（iOS の大見出し） */
+  .page-title {
+    @apply text-[26px] font-extrabold leading-tight tracking-[-0.015em] text-fg;
   }
-  .glass-thin {
-    @apply border border-white/[0.08] bg-white/[0.05];
-    backdrop-filter: blur(16px) saturate(150%);
-    -webkit-backdrop-filter: blur(16px) saturate(150%);
-  }
+  /* 見出しの上の小さな補足・セクションの見出し */
   .section-label {
-    @apply text-[12px] font-semibold uppercase tracking-[0.08em] text-white/45;
+    @apply text-[13px] font-bold text-fg-2;
   }
   .field {
-    @apply w-full rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-[15px] text-white outline-none transition placeholder:text-white/30 focus:border-white/25 focus:bg-white/[0.09];
+    @apply w-full rounded-card bg-sunken px-4 py-3 text-[16px] text-fg outline-none ring-1 ring-inset ring-line transition placeholder:text-fg-3 focus:ring-2 focus:ring-accent;
+  }
+  /* 主な操作（青 1 色） */
+  .btn-primary {
+    @apply flex items-center justify-center gap-2 rounded-card bg-accent px-4 py-3.5 text-[16px] font-bold text-white transition active:brightness-90 disabled:opacity-40;
+  }
+  /* 補助の操作 */
+  .btn-secondary {
+    @apply flex items-center justify-center gap-2 rounded-card bg-fill px-4 py-3 text-[15px] font-bold text-fg transition active:brightness-95 disabled:opacity-40;
+  }
+  /*
+   * 布の質感：細かい綾織り（斜めの糸）と横糸の重なりを、ごく薄い線のくり返しで描く。静的な CSS なので動かしても軽い。
+   *  .fabric-denim  … インディゴデニム。シーンの上に浮かぶボタン・つまみ（空の明るさに関係なく読める）
+   *  .fabric-canvas … キャンバス地。タブバーなど地の色の上（ライト／ダークの地の色に織り目を足す）
+   *  .stitch        … 内側に一周、ステッチ（破線）を入れる
+   */
+  .fabric-denim {
+    background-color: #24395a;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.18) 0 1px, transparent 1px 4px),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.12));
+    color: #f3f6fb;
+    box-shadow: 0 6px 16px -6px rgba(10, 16, 34, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  .fabric-canvas {
+    background-color: rgb(var(--c-page));
+    background-image:
+      repeating-linear-gradient(0deg, rgb(var(--c-fg) / 0.035) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgb(var(--c-fg) / 0.03) 0 1px, transparent 1px 3px);
+  }
+  .stitch { position: relative; }
+  .stitch::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 1px dashed rgba(255, 255, 255, 0.32);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  .fabric-canvas.stitch::before { border-color: rgb(var(--c-fg) / 0.14); }
+  /* シーンの上（ホーム）に直接浮かぶ丸いボタン・つまみ */
+  .scene-chip {
+    @apply bg-surface text-fg shadow-raised;
   }
 }
 
 @layer utilities {
-  /* アプリの枠。iOS のホーム画面アプリでは高さが画面より短く報告されることがあるので、
-     main.tsx が測った画面の高さ（--app-h）を使う。ふつうのブラウザでは 100% のまま */
-  .app-frame { position: fixed; left: 0; right: 0; top: 0; height: var(--app-h, 100%); }
-  .h-app { height: var(--app-h, 100%); }
+  /* アプリの枠。見えている高さ（100dvh）にそろえ、文書そのものはスクロールさせない */
+  .app-frame { position: fixed; left: 0; right: 0; top: 0; height: 100dvh; overflow: hidden; }
+  .h-app { height: 100dvh; }
   .pt-safe { padding-top: max(env(safe-area-inset-top), 16px); }
   .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 12px); }
   .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -84,8 +172,8 @@ input[type='range'].ios-range {
 input[type='range'].ios-range::-webkit-slider-thumb { -webkit-appearance: none; width: 0; height: 0; }
 input[type='range'].ios-range::-moz-range-thumb { width: 0; height: 0; border: 0; }
 
-input[type='time']::-webkit-calendar-picker-indicator,
-input[type='date']::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.6; }
+:root[data-theme='dark'] input[type='time']::-webkit-calendar-picker-indicator,
+:root[data-theme='dark'] input[type='date']::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.6; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; }

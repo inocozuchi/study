@@ -5,6 +5,8 @@ import type { MeadowPalette, SeasonLook } from '../palette';
 import { HikerRig, type HikerRefs } from '../HikerRig';
 import { Baked } from '../Baked';
 import { DogRig, type DogRefs } from '../DogRig';
+import { HIKER_PALETTES } from '../HikerRig';
+import { tentAt } from '../tents';
 
 export interface MeadowRefs {
   backTrack: HTMLDivElement | null;
@@ -70,8 +72,12 @@ export const MeadowLayer = memo(function MeadowLayer({
   hikerRefs,
   dogRefs,
   hikerBoxRef,
+  hikerLook = 0,
+  tent = 0,
 }: {
   L: StageLayout;
+  hikerLook?: number;
+  tent?: number;
   look: SeasonLook;
   refs: MutableRefObject<MeadowRefs>;
   hikerRefs: MutableRefObject<HikerRefs>;
@@ -154,19 +160,9 @@ export const MeadowLayer = memo(function MeadowLayer({
         className="absolute"
         style={{ left: tentX - 70 * k, top: tentY - 62 * k, width: 140 * k, height: 70 * k, opacity: 0 }}
       >
-        <Baked width={Math.round(140 * k)} height={Math.round(70 * k)}>
+        <Baked width={Math.round(140 * k)} height={Math.round(70 * k)} bakeKey={tent}>
           <svg viewBox="-70 -62 140 70">
-            <g filter="url(#crayon)">
-              <ellipse cx="2" cy="1" rx="48" ry="4" fill="#2A1A0A" opacity="0.2" />
-              <path d="M-44 0 Q-41 -44 0 -48 Q41 -44 46 0 Z" fill="#E7A83A" />
-              <path d="M0 -48 Q41 -44 46 0 L18 0 Q20 -30 0 -48 Z" fill="#C88626" />
-              <path d="M-44 0 Q-41 -44 0 -48 L-6 -46 Q-36 -40 -38 0 Z" fill="#F1C35C" />
-              <path d="M-20 0 Q-18 -30 0 -32 Q16 -30 18 0 Z" fill="#3E8A55" />
-              <path d="M-15 0 Q-13 -24 0 -26 Q12 -24 13 0 Z" fill="#1F3D57" />
-              <path d="M-44 0 Q-41 -44 0 -48 Q41 -44 46 0 Z" stroke="#2E221C" strokeWidth="1.8" fill="none" strokeLinejoin="round" />
-              <path d="M24 -36 l6 -6 M28 -28 l8 -8 M32 -20 l9 -9 M36 -12 l8 -8" stroke="#2E221C" strokeWidth="1" opacity="0.3" strokeLinecap="round" />
-              <path d="M0 -48 L-2 -55 M-38 -6 L-62 2 M42 -6 L64 2" stroke="#4A3626" strokeWidth="1" />
-            </g>
+            <g filter="url(#crayon)">{tentAt(tent).art}</g>
           </svg>
         </Baked>
       </div>
@@ -212,7 +208,7 @@ export const MeadowLayer = memo(function MeadowLayer({
       {/* ハイカー */}
       <div ref={hikerBoxRef} className="absolute left-0 top-0" style={{ transform: `translate3d(${hx - 45 * k}px, ${gy - 118 * k}px, 0)` }}>
         <svg width={105 * k} height={124 * k} viewBox="-45 -118 105 124" className="block overflow-visible">
-          <HikerRig refs={hikerRefs} />
+          <HikerRig refs={hikerRefs} palette={HIKER_PALETTES[hikerLook] ?? HIKER_PALETTES[0]} />
         </svg>
       </div>
 

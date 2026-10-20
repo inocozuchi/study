@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Flame, Mountain, TrendingDown, TrendingUp } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
@@ -31,7 +31,7 @@ export function InsightsScreen() {
   return (
     <div className="mx-auto max-w-xl px-5 pb-40 pt-safe">
       <header className="pt-2">
-        <p className="text-[13px] font-semibold text-white/50">{fmtDateJa(now)}</p>
+        <p className="text-[13px] font-semibold text-fg-2">{fmtDateJa(now)}</p>
         <h1 className="text-[32px] font-bold leading-tight tracking-tight">インサイト</h1>
       </header>
 
@@ -39,21 +39,21 @@ export function InsightsScreen() {
       <GlassCard className="mt-4 overflow-hidden p-5">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-[13px] font-semibold text-white/55">今日の集中</p>
+            <p className="text-[13px] font-semibold text-fg-2">今日の集中</p>
             <p className="tabular mt-1 text-[44px] font-bold leading-none tracking-tight">
               {Math.floor(sum.today / 60)}
-              <span className="text-[20px] font-semibold text-white/55">時間</span>
+              <span className="text-[20px] font-semibold text-fg-2">時間</span>
               {Math.round(sum.today % 60)}
-              <span className="text-[20px] font-semibold text-white/55">分</span>
+              <span className="text-[20px] font-semibold text-fg-2">分</span>
             </p>
-            <p className={`mt-2 flex items-center gap-1 text-[13px] font-semibold ${delta >= 0 ? 'text-moss' : 'text-white/50'}`}>
+            <p className={`mt-2 flex items-center gap-1 text-[13px] font-semibold ${delta >= 0 ? 'text-moss' : 'text-fg-2'}`}>
               {delta >= 0 ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
               昨日より {delta >= 0 ? '+' : '−'}{fmtDuration(Math.abs(delta))}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-[12px] font-semibold text-white/45">獲得標高</p>
-            <p className="tabular text-[20px] font-bold text-sun">+{fmtMeters(sum.today * METERS_PER_MINUTE)}</p>
+            <p className="text-[12px] font-semibold text-fg-2">獲得標高</p>
+            <p className="tabular text-[20px] font-bold text-accent-ink">+{fmtMeters(sum.today * METERS_PER_MINUTE)}</p>
           </div>
         </div>
       </GlassCard>
@@ -93,9 +93,9 @@ export function InsightsScreen() {
 function Tile({ label, value, sub, icon, delay }: { label: string; value: string; sub: string; icon?: ReactNode; delay: number }) {
   return (
     <GlassCard delay={delay} className="p-4">
-      <p className="flex items-center gap-1 text-[12px] font-semibold text-white/50">{icon}{label}</p>
+      <p className="flex items-center gap-1 text-[12px] font-semibold text-fg-2">{icon}{label}</p>
       <p className="tabular mt-1 text-[24px] font-bold tracking-tight">{value}</p>
-      <p className="mt-0.5 truncate text-[11px] text-white/40">{sub}</p>
+      <p className="mt-0.5 truncate text-[11px] text-fg-2">{sub}</p>
     </GlassCard>
   );
 }
@@ -104,7 +104,7 @@ function CardTitle({ title, sub }: { title: string; sub?: string }) {
   return (
     <div className="mb-4">
       <h2 className="text-[17px] font-bold tracking-tight">{title}</h2>
-      {sub && <p className="mt-0.5 text-[12px] text-white/45">{sub}</p>}
+      {sub && <p className="mt-0.5 text-[12px] text-fg-2">{sub}</p>}
     </div>
   );
 }
@@ -127,7 +127,7 @@ function BarsCard({ bars, subjects, period }: { bars: ReturnType<typeof dailyBar
         <AnimatePresence>
           {hb && (
             <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="rounded-xl bg-black/40 px-3 py-2 text-right text-[12px]">
-              <p className="font-semibold text-white/60">{fmtDateJa(hb.date)}</p>
+              <p className="font-semibold text-fg-2">{fmtDateJa(hb.date)}</p>
               <p className="tabular text-[15px] font-bold">{fmtDuration(hb.total)}</p>
             </motion.div>
           )}
@@ -138,8 +138,8 @@ function BarsCard({ bars, subjects, period }: { bars: ReturnType<typeof dailyBar
         {/* グリッド */}
         {[0, 0.5, 1].map((f) => (
           <div key={f} className="pointer-events-none absolute inset-x-0 flex items-center gap-2" style={{ top: H - H * f }}>
-            <div className="h-px flex-1 bg-white/[0.07]" />
-            <span className="tabular w-7 text-right text-[11px] text-white/50">{axisLabel(top * f)}</span>
+            <div className="h-px flex-1 bg-fill" />
+            <span className="tabular w-7 text-right text-[11px] text-fg-2">{axisLabel(top * f)}</span>
           </div>
         ))}
         <div className="absolute bottom-[22px] left-0 right-9 flex items-end" style={{ height: H, gap: period === 'week' ? 10 : 3 }}>
@@ -166,7 +166,7 @@ function BarsCard({ bars, subjects, period }: { bars: ReturnType<typeof dailyBar
                   ))}
                 </motion.div>
                 {(period === 'week' || i % 5 === 4 || isToday) && (
-                  <span className={`absolute -bottom-[20px] left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold ${isToday ? 'text-white' : 'text-white/55'}`}>
+                  <span className={`absolute -bottom-[20px] left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold ${isToday ? 'text-fg' : 'text-fg-2'}`}>
                     {period === 'week' ? weekdayJa(b.date) : b.date.getDate()}
                   </span>
                 )}
@@ -179,15 +179,15 @@ function BarsCard({ bars, subjects, period }: { bars: ReturnType<typeof dailyBar
       {hb && hb.total > 0 && (
         <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[12px]">
           {subjects.filter((s) => hb.bySubject[s.id]).map((s) => (
-            <span key={s.id} className="flex items-center gap-1.5 text-white/70">
+            <span key={s.id} className="flex items-center gap-1.5 text-fg-2">
               <span className="h-2 w-2 rounded-sm" style={{ background: s.color }} />
-              {s.name} <span className="tabular text-white/45">{fmtDuration(hb.bySubject[s.id])}</span>
+              {s.name} <span className="tabular text-fg-2">{fmtDuration(hb.bySubject[s.id])}</span>
             </span>
           ))}
         </div>
       )}
       {!hb && used.length > 1 && (
-        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-white/60">
+        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-fg-2">
           {used.map((s) => (
             <span key={s.id} className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-sm" style={{ background: s.color }} />
@@ -216,7 +216,7 @@ function DonutCard({ dist, subjects }: { dist: Record<string, number>; subjects:
     <GlassCard className="mt-3 p-5" delay={0.08}>
       <CardTitle title="科目別の配分" sub="どの山にどれだけ登ったか" />
       {total === 0 ? (
-        <p className="py-6 text-center text-[13px] text-white/45">この期間の記録はまだありません</p>
+        <p className="py-6 text-center text-[13px] text-fg-2">この期間の記録はまだありません</p>
       ) : (
         <div className="flex flex-col items-center gap-5 min-[440px]:flex-row">
           <div className="relative h-[150px] w-[150px] shrink-0">
@@ -250,9 +250,9 @@ function DonutCard({ dist, subjects }: { dist: Record<string, number>; subjects:
             </svg>
             <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
               <div>
-                <p className="text-[11px] font-semibold text-white/45">{activeRow ? activeRow.s.name : '合計'}</p>
+                <p className="text-[11px] font-semibold text-fg-2">{activeRow ? activeRow.s.name : '合計'}</p>
                 <p className="tabular text-[18px] font-bold">{fmtDuration(activeRow ? activeRow.m : total, true)}</p>
-                {activeRow && <p className="tabular text-[11px] text-white/50">{Math.round((activeRow.m / total) * 100)}%</p>}
+                {activeRow && <p className="tabular text-[11px] text-fg-2">{Math.round((activeRow.m / total) * 100)}%</p>}
               </div>
             </div>
           </div>
@@ -268,11 +268,11 @@ function DonutCard({ dist, subjects }: { dist: Record<string, number>; subjects:
                   onClick={() => setActive(active === s.id ? null : s.id)}
                   className={`flex cursor-pointer items-center gap-2 text-[13px] transition-opacity ${active && active !== s.id ? 'opacity-40' : ''}`}
                 >
-                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-white" style={{ background: s.color }}>
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-fg" style={{ background: s.color }}>
                     <SubjectIcon subject={s} size={13} />
                   </span>
                   <span className="min-w-0 flex-1 truncate font-medium">{s.name}</span>
-                  <span className="tabular text-white/50">{Math.round((m / total) * 100)}%</span>
+                  <span className="tabular text-fg-2">{Math.round((m / total) * 100)}%</span>
                   <span className="tabular w-14 text-right font-semibold">{fmtDuration(m, true)}</span>
                 </li>
               ))}
@@ -301,49 +301,42 @@ function HeatmapCard({ grid }: { grid: number[][] }) {
       <div className="flex items-start justify-between">
         <CardTitle title="集中しやすい時間帯" sub={peak.v > 0 ? `直近 4 週間 · いちばん登れているのは ${peak.h}時台` : '直近 4 週間'} />
         {cell && (
-          <div className="rounded-xl bg-black/40 px-3 py-2 text-right text-[12px]">
-            <p className="font-semibold text-white/60">{WEEK[cell[0]]}曜 {cell[1]}時台</p>
-            <p className="tabular text-[15px] font-bold">{fmtDuration(grid[cell[0]][cell[1]] / 4)}<span className="text-[11px] font-medium text-white/50"> /週</span></p>
+          <div className="rounded-chip bg-sunken px-3 py-2 text-right text-[12px]">
+            <p className="font-semibold text-fg-2">{WEEK[cell[0]]}曜 {cell[1]}時台</p>
+            <p className="tabular text-[15px] font-bold">{fmtDuration(grid[cell[0]][cell[1]] / 4)}<span className="text-[11px] font-medium text-fg-2"> /週</span></p>
           </div>
         )}
       </div>
-      <div className="flex gap-2" onMouseLeave={() => setCell(null)}>
-        <div className="grid grid-rows-7 gap-[3px] pt-px">
-          {WEEK.map((w) => (
-            <span key={w} className="flex h-full items-center text-[11px] font-semibold text-white/55">{w}</span>
-          ))}
-        </div>
-        <div className="flex-1">
-          <div className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${HOURS.length}, minmax(0, 1fr))` }}>
-            {grid.map((row, d) =>
-              HOURS.map((h) => {
-                const v = row[h];
-                const a = v > 0 ? 0.18 + 0.82 * Math.pow(v / max, 0.75) : 0;
-                const on = cell && cell[0] === d && cell[1] === h;
-                return (
-                  <button
-                    key={`${d}-${h}`}
-                    aria-label={`${WEEK[d]}曜 ${h}時台 ${Math.round(v)}分`}
-                    onMouseEnter={() => setCell([d, h])}
-                    onClick={() => setCell(on ? null : [d, h])}
-                    className="aspect-square rounded-[4px] transition-transform hover:scale-110"
-                    style={{ background: v > 0 ? `rgba(57,135,229,${a})` : 'rgba(255,255,255,0.05)', boxShadow: on ? '0 0 0 1.5px #fff' : 'none' }}
-                  />
-                );
-              }),
-            )}
-          </div>
-          {/* 時刻ラベルは各列の中央に置く */}
-          <div className="relative mt-1.5 h-3.5 text-[11px] text-white/50">
-            {[6, 9, 12, 15, 18, 21].map((h) => (
-              <span key={h} className="tabular absolute -translate-x-1/2" style={{ left: `${((HOURS.indexOf(h) + 0.5) / HOURS.length) * 100}%` }}>
-                {h}
-              </span>
-            ))}
-          </div>
-        </div>
+      {/* 曜日・時刻のラベルもマスと同じグリッドに置き、行と列が必ずそろうようにする */}
+      <div className="grid gap-[3px]" style={{ gridTemplateColumns: `auto repeat(${HOURS.length}, minmax(0, 1fr))` }} onMouseLeave={() => setCell(null)}>
+        {grid.map((row, d) => (
+          <Fragment key={d}>
+            <span className="flex items-center pr-1.5 text-[11px] font-semibold text-fg-2">{WEEK[d]}</span>
+            {HOURS.map((h) => {
+              const v = row[h];
+              const a = v > 0 ? 0.18 + 0.82 * Math.pow(v / max, 0.75) : 0;
+              const on = cell && cell[0] === d && cell[1] === h;
+              return (
+                <button
+                  key={h}
+                  aria-label={`${WEEK[d]}曜 ${h}時台 ${Math.round(v)}分`}
+                  onMouseEnter={() => setCell([d, h])}
+                  onClick={() => setCell(on ? null : [d, h])}
+                  className="aspect-square rounded-[4px] transition-transform hover:scale-110"
+                  style={{ background: v > 0 ? `rgba(57,135,229,${a})` : 'rgb(var(--c-fill))', boxShadow: on ? '0 0 0 1.5px rgb(var(--c-fg))' : 'none' }}
+                />
+              );
+            })}
+          </Fragment>
+        ))}
+        <span />
+        {HOURS.map((h) => (
+          <span key={h} className="tabular mt-1 whitespace-nowrap text-center text-[11px] text-fg-2">
+            {h % 3 === 0 ? h : ''}
+          </span>
+        ))}
       </div>
-      <div className="mt-3 flex items-center justify-end gap-1.5 text-[11px] text-white/50">
+      <div className="mt-3 flex items-center justify-end gap-1.5 text-[11px] text-fg-2">
         少 {[0.18, 0.4, 0.6, 0.8, 1].map((a) => <span key={a} className="h-2.5 w-2.5 rounded-[3px]" style={{ background: `rgba(57,135,229,${a})` }} />)} 多
       </div>
     </GlassCard>
@@ -364,28 +357,27 @@ function AltitudeCard({ total }: { total: number }) {
 
   return (
     <GlassCard className="relative mt-3 overflow-hidden p-5" delay={0.12}>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 opacity-40" style={{ background: 'linear-gradient(180deg, transparent, rgba(255,210,122,0.12))' }} />
       <div className="relative">
-        <p className="flex items-center gap-1.5 text-[13px] font-semibold text-white/55"><Mountain size={15} className="text-sun" /> これまでの獲得標高</p>
-        <p className="tabular mt-1 text-[40px] font-bold leading-none tracking-tight text-sun">{fmtMeters(meters)}</p>
-        <p className="mt-2 text-[13px] text-white/60">
-          富士山 <span className="tabular font-bold text-white">{fuji.toFixed(1)}</span> 座分 · エベレスト <span className="tabular font-bold text-white">{everest.toFixed(2)}</span> 座分
+        <p className="flex items-center gap-1.5 text-[13px] font-semibold text-fg-2"><Mountain size={15} className="text-accent" /> これまでの獲得標高</p>
+        <p className="tabular mt-1 text-[40px] font-bold leading-none tracking-tight text-accent-ink">{fmtMeters(meters)}</p>
+        <p className="mt-2 text-[13px] text-fg-2">
+          富士山 <span className="tabular font-bold text-fg">{fuji.toFixed(1)}</span> 座分 · エベレスト <span className="tabular font-bold text-fg">{everest.toFixed(2)}</span> 座分
         </p>
         <div className="mt-4">
           <div className="flex justify-between text-[12px]">
-            <span className="text-white/50">次の目標</span>
-            <span className="font-semibold">{target.name} <span className="tabular text-white/45">{fmtMeters(target.meters)}</span></span>
+            <span className="text-fg-2">次の目標</span>
+            <span className="font-semibold">{target.name} <span className="tabular text-fg-2">{fmtMeters(target.meters)}</span></span>
           </div>
-          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/10">
-            <motion.div className="h-full rounded-full bg-gradient-to-r from-sun/60 to-sun" initial={{ width: 0 }} animate={{ width: `${p * 100}%` }} transition={springSoft} />
+          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-fill">
+            <motion.div className="h-full rounded-full bg-accent"initial={{ width: 0 }} animate={{ width: `${p * 100}%` }} transition={springSoft} />
           </div>
-          <p className="tabular mt-1 text-right text-[11px] text-white/40">あと {fmtMeters(target.meters - meters)}（{fmtDuration((target.meters - meters) / METERS_PER_MINUTE)}）</p>
+          <p className="tabular mt-1 text-right text-[11px] text-fg-2">あと {fmtMeters(target.meters - meters)}（{fmtDuration((target.meters - meters) / METERS_PER_MINUTE)}）</p>
         </div>
         <div className="no-scrollbar -mx-5 mt-3 flex gap-2 overflow-x-auto px-5">
           {LANDMARKS.map((l) => {
             const done = meters >= l.meters;
             return (
-              <span key={l.name} className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${done ? 'bg-sun/15 text-sun' : 'bg-white/[0.05] text-white/40'}`}>
+              <span key={l.name} className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${done ? 'bg-accent-soft text-accent-ink' : 'bg-fill text-fg-2'}`}>
                 {done && <Check size={11} strokeWidth={3} />}
                 {l.name}
                 <span className="tabular font-normal opacity-70">{l.meters.toLocaleString()}</span>

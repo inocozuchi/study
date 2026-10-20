@@ -77,7 +77,7 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
       title={editing ? (kind === 'record' ? '記録を編集' : '予定を編集') : kind === 'record' ? 'あとから記録' : '予定を立てる'}
       subtitle={kind === 'record' ? '電車の中や紙の勉強も、旅の一部に' : 'タイムラインに学習ブロックを置きましょう'}
       action={
-        <Pressable onClick={save} disabled={!valid} className="hit flex h-8 items-center gap-1 rounded-full bg-white px-3.5 text-[13px] font-bold text-night-950">
+        <Pressable onClick={save} disabled={!valid} className="hit flex h-8 items-center gap-1 rounded-full bg-accent px-3.5 text-[13px] font-bold text-white">
           <Check size={14} strokeWidth={3} /> 保存
         </Pressable>
       }
@@ -106,8 +106,8 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
                   onClick={() => setSubjectId(sub.id)}
                   className="flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold transition-colors"
                   style={{
-                    background: active ? alpha(sub.color, 0.22) : 'rgba(255,255,255,0.06)',
-                    color: active ? sub.color : 'rgba(255,255,255,0.65)',
+                    background: active ? alpha(sub.color, 0.22) : 'rgb(var(--c-fill))',
+                    color: active ? sub.color : 'rgb(var(--c-fg2))',
                     boxShadow: active ? `inset 0 0 0 1.5px ${alpha(sub.color, 0.6)}` : 'none',
                   }}
                 >
@@ -116,7 +116,7 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
                 </motion.button>
               );
             })}
-            {activeSubjects.length === 0 && <p className="text-[13px] text-white/50">先にルート画面で科目を追加してください</p>}
+            {activeSubjects.length === 0 && <p className="text-[13px] text-fg-2">先にルート画面で科目を追加してください</p>}
           </div>
         </section>
 

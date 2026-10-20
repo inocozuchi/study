@@ -18,8 +18,8 @@ function isIOS() {
 function Step({ n, children }: { n: number; children: ReactNode }) {
   return (
     <li className="flex gap-3">
-      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/12 text-[12px] font-bold">{n}</span>
-      <span className="min-w-0 flex-1 pt-0.5 text-[14px] leading-relaxed text-white/80">{children}</span>
+      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-fill text-[12px] font-bold">{n}</span>
+      <span className="min-w-0 flex-1 pt-0.5 text-[14px] leading-relaxed text-fg">{children}</span>
     </li>
   );
 }
@@ -40,35 +40,35 @@ export function InstallSheet({ open, onClose }: { open: boolean; onClose: () => 
 
         <section className={ios || !standalone ? '' : 'opacity-60'}>
           <p className="section-label mb-2">iPhone（Safari）</p>
-          <ol className="glass-thin space-y-3.5 rounded-2xl p-4">
+          <ol className="group-box space-y-3.5 rounded-2xl p-4">
             <Step n={1}>Safari でこのページを開きます。</Step>
             <Step n={2}>
-              画面下の <Share size={15} className="mx-0.5 inline -translate-y-px" /> <b className="font-semibold text-white">共有</b> ボタンをタップします。
+              画面下の <Share size={15} className="mx-0.5 inline -translate-y-px" /> <b className="font-semibold text-fg">共有</b> ボタンをタップします。
             </Step>
             <Step n={3}>
-              メニューを上へスクロールして <PlusSquare size={15} className="mx-0.5 inline -translate-y-px" /> <b className="font-semibold text-white">ホーム画面に追加</b> を選びます。
+              メニューを上へスクロールして <PlusSquare size={15} className="mx-0.5 inline -translate-y-px" /> <b className="font-semibold text-fg">ホーム画面に追加</b> を選びます。
             </Step>
             <Step n={4}>
-              <b className="font-semibold text-white">Web アプリとして開く</b> がオンになっているのを確かめて、右上の <b className="font-semibold text-white">追加</b> をタップします。
+              <b className="font-semibold text-fg">Web アプリとして開く</b> がオンになっているのを確かめて、右上の <b className="font-semibold text-fg">追加</b> をタップします。
             </Step>
           </ol>
-          <p className="mt-2 px-1 text-[12px] leading-relaxed text-white/40">ホーム画面に「Focus Trail」のアイコンができます。次からはそこから開いてください。</p>
+          <p className="mt-2 px-1 text-[12px] leading-relaxed text-fg-2">ホーム画面に「Focus Trail」のアイコンができます。次からはそこから開いてください。</p>
         </section>
 
         <section className={!ios || !standalone ? '' : 'opacity-60'}>
           <p className="section-label mb-2">Android（Chrome）</p>
-          <ol className="glass-thin space-y-3.5 rounded-2xl p-4">
+          <ol className="group-box space-y-3.5 rounded-2xl p-4">
             <Step n={1}>Chrome でこのページを開きます。</Step>
             <Step n={2}>
-              右上の <MoreVertical size={15} className="mx-0.5 inline -translate-y-px" /> メニューから <b className="font-semibold text-white">ホーム画面に追加</b>（または <b className="font-semibold text-white">アプリをインストール</b>）を選びます。
+              右上の <MoreVertical size={15} className="mx-0.5 inline -translate-y-px" /> メニューから <b className="font-semibold text-fg">ホーム画面に追加</b>（または <b className="font-semibold text-fg">アプリをインストール</b>）を選びます。
             </Step>
           </ol>
         </section>
 
-        <section className="rounded-2xl bg-sun/10 p-4 text-[13px] leading-relaxed text-white/70">
-          <p className="font-semibold text-sun">記録はホーム画面のアプリごとに保存されます</p>
+        <section className="rounded-card bg-accent-soft p-4 text-[13px] leading-relaxed text-fg-2">
+          <p className="font-bold text-accent-ink">記録はホーム画面のアプリごとに保存されます</p>
           <p className="mt-1">
-            Safari で使った記録と、ホーム画面から開いたアプリの記録は<b className="font-semibold text-white">別々に保存</b>されます（iPhone の仕様）。追加したら、これからはホーム画面のアイコンから使ってください。
+            Safari で使った記録と、ホーム画面から開いたアプリの記録は<b className="font-semibold text-fg">別々に保存</b>されます（iPhone の仕様）。追加したら、これからはホーム画面のアイコンから使ってください。
           </p>
         </section>
       </div>

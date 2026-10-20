@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Music, Settings2 } from 'lucide-react';
+import { ChevronDown, IdCard, Music, Settings2 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { useTimer, type JourneyResult } from '@/store/TimerStore';
 import { Pressable } from '@/components/ui/Pressable';
@@ -9,7 +9,9 @@ import { BreathOverlay } from '@/components/focus/BreathOverlay';
 import { CassettePlayer } from '@/components/audio/CassettePlayer';
 import { TOOL_TABS, ToolsPanel, type ToolTab } from '@/components/tools/ToolsPanel';
 import { SettingsScreen } from './SettingsScreen';
-import { getDesign } from '@/designs';
+import { getDesign, TRAVEL_MODES } from '@/designs';
+import { ModeSheet } from '@/components/profile/ModeSheet';
+import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { streaks, summary } from '@/lib/stats';
 import { dateKey, fmtDuration } from '@/lib/time';
 import { useNow } from '@/hooks/useNow';
@@ -29,6 +31,8 @@ export function HomeScreen({ result, setResult }: Props) {
   const [music, setMusic] = useState(false);
   const [tool, setTool] = useState<ToolTab | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [modeOpen, setModeOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const journeying = timer.phase !== 'idle' || !!timer.journeyStartedAt;
   const design = getDesign(settings.timerDesign);
@@ -69,6 +73,8 @@ export function HomeScreen({ result, setResult }: Props) {
               onMusic={() => setMusic(true)}
               onSettings={() => setSettingsOpen(true)}
               onTool={setTool}
+              onMode={() => setModeOpen(true)}
+              onProfile={() => setProfileOpen(true)}
             />
           </motion.div>
         )}
@@ -79,12 +85,15 @@ export function HomeScreen({ result, setResult }: Props) {
       <CassettePlayer open={music} onClose={() => setMusic(false)} />
       <ToolsPanel tab={tool} onTab={setTool} onClose={() => setTool(null)} />
       <SettingsScreen open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <ModeSheet open={modeOpen} onClose={() => setModeOpen(false)} />
+      <ProfileSheet open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   );
 }
 
-function HomeIdle({ onFocus, onMusic, onSettings, onTool }: { onFocus: () => void; onMusic: () => void; onSettings: () => void; onTool: (t: ToolTab) => void }) {
+function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: { onFocus: () => void; onMusic: () => void; onSettings: () => void; onTool: (t: ToolTab) => void; onMode: () => void; onProfile: () => void }) {
   const { settings, sessions } = useApp();
+  const mode = TRAVEL_MODES.find((m) => m.id === settings.timerDesign);
   // 日付が変わったら「今日」と連続日数を数え直す
   const today = dateKey(useNow(60_000));
   const sum = useMemo(() => summary(sessions), [sessions, today]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -94,25 +103,37 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool }: { onFocus: () => voi
   return (
     <div className="relative mx-auto h-full max-w-xl">
       {/* 上部 */}
-      <div className="flex items-center justify-between px-5 pt-safe">
-        <Pressable onClick={onMusic} aria-label="サウンド" className={`glass-scene mt-1 grid h-10 w-10 place-items-center rounded-full ${settings.bgmPlaying || settings.ambientPlaying ? 'text-ember' : 'text-white/85'}`}>
+      <div className="flex items-center justify-between gap-2 px-5 pt-safe">
+        <Pressable onClick={onMusic} aria-label="サウンド" className={`fabric-denim stitch mt-1 grid h-11 w-11 shrink-0 place-items-center rounded-full ${settings.bgmPlaying || settings.ambientPlaying ? 'text-sun' : ''}`}>
           <Music size={18} />
         </Pressable>
-        <Pressable onClick={onSettings} aria-label="設定" className="glass-scene mt-1 grid h-10 w-10 place-items-center rounded-full text-white">
-          <Settings2 size={18} />
+        {/* 旅のモード（登山 / 列車 / 航空） */}
+        <Pressable onClick={onMode} aria-label={`旅のモード：${mode?.mode.name}`} className="fabric-denim stitch mt-1 flex h-11 items-center gap-1.5 rounded-full pl-3.5 pr-3 text-[14px] font-bold">
+          <span className="text-[17px] leading-none">{mode?.emoji}</span>
+          {mode?.mode.name}
+          <ChevronDown size={15} strokeWidth={2.6} className="opacity-80" />
         </Pressable>
+        <div className="flex shrink-0 gap-2">
+          <Pressable onClick={onProfile} aria-label="旅のパス" className="fabric-denim stitch mt-1 grid h-11 w-11 place-items-center rounded-full">
+            <IdCard size={18} />
+          </Pressable>
+          <Pressable onClick={onSettings} aria-label="設定" className="fabric-denim stitch mt-1 grid h-11 w-11 place-items-center rounded-full">
+            <Settings2 size={18} />
+          </Pressable>
+        </div>
       </div>
 
       {/* 挨拶 */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={springSoft} className="px-6 pt-5">
-        <h1 className="text-[30px] font-bold leading-tight tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
+        {/* シーンの上なので、外観（ライト／ダーク）に関係なく白い文字 */}
+        <h1 className="text-[30px] font-bold leading-tight tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,0,0,0.35)]">
           やあ！{settings.userName}、
           <br />
-          <span className="text-[21px] font-semibold text-white/90">前へ進む準備はいい？</span>
+          <span className="text-[21px] font-semibold text-white/95">前へ進む準備はいい？</span>
         </h1>
         <div className="mt-3 flex flex-wrap gap-1.5">
           {[`今日 ${fmtDuration(sum.today, true)}`, `🔥 ${st.current}日連続`].map((c) => (
-            <span key={c} className="tabular rounded-full border border-white/10 bg-black/35 px-2.5 py-1 text-[12px] font-semibold text-white backdrop-blur-md">
+            <span key={c} className="fabric-denim stitch tabular rounded-full px-3 py-1.5 text-[12px] font-bold">
               {c}
             </span>
           ))}
@@ -120,10 +141,10 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool }: { onFocus: () => voi
       </motion.div>
 
       {/* サイドのツールタブ */}
-      <motion.nav initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ ...springBouncy, delay: 0.15 }} className="glass-scene absolute right-3 top-[30%] flex flex-col gap-1 rounded-full p-1.5" aria-label="ツール">
-        {TOOL_TABS.map(({ key, label, icon: Icon, color }) => (
-          <Pressable key={key} scale={0.85} onClick={() => onTool(key)} aria-label={label} className="grid h-11 w-11 place-items-center rounded-full bg-white/[0.08]">
-            <Icon size={19} color={color} strokeWidth={2.2} />
+      <motion.nav initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ ...springBouncy, delay: 0.15 }} className="fabric-denim stitch absolute right-3 top-[30%] flex flex-col gap-1 rounded-full p-1.5" aria-label="ツール">
+        {TOOL_TABS.map(({ key, label, icon: Icon }) => (
+          <Pressable key={key} scale={0.85} onClick={() => onTool(key)} aria-label={label} className="relative z-10 grid h-11 w-11 place-items-center rounded-full bg-white/10">
+            <Icon size={19} strokeWidth={2.2} />
           </Pressable>
         ))}
       </motion.nav>
@@ -143,7 +164,7 @@ function FocusButton({ onClick }: { onClick: () => void }) {
       {[0, 1].map((i) => (
         <motion.span
           key={i}
-          className="absolute inset-0 rounded-full border border-white/40"
+          className="absolute inset-0 rounded-full border border-white/50"
           animate={{ scale: [1, 1.3], opacity: [0.6, 0] }}
           transition={{ duration: 3.2, repeat: Infinity, delay: i * 1.6, ease: 'easeOut' }}
         />

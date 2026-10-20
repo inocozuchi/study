@@ -59,8 +59,17 @@ export type SkyOverride = 'auto' | 'clock' | 'dawn' | 'day' | 'sunset' | 'night'
 /** 旅の季節（シーンの配色・木々・舞うものが変わる） */
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter' | 'sakura';
 
+/** 外観：端末に合わせる / ライト / ダーク */
+export type Appearance = 'system' | 'light' | 'dark';
+
 /** 文字のフォント（lib/fonts.ts の FONTS） */
 export type FontId = 'ud' | 'system' | 'noto' | 'rounded' | 'maru' | 'hand' | 'mincho';
+
+/** 旅のモード。'flight'（航空）は準備中（カードだけ） */
+export type TravelMode = 'mountain' | 'train' | 'flight';
+/** タイマーのデザインとして選べるモード */
+export type TimerDesignId = Exclude<TravelMode, 'flight'>;
+export type TrainClass = 'local' | 'express';
 
 export interface Settings {
   pomodoroFocus: number;
@@ -69,7 +78,6 @@ export interface Settings {
   longBreakEvery: number;
   countdownMinutes: number;
   mode: TimerMode;
-  deepFocus: boolean;
   wakeLock: boolean;
   chime: boolean;
   /** 内蔵（合成）の環境音の音量 */
@@ -92,9 +100,26 @@ export interface Settings {
   bgmVolume: number;
   /** 集中開始時の深呼吸 */
   breathing: boolean;
-  /** タイマーのデザイン（現在は登山のみ） */
-  timerDesign: 'mountain';
+  /** 旅のモード（タイマーのデザイン）。航空は準備中で選べない */
+  timerDesign: TimerDesignId;
+  /** 目標（列車の「行き先」、飛行機の DESTINATION）。空なら「目標」 */
+  goal: string;
+  /** 出発駅（列車のきっぷ）。空なら「はじまり」 */
+  departure: string;
+  /** 列車：普通 / 特急 */
+  trainClass: TrainClass;
+  /** 列車の走行音（public/sounds/train.*） */
+  trainSound: boolean;
+  /** 登山：ハイカーの服（0..2） */
+  hikerLook: number;
+  /** 登山：テント（0..2） */
+  tentStyle: number;
   font: FontId;
+  appearance: Appearance;
+  /** Google カレンダー：OAuth クライアント ID（端末ごと。lib/googleCalendar の BUILTIN_CLIENT_ID があれば不要） */
+  googleClientId: string;
+  /** Google カレンダー：表示しないカレンダーの ID */
+  googleHiddenCalendars: string[];
 }
 
 export type TimerPhase = 'idle' | 'focus' | 'break';
@@ -119,8 +144,6 @@ export interface ActiveTimer {
   /** 旅（集中開始〜長押しで終了まで）の開始時刻と、記録済みの集中 ms */
   journeyStartedAt?: number | null;
   journeyFocusMs?: number;
-  /** ディープ集中：画面を離れた時刻（アプリが閉じられても復帰時に判定できるよう保存） */
-  hiddenAt?: number | null;
 }
 
 /** ノート（その日の振り返り） */

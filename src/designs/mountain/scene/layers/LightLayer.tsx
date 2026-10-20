@@ -9,47 +9,13 @@ export interface LightRefs {
   alert: HTMLDivElement | null;
 }
 
-const GRAIN =
-  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.45  0 0 0 0 0.4  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")";
-
-/** Layer 6：差し込む光、焚き火の発光、舞う光の粒・花びら、紙のような質感 */
-export const LightLayer = memo(function LightLayer({ L, day, refs }: { L: StageLayout; day: number; refs: MutableRefObject<LightRefs> }) {
+/** Layer 6：焚き火の発光、舞う光の粒・花びら */
+export const LightLayer = memo(function LightLayer({ L, refs }: { L: StageLayout; refs: MutableRefObject<LightRefs> }) {
   const { W, H, k } = L;
   const fx = L.fireX;
   const fy = L.ground(fx);
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      {/* ゴッドレイ（右上から斜めに） */}
-      <div className="absolute inset-0" style={{ opacity: day * 0.9, transition: 'opacity 2s', mixBlendMode: 'screen' }}>
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(120% 70% at 92% -5%, rgba(255,236,190,0.42), rgba(255,236,190,0) 60%)' }} />
-        {[
-          { r: 28, w: 9, o: 0.5, d: 0 },
-          { r: 36, w: 5, o: 0.35, d: -2 },
-          { r: 44, w: 12, o: 0.28, d: -4 },
-          { r: 53, w: 6, o: 0.32, d: -1 },
-          { r: 62, w: 10, o: 0.2, d: -3 },
-        ].map((ray, i) => (
-          <div
-            key={i}
-            className="ft-ray absolute"
-            style={{
-              right: '-10%',
-              top: '-12%',
-              width: `${ray.w}vmax`,
-              height: '150vmax',
-              transformOrigin: '50% 0',
-              transform: `rotate(${ray.r}deg)`,
-              background: `linear-gradient(180deg, rgba(255,240,205,${ray.o}) 0%, rgba(255,240,205,${ray.o * 0.4}) 45%, rgba(255,240,205,0) 80%)`,
-              // 縁のぼかしはマスクで作る（filter: blur は毎フレーム計算になる）
-              WebkitMaskImage: 'linear-gradient(90deg, transparent, #000 50%, transparent)',
-              maskImage: 'linear-gradient(90deg, transparent, #000 50%, transparent)',
-              willChange: 'opacity',
-              animationDelay: `${ray.d}s`,
-            }}
-          />
-        ))}
-      </div>
-
       {/* 焚き火（夜でも暗くならないよう、ティントより上で描く） */}
       <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${W} ${H}`}>
         <defs>
@@ -60,7 +26,7 @@ export const LightLayer = memo(function LightLayer({ L, day, refs }: { L: StageL
           </radialGradient>
         </defs>
         <g ref={(el) => { refs.current.fire = el; }} opacity="0">
-          <circle ref={(el) => { refs.current.glow = el; }} cx={fx} cy={fy - 10 * k} r={90 * k} fill="url(#ft-fireglow)" style={{ mixBlendMode: 'screen' }} />
+          <circle ref={(el) => { refs.current.glow = el; }} cx={fx} cy={fy - 10 * k} r={90 * k} fill="url(#ft-fireglow)" />
           <g transform={`translate(${fx} ${fy}) scale(${k})`}>
             {/* 石と薪 */}
             {[-12, -6, 0, 6, 12].map((x) => (
@@ -93,9 +59,6 @@ export const LightLayer = memo(function LightLayer({ L, day, refs }: { L: StageL
       >
         !
       </div>
-
-      {/* 紙・絵の具のような粒状感 */}
-      <div className="absolute inset-0 opacity-[0.16] mix-blend-overlay" style={{ backgroundImage: GRAIN, transform: 'translateZ(0)' }} />
     </div>
   );
 });

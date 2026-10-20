@@ -32,10 +32,10 @@ export function RoutesScreen() {
     <div className="mx-auto max-w-xl px-5 pb-40 pt-safe">
       <header className="flex items-end justify-between pt-2">
         <div>
-          <p className="text-[13px] font-semibold text-white/50">{activeSubjects.length} ルート · 登頂 {summited.length}</p>
+          <p className="text-[13px] font-semibold text-fg-2">{activeSubjects.length} ルート · 登頂 {summited.length}</p>
           <h1 className="text-[32px] font-bold leading-tight tracking-tight">山岳ルート</h1>
         </div>
-        <Pressable onClick={() => setEditing(null)} aria-label="ルートを追加" className="grid h-11 w-11 place-items-center rounded-full bg-white text-night-950 shadow-glass">
+        <Pressable onClick={() => setEditing(null)} aria-label="ルートを追加" className="grid h-11 w-11 place-items-center rounded-full bg-accent text-white shadow-raised">
           <Plus size={22} strokeWidth={2.6} />
         </Pressable>
       </header>
@@ -62,8 +62,8 @@ export function RoutesScreen() {
             <GlassCard className="p-6 text-center">
               <p className="text-[32px]">🏔</p>
               <p className="mt-2 text-[15px] font-semibold">まだルートがありません</p>
-              <p className="mt-1 text-[13px] text-white/50">勉強したい科目ごとに、登る山を決めましょう</p>
-              <button onClick={() => setEditing(null)} className="mt-4 rounded-full bg-white px-5 py-2.5 text-[14px] font-bold text-night-950">最初のルートをひらく</button>
+              <p className="mt-1 text-[13px] text-fg-2">勉強したい科目ごとに、登る山を決めましょう</p>
+              <button onClick={() => setEditing(null)} className="mt-4 rounded-full bg-accent px-5 py-2.5 text-[14px] font-bold text-white">最初のルートをひらく</button>
             </GlassCard>
           )}
         </div>
@@ -91,26 +91,27 @@ function RouteCard({ subject, minutes, delay, onClick }: { subject: Subject; min
       <div className="relative h-36">
         <MountainArt stage={stage.index} color={subject.color} progress={prog} summited={!!subject.summitedAt} className="absolute inset-0 h-full w-full" />
         <div className="absolute inset-0 bg-gradient-to-t from-night-950/80 via-night-950/10 to-transparent" />
-        <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-semibold backdrop-blur-md">
+        {/* 絵の上の文字は外観に関係なく白 */}
+        <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-bold text-white">
           <span className="h-1.5 w-1.5 rounded-full" style={{ background: stage.tint }} />
           {subject.summitedAt ? '登頂済み' : `${stage.index + 1}. ${stage.name}`}
         </div>
-        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
+        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.35)]">
           <div className="flex items-center gap-2.5">
             <SubjectBadge subject={subject} size={38} />
             <div className="leading-tight">
               <p className="text-[17px] font-bold">{subject.name}</p>
-              <p className="text-[12px] text-white/65">{subject.mountainName}</p>
+              <p className="text-[12px] text-white/75">{subject.mountainName}</p>
             </div>
           </div>
-          <p className="tabular text-[22px] font-bold tracking-tight">{Math.floor(prog * 100)}<span className="text-[13px] text-white/60">%</span></p>
+          <p className="tabular text-[22px] font-bold tracking-tight">{Math.floor(prog * 100)}<span className="text-[13px] text-white/75">%</span></p>
         </div>
       </div>
       <div className="px-4 py-3">
-        <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+        <div className="h-1.5 overflow-hidden rounded-full bg-fill">
           <motion.div className="h-full rounded-full" style={{ background: `linear-gradient(90deg, ${alpha(subject.color, 0.6)}, ${subject.color})` }} initial={{ width: 0 }} animate={{ width: `${prog * 100}%` }} transition={{ ...springSoft, delay: delay + 0.15 }} />
         </div>
-        <div className="tabular mt-2 flex justify-between text-[12px] text-white/50">
+        <div className="tabular mt-2 flex justify-between text-[12px] text-fg-2">
           <span>標高 {fmtMeters(minutes * METERS_PER_MINUTE)} / {fmtMeters(subject.targetMinutes * METERS_PER_MINUTE)}</span>
           <span>{subject.summitedAt ? `${fmtDateJa(subject.summitedAt, false)} 登頂` : `登頂まであと ${fmtDuration(remain)}`}</span>
         </div>
@@ -134,7 +135,7 @@ function RouteDetailSheet({ subject, onClose, onEdit }: { subject: Subject | nul
       title={live?.mountainName}
       subtitle={live && `${live.name} · 累計 ${fmtDuration(minutes)}`}
       action={live && (
-        <Pressable onClick={() => onEdit(live)} className="flex h-8 items-center gap-1 rounded-full bg-white/10 px-3 text-[13px] font-semibold">
+        <Pressable onClick={() => onEdit(live)} className="flex h-8 items-center gap-1 rounded-full bg-fill px-3 text-[13px] font-semibold">
           <Pencil size={13} /> 編集
         </Pressable>
       )}
@@ -162,12 +163,12 @@ function RouteDetailSheet({ subject, onClose, onEdit }: { subject: Subject | nul
                     {reached && !current ? <Check size={15} strokeWidth={3} /> : i + 1}
                   </span>
                   <div className="min-w-0 pt-0.5">
-                    <p className={`text-[15px] font-semibold ${reached ? '' : 'text-white/45'}`}>
+                    <p className={`text-[15px] font-semibold ${reached ? '' : 'text-fg-2'}`}>
                       {st.name}
                       {current && <span className="ml-2 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: alpha(live.color, 0.2), color: live.color }}>現在地</span>}
                     </p>
-                    <p className="mt-0.5 text-[12px] text-white/45">{st.description}</p>
-                    <p className="tabular mt-0.5 text-[11px] text-white/35">{i === 4 ? `登頂 ${fmtDuration(live.targetMinutes)}` : `${fmtDuration(needMin)} から`} · {fmtMeters(needMin * METERS_PER_MINUTE)}</p>
+                    <p className="mt-0.5 text-[12px] text-fg-2">{st.description}</p>
+                    <p className="tabular mt-0.5 text-[11px] text-fg-3">{i === 4 ? `登頂 ${fmtDuration(live.targetMinutes)}` : `${fmtDuration(needMin)} から`} · {fmtMeters(needMin * METERS_PER_MINUTE)}</p>
                   </div>
                 </li>
               );
@@ -177,10 +178,10 @@ function RouteDetailSheet({ subject, onClose, onEdit }: { subject: Subject | nul
           {recent.length > 0 && (
             <>
               <p className="section-label mb-2 mt-5">最近の足あと</p>
-              <div className="glass-thin divide-y divide-white/[0.06] rounded-2xl">
+              <div className="group-box divide-y divide-line rounded-2xl">
                 {recent.map((s) => (
                   <div key={s.id} className="flex items-center justify-between px-4 py-2.5 text-[13px]">
-                    <span className="text-white/70">{fmtDateJa(s.start, false)} {fmtTime(s.start)}{s.note ? ` · ${s.note}` : ''}</span>
+                    <span className="text-fg-2">{fmtDateJa(s.start, false)} {fmtTime(s.start)}{s.note ? ` · ${s.note}` : ''}</span>
                     <span className="tabular font-semibold">{fmtDuration(s.minutes)}</span>
                   </div>
                 ))}
@@ -195,8 +196,7 @@ function RouteDetailSheet({ subject, onClose, onEdit }: { subject: Subject | nul
                 setSubject(live.id);
                 onClose();
               }}
-              className="mt-5 w-full rounded-2xl py-3.5 text-[15px] font-bold text-night-950"
-              style={{ background: live.color }}
+              className="btn-primary mt-5 w-full"
             >
               このルートを次の登山に選ぶ
             </motion.button>
@@ -230,18 +230,18 @@ function Journal({ summited }: { summited: Subject[] }) {
                   <SummitStamp subject={s} size={112} date={s.summitedAt} />
                 </motion.div>
                 <p className="mt-2 text-[15px] font-bold">{s.mountainName}</p>
-                <p className="text-[12px] text-white/50">{s.name}</p>
-                <p className="tabular mt-1.5 text-[11px] text-white/40">{fmtDateJa(s.summitedAt!, false)} · {fmtDuration(minutesBySubject[s.id] ?? 0, true)}</p>
+                <p className="text-[12px] text-fg-2">{s.name}</p>
+                <p className="tabular mt-1.5 text-[11px] text-fg-2">{fmtDateJa(s.summitedAt!, false)} · {fmtDuration(minutesBySubject[s.id] ?? 0, true)}</p>
               </GlassCard>
             ))}
           </div>
         ) : (
-          <GlassCard className="p-5 text-center text-[13px] text-white/50">最初の登頂で、ここに記念スタンプが押されます</GlassCard>
+          <GlassCard className="p-5 text-center text-[13px] text-fg-2">最初の登頂で、ここに記念スタンプが押されます</GlassCard>
         )}
       </section>
 
       <section>
-        <SectionTitle>風景図鑑 <span className="ml-1 text-white/35">{maxStage + 1}/5</span></SectionTitle>
+        <SectionTitle>風景図鑑 <span className="ml-1 text-fg-3">{maxStage + 1}/5</span></SectionTitle>
         <div className="space-y-3">
           {STAGES.map((st, i) => {
             const unlocked = i <= maxStage;
@@ -252,14 +252,14 @@ function Journal({ summited }: { summited: Subject[] }) {
                 </div>
                 {!unlocked && (
                   <div className="absolute inset-0 grid place-items-center bg-night-950/40">
-                    <span className="flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1.5 text-[12px] font-semibold text-white/70"><Lock size={13} /> 未踏の風景</span>
+                    <span className="flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5 text-[12px] font-bold text-white"><Lock size={13} /> 未踏の風景</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between px-4 py-3">
                   <div>
-                    <p className="text-[11px] font-semibold text-white/40">No.{i + 1}</p>
+                    <p className="text-[11px] font-semibold text-fg-2">No.{i + 1}</p>
                     <p className="text-[15px] font-semibold">{unlocked ? st.name : '？？？'}</p>
-                    <p className="mt-0.5 text-[12px] text-white/45">{unlocked ? st.description : `いずれかのルートで ${Math.round(st.from * 100)}% まで登ると解放`}</p>
+                    <p className="mt-0.5 text-[12px] text-fg-2">{unlocked ? st.description : `いずれかのルートで ${Math.round(st.from * 100)}% まで登ると解放`}</p>
                   </div>
                 </div>
               </GlassCard>

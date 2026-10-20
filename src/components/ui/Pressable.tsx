@@ -10,7 +10,7 @@ export const Pressable = forwardRef<HTMLButtonElement, HTMLMotionProps<'button'>
       type={type}
       whileTap={{ scale }}
       transition={spring}
-      className={`select-none outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-40 ${className}`}
+      className={`select-none outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-40 ${className}`}
       {...rest}
     />
   ),
