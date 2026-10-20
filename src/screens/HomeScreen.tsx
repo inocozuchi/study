@@ -1,31 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Copy, Music, RefreshCw, Settings2, Users } from 'lucide-react';
+import { Music, Settings2 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { useTimer, type JourneyResult } from '@/store/TimerStore';
-import { Segmented } from '@/components/ui/Segmented';
 import { Pressable } from '@/components/ui/Pressable';
-import { Sheet } from '@/components/ui/Sheet';
 import { SetupSheet } from '@/components/home/SetupSheet';
 import { BreathOverlay } from '@/components/focus/BreathOverlay';
 import { CassettePlayer } from '@/components/audio/CassettePlayer';
 import { TOOL_TABS, ToolsPanel, type ToolTab } from '@/components/tools/ToolsPanel';
 import { SettingsScreen } from './SettingsScreen';
 import { getDesign } from '@/designs';
-import { multiSupported, randomRoomCode, type Peer } from '@/hooks/useMultiRoom';
 import { streaks, summary } from '@/lib/stats';
 import { dateKey, fmtDuration } from '@/lib/time';
 import { useNow } from '@/hooks/useNow';
 import { springBouncy, springSoft } from '@/lib/motion';
-import type { StudyStyle } from '@/types';
 
 interface Props {
   result: JourneyResult | null;
   setResult: (r: JourneyResult | null) => void;
-  peers: Peer[];
 }
 
-export function HomeScreen({ result, setResult, peers }: Props) {
+export function HomeScreen({ result, setResult }: Props) {
   const { settings, updateSettings } = useApp();
   const t = useTimer();
   const { timer } = t;
@@ -34,7 +29,6 @@ export function HomeScreen({ result, setResult, peers }: Props) {
   const [music, setMusic] = useState(false);
   const [tool, setTool] = useState<ToolTab | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [room, setRoom] = useState(false);
 
   const journeying = timer.phase !== 'idle' || !!timer.journeyStartedAt;
   const design = getDesign(settings.timerDesign);
@@ -66,7 +60,7 @@ export function HomeScreen({ result, setResult, peers }: Props) {
           </motion.div>
         ) : journeying ? (
           <motion.div key="hud" className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
-            <design.Session onMusic={() => setMusic(true)} onEnd={end} companions={peers.map((p) => p.name)} />
+            <design.Session onMusic={() => setMusic(true)} onEnd={end} />
           </motion.div>
         ) : (
           <motion.div key="home" className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.3 } }}>
@@ -75,8 +69,6 @@ export function HomeScreen({ result, setResult, peers }: Props) {
               onMusic={() => setMusic(true)}
               onSettings={() => setSettingsOpen(true)}
               onTool={setTool}
-              onRoom={() => setRoom(true)}
-              peers={peers}
             />
           </motion.div>
         )}
@@ -87,21 +79,17 @@ export function HomeScreen({ result, setResult, peers }: Props) {
       <CassettePlayer open={music} onClose={() => setMusic(false)} />
       <ToolsPanel tab={tool} onTab={setTool} onClose={() => setTool(null)} />
       <SettingsScreen open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-      <RoomSheet open={room} onClose={() => setRoom(false)} peers={peers} />
     </div>
   );
 }
 
-function HomeIdle({ onFocus, onMusic, onSettings, onTool, onRoom, peers }: { onFocus: () => void; onMusic: () => void; onSettings: () => void; onTool: (t: ToolTab) => void; onRoom: () => void; peers: Peer[] }) {
-  const { settings, updateSettings, sessions } = useApp();
+function HomeIdle({ onFocus, onMusic, onSettings, onTool }: { onFocus: () => void; onMusic: () => void; onSettings: () => void; onTool: (t: ToolTab) => void }) {
+  const { settings, sessions } = useApp();
   // 日付が変わったら「今日」と連続日数を数え直す
   const today = dateKey(useNow(60_000));
   const sum = useMemo(() => summary(sessions), [sessions, today]); // eslint-disable-line react-hooks/exhaustive-deps
   const st = useMemo(() => streaks(sessions), [sessions, today]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const setStyle = (s: StudyStyle) => {
-    updateSettings(s === 'multi' && !settings.roomCode ? { style: s, roomCode: randomRoomCode() } : { style: s });
-  };
 
   return (
     <div className="relative mx-auto h-full max-w-xl">
@@ -140,27 +128,8 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onRoom, peers }: { onF
         ))}
       </motion.nav>
 
-      {/* 下部：ソロ/マルチ + 集中ボタン */}
-      <div className="absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+100px)] flex flex-col items-center gap-3.5 px-6">
-        <div className="flex w-full max-w-[260px] flex-col items-center gap-2">
-          <Segmented<StudyStyle>
-            value={settings.style}
-            onChange={setStyle}
-            className="w-full !bg-black/35 shadow-glass"
-            size="sm"
-            options={[
-              { value: 'solo', label: 'ソロ' },
-              { value: 'multi', label: 'マルチ' },
-            ]}
-          />
-          <AnimatePresence>
-            {settings.style === 'multi' && (
-              <motion.button initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} onClick={onRoom} className="glass-scene flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold text-white/85">
-                <Users size={13} /> 部屋 {settings.roomCode} · {peers.length + 1}人
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </div>
+      {/* 下部：集中ボタン */}
+      <div className="absolute inset-x-0 bottom-[calc(max(env(safe-area-inset-bottom),8px)+84px)] flex flex-col items-center px-6">
         <FocusButton onClick={onFocus} />
       </div>
     </div>
@@ -190,78 +159,5 @@ function FocusButton({ onClick }: { onClick: () => void }) {
         <span className="text-[26px] font-bold tracking-[0.12em]">集中</span>
       </motion.button>
     </div>
-  );
-}
-
-function RoomSheet({ open, onClose, peers }: { open: boolean; onClose: () => void; peers: Peer[] }) {
-  const { settings, updateSettings } = useApp();
-  const [code, setCode] = useState(settings.roomCode);
-  const [copied, setCopied] = useState(false);
-  useEffect(() => {
-    if (open) setCode(settings.roomCode);
-  }, [open, settings.roomCode]);
-  const statusLabel = { idle: '準備中', focus: '集中中', break: '休憩中' } as const;
-
-  return (
-    <Sheet open={open} onClose={onClose} title="マルチ" subtitle="同じ部屋コードで一緒に集中しよう">
-      <div className="space-y-4 pb-5">
-        <div className="glass-thin rounded-2xl p-4">
-          <p className="section-label">部屋コード</p>
-          <div className="mt-2 flex gap-2">
-            <input
-              className="field tabular text-center text-[22px] font-semibold uppercase tracking-[0.3em]"
-              value={code}
-              maxLength={8}
-              onChange={(e) => {
-                const c = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                setCode(c);
-                // 閉じ方によっては blur が来ないので、入力のたびに保存する
-                if (c.trim()) updateSettings({ roomCode: c.trim() });
-              }}
-              aria-label="部屋コード"
-            />
-            <Pressable aria-label="新しいコード" onClick={() => { const c = randomRoomCode(); setCode(c); updateSettings({ roomCode: c }); }} className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/10">
-              <RefreshCw size={18} />
-            </Pressable>
-            <Pressable
-              aria-label="コピー"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(code);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1500);
-                } catch {
-                  /* noop */
-                }
-              }}
-              className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/10"
-            >
-              <Copy size={18} />
-            </Pressable>
-          </div>
-          <p className="mt-2 text-[12px] leading-relaxed text-white/45">
-            {copied ? 'コピーしました ✓ ' : ''}
-            {multiSupported ? 'この端末の別のタブやウィンドウで同じコードを開くと、一緒に集中できます。' : 'このブラウザはマルチに対応していません。'}
-          </p>
-        </div>
-        <div className="glass-thin divide-y divide-white/[0.06] overflow-hidden rounded-2xl">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-ember/20 text-[15px]">🧭</span>
-            <span className="flex-1 text-[15px] font-semibold">{settings.userName}（あなた）</span>
-          </div>
-          {peers.map((p) => (
-            <div key={p.id} className="flex items-center gap-3 px-4 py-3">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-summit/20 text-[15px]">🎒</span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-semibold">{p.name}</span>
-                <span className="block text-[12px] text-white/45">{statusLabel[p.status]}{p.subject ? ` · ${p.subject}` : ''}</span>
-              </span>
-              <span className={`h-2.5 w-2.5 rounded-full ${p.status === 'focus' ? 'bg-moss' : p.status === 'break' ? 'bg-sun' : 'bg-white/30'}`} />
-            </div>
-          ))}
-          {peers.length === 0 && <p className="px-4 py-4 text-center text-[13px] text-white/40">まだ誰もいません</p>}
-        </div>
-      </div>
-    </Sheet>
   );
 }

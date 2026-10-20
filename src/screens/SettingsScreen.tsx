@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Bell, ChevronLeft, ChevronRight, Clock, Coffee, Database, Eye, Leaf, Mountain, Music, PlusSquare, Repeat, RotateCcw, Smartphone, Sun, Timer, Trash2,
+  Bell, ChevronLeft, ChevronRight, Clock, Coffee, Database, Eye, Leaf, Mountain, Music, PlusSquare, Repeat, Smartphone, Sun, Timer, Trash2,
   Type, User, Volume2, Waves, Wind,
 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
@@ -70,13 +70,15 @@ function ambientKey(mix: AmbientMix) {
 
 /** iOS 設定アプリ風。ホームの歯車から右へスライドして開く */
 export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { settings, updateSettings, resetToSample, clearAll } = useApp();
+  const { settings, updateSettings, clearAll } = useApp();
   const tracks = useBgmTracks();
+  const currentTrack = tracks.find((t) => t.id === settings.bgmTrackId) ?? tracks[0];
   const [picker, setPicker] = useState<PickerKey | null>(null);
   const [nameOpen, setNameOpen] = useState(false);
   const [installOpen, setInstallOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [name, setName] = useState('');
-  const [confirm, setConfirm] = useState<null | 'sample' | 'clear'>(null);
+  const [confirm, setConfirm] = useState(false);
   const set = <K extends keyof Settings>(k: K) => (v: Settings[K]) => updateSettings({ [k]: v } as Partial<Settings>);
 
   const minutes = (list: number[]): PickerOption<number>[] => list.map((m) => ({ value: m, label: `${m}分` }));
@@ -85,7 +87,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
     short: { title: '休憩時間', value: settings.pomodoroShortBreak, options: minutes([3, 5, 7, 10, 15]), onSelect: (v) => updateSettings({ pomodoroShortBreak: Number(v) }) },
     long: { title: '長い休憩', value: settings.pomodoroLongBreak, options: minutes([10, 15, 20, 25, 30]), onSelect: (v) => updateSettings({ pomodoroLongBreak: Number(v) }) },
     every: { title: '長い休憩の間隔', value: settings.longBreakEvery, options: [2, 3, 4, 5, 6].map((n) => ({ value: n, label: `${n}回の登りごと` })), onSelect: (v) => updateSettings({ longBreakEvery: Number(v) }) },
-    bgm: { title: 'BGM', value: settings.bgmTrack, options: tracks.map((t, i) => ({ value: i, label: t.title, detail: `${t.subtitle} · ${t.detail}`, icon: t.kind === 'file' ? '🎵' : '📼' })), onSelect: (v) => updateSettings({ bgmTrack: Number(v) }) },
+    bgm: { title: 'BGM', value: currentTrack?.id ?? '', options: tracks.map((t) => ({ value: t.id, label: t.title, detail: t.subtitle, icon: '🎵' })), onSelect: (v) => updateSettings({ bgmTrackId: String(v) }) },
     ambient: {
       title: '環境音',
       value: ambientKey(settings.ambient),
@@ -138,7 +140,14 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
     <>
       <AnimatePresence>
         {open && (
-          <motion.div className="fixed inset-0 z-40 overflow-y-auto bg-night-950 text-white" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springSheet}>
+          <motion.div
+            onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 4)}
+            className="fixed inset-x-0 top-0 h-app z-40 overflow-y-auto bg-night-950 text-white" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springSheet}>
+            {/* ステータスバーの下：スクロールしたときだけぼかす */}
+            <div
+              className="pointer-events-none sticky top-0 z-10 -mb-[env(safe-area-inset-top)] h-[env(safe-area-inset-top)] border-b border-white/[0.06] bg-night-950/60 backdrop-blur-xl transition-opacity duration-200"
+              style={{ opacity: scrolled ? 1 : 0 }}
+            />
             <div className="mx-auto max-w-xl px-4 pb-16 pt-safe">
               <button onClick={onClose} className="-ml-1 mt-1 flex items-center gap-0.5 py-2 text-[16px] font-medium text-summit">
                 <ChevronLeft size={22} /> ホーム
@@ -167,9 +176,9 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                 <Row icon={<Wind size={16} />} color="#5EA8B8" title="集中前の深呼吸" right={<Toggle checked={settings.breathing} onChange={set('breathing')} color="#34C759" label="深呼吸" />} />
               </Group>
 
-              <Group title="音楽設定" footer="音楽・環境音はすべてブラウザ内でリアルタイムに合成しています。">
+              <Group title="音楽設定" footer="BGM は public/bgm に置いた曲が流れます（曲の終わりで途切れず繰り返します）。環境音はブラウザ内で合成しています。">
                 <Row icon={<Music size={16} />} color="#3E86C9" title="集中を始めたら音楽を流す" right={<Toggle checked={settings.bgmOnFocus} onChange={set('bgmOnFocus')} color="#34C759" label="音楽を流す" />} />
-                <Row icon={<span className="text-[15px]">📼</span>} color="#4A3A34" title="BGM" value={tracks[settings.bgmTrack % tracks.length]?.title} onClick={() => setPicker('bgm')} />
+                <Row icon={<span className="text-[15px]">📼</span>} color="#4A3A34" title="BGM" value={currentTrack?.title ?? 'まだありません'} onClick={tracks.length ? () => setPicker('bgm') : undefined} />
                 <Row
                   icon={<Volume2 size={16} />}
                   color="#6E5D52"
@@ -203,8 +212,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
               </Group>
 
               <Group title="データ" footer="記録はこの端末のブラウザ内に保存されます。ホーム画面に追加するとアプリとして全画面で使えます。">
-                <Row icon={<RotateCcw size={16} />} color="#199e70" title="サンプルデータに戻す" onClick={() => setConfirm('sample')} />
-                <Row icon={<Trash2 size={16} />} color="#D9573B" title="すべての記録を消去" onClick={() => setConfirm('clear')} />
+                <Row icon={<Trash2 size={16} />} color="#D9573B" title="すべての記録を消去" onClick={() => setConfirm(true)} />
                 <Row icon={<Database size={16} />} color="#6E5D52" title="Focus Trail" value="v2.0" />
               </Group>
             </div>
@@ -230,21 +238,21 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
         </form>
       </Sheet>
 
-      <Modal open={!!confirm} onClose={() => setConfirm(null)}>
+      <Modal open={confirm} onClose={() => setConfirm(false)}>
         <div className="p-6 text-center">
-          <p className="text-[19px] font-bold">{confirm === 'sample' ? 'サンプルデータに戻しますか？' : 'すべての記録を消去しますか？'}</p>
-          <p className="mt-2 text-[13px] text-white/55">{confirm === 'sample' ? '今の記録はサンプルで上書きされます。' : 'この操作は取り消せません。'}</p>
+          <p className="text-[19px] font-bold">すべての記録を消去しますか？</p>
+          <p className="mt-2 text-[13px] text-white/55">科目・記録・予定・ノート・ToDo・習慣がすべて消えます。この操作は取り消せません。</p>
           <div className="mt-5 grid grid-cols-2 gap-2">
-            <button onClick={() => setConfirm(null)} className="rounded-2xl bg-white/10 py-3 font-semibold">やめる</button>
+            <button onClick={() => setConfirm(false)} className="rounded-2xl bg-white/10 py-3 font-semibold">やめる</button>
             <button
               onClick={async () => {
-                await (confirm === 'sample' ? resetToSample() : clearAll());
-                setConfirm(null);
+                await clearAll();
+                setConfirm(false);
                 onClose();
               }}
               className="rounded-2xl bg-[#FF5A5F] py-3 font-bold text-white"
             >
-              {confirm === 'sample' ? '戻す' : '消去'}
+              消去
             </button>
           </div>
         </div>

@@ -16,6 +16,8 @@
     color: #fff;
     overscroll-behavior: none;
   }
+  /* 文書そのものはスクロールさせない（スクロールは各画面の中だけ） */
+  html, body { overflow: hidden; }
   body {
     @apply font-sans antialiased;
     -webkit-font-smoothing: antialiased;
@@ -62,6 +64,10 @@
 }
 
 @layer utilities {
+  /* アプリの枠。iOS のホーム画面アプリでは高さが画面より短く報告されることがあるので、
+     main.tsx が測った画面の高さ（--app-h）を使う。ふつうのブラウザでは 100% のまま */
+  .app-frame { position: fixed; left: 0; right: 0; top: 0; height: var(--app-h, 100%); }
+  .h-app { height: var(--app-h, 100%); }
   .pt-safe { padding-top: max(env(safe-area-inset-top), 16px); }
   .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 12px); }
   .no-scrollbar::-webkit-scrollbar { display: none; }

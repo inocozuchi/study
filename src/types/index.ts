@@ -62,8 +62,6 @@ export type Season = 'spring' | 'summer' | 'autumn' | 'winter' | 'sakura';
 /** 文字のフォント（lib/fonts.ts の FONTS） */
 export type FontId = 'ud' | 'system' | 'noto' | 'rounded' | 'maru' | 'hand' | 'mincho';
 
-export type StudyStyle = 'solo' | 'multi';
-
 export interface Settings {
   pomodoroFocus: number;
   pomodoroShortBreak: number;
@@ -81,15 +79,13 @@ export interface Settings {
   /** 挨拶で呼ぶ名前 */
   userName: string;
   season: Season;
-  style: StudyStyle;
-  /** マルチの部屋コード */
-  roomCode: string;
   /** 休憩が終わったら自動で次の登りへ */
   autoContinue: boolean;
   /** 集中を始めたら BGM を流す */
   bgmOnFocus: boolean;
   bgmPlaying: boolean;
-  bgmTrack: number;
+  /** 選んでいる BGM（tracks.json の曲の ID）。null は先頭の曲 */
+  bgmTrackId: string | null;
   bgmVolume: number;
   /** 集中開始時の深呼吸 */
   breathing: boolean;

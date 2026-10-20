@@ -40,7 +40,10 @@ export const LightLayer = memo(function LightLayer({ L, day, refs }: { L: StageL
               transformOrigin: '50% 0',
               transform: `rotate(${ray.r}deg)`,
               background: `linear-gradient(180deg, rgba(255,240,205,${ray.o}) 0%, rgba(255,240,205,${ray.o * 0.4}) 45%, rgba(255,240,205,0) 80%)`,
-              filter: 'blur(8px)',
+              // 縁のぼかしはマスクで作る（filter: blur は毎フレーム計算になる）
+              WebkitMaskImage: 'linear-gradient(90deg, transparent, #000 50%, transparent)',
+              maskImage: 'linear-gradient(90deg, transparent, #000 50%, transparent)',
+              willChange: 'opacity',
               animationDelay: `${ray.d}s`,
             }}
           />
@@ -92,7 +95,7 @@ export const LightLayer = memo(function LightLayer({ L, day, refs }: { L: StageL
       </div>
 
       {/* 紙・絵の具のような粒状感 */}
-      <div className="absolute inset-0 opacity-[0.16] mix-blend-overlay" style={{ backgroundImage: GRAIN }} />
+      <div className="absolute inset-0 opacity-[0.16] mix-blend-overlay" style={{ backgroundImage: GRAIN, transform: 'translateZ(0)' }} />
     </div>
   );
 });

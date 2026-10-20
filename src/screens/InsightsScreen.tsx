@@ -65,7 +65,7 @@ export function InsightsScreen() {
         <Tile
           label="連続学習"
           value={`${streak.current}日`}
-          sub={streak.todayDone ? `最長 ${streak.best}日` : '今日はまだ — 火を絶やさずに'}
+          sub={streak.todayDone ? `最長 ${streak.best}日` : '今日はまだ記録なし'}
           icon={<Flame size={15} className="text-ember" />}
           delay={0.09}
         />
@@ -139,7 +139,7 @@ function BarsCard({ bars, subjects, period }: { bars: ReturnType<typeof dailyBar
         {[0, 0.5, 1].map((f) => (
           <div key={f} className="pointer-events-none absolute inset-x-0 flex items-center gap-2" style={{ top: H - H * f }}>
             <div className="h-px flex-1 bg-white/[0.07]" />
-            <span className="tabular w-7 text-right text-[11px] text-white/50">{Math.round((top * f) / 60)}h</span>
+            <span className="tabular w-7 text-right text-[11px] text-white/50">{axisLabel(top * f)}</span>
           </div>
         ))}
         <div className="absolute bottom-[22px] left-0 right-9 flex items-end" style={{ height: H, gap: period === 'week' ? 10 : 3 }}>
@@ -396,4 +396,12 @@ function AltitudeCard({ total }: { total: number }) {
       </div>
     </GlassCard>
   );
+}
+
+/** グラフの目盛り：1 時間未満は分で（0.5h が 1h に丸まって同じ目盛りが並ばないように） */
+function axisLabel(min: number) {
+  if (min <= 0) return '0';
+  if (min < 60) return `${Math.round(min)}m`;
+  const h = min / 60;
+  return `${Number.isInteger(h) ? h : h.toFixed(1)}h`;
 }

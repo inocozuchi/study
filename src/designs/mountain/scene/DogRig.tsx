@@ -41,7 +41,7 @@ export function DogRig({ refs }: { refs: React.MutableRefObject<DogRefs> }) {
     refs.current[k] = el;
   };
   return (
-    <g filter="url(#crayon-boil)">
+    <g>
       <ellipse cx="0" cy="0.8" rx="17" ry="2" fill="#2A1A0A" opacity="0.16" />
       <g ref={r('body')}>
         <g transform={`translate(${FRONT.x + 2.4} ${FRONT.y})`}><DogLeg id="ff" far r={r} /></g>

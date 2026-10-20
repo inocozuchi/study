@@ -11,7 +11,7 @@ import type { DesignSessionProps } from '../types';
 const HOLD_MS = 1100;
 
 /** 登山デザイン：集中中・休憩中のフルスクリーン HUD。画面のどこでも長押しで旅を終える */
-export function MountainSession({ onMusic, onEnd, companions }: DesignSessionProps) {
+export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
   const t = useTimer();
   const { timer } = t;
   const { subjectById } = useApp();
@@ -96,13 +96,6 @@ export function MountainSession({ onMusic, onEnd, companions }: DesignSessionPro
           <CrayonOutline shape="circle" color="rgba(255,248,234,0.4)" width={1.4} />
         </motion.button>
       </div>
-
-      {/* 仲間 */}
-      {companions.length > 0 && (
-        <div className="pointer-events-none mt-3 flex justify-center">
-          <span className="rounded-full bg-ink/35 px-3 py-1 font-maru text-[12px] font-bold text-paper backdrop-blur-sm">🏕 {companions.join('・')} と一緒に登っています</span>
-        </div>
-      )}
 
       {/* 下部：休憩カード / 長押しヒント */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 px-5 pb-[calc(env(safe-area-inset-bottom)+24px)]">

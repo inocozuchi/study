@@ -85,3 +85,11 @@
 }
 .ft-sway-div { animation: ft-sway-div 8s ease-in-out infinite; transform-origin: 50% 100%; will-change: transform; }
 .ft-reduced .ft-sway-div { animation-play-state: paused; }
+
+/* 前景の草花：帯ごとに根元を支点にゆっくり揺らす */
+@keyframes ft-fg-sway {
+  0%, 100% { transform: skewX(-2.5deg); }
+  50% { transform: skewX(3deg); }
+}
+.ft-fg-sway { animation: ft-fg-sway 4.6s ease-in-out infinite; transform-origin: 50% 100%; will-change: transform; }
+.ft-reduced .ft-fg-sway { animation-play-state: paused; }

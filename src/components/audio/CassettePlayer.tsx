@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bug, ChevronDown, CloudRain, Flame, Pause, Play, SkipBack, SkipForward, Trees, Volume1, Volume2, Waves } from 'lucide-react';
+import { Bug, ChevronDown, Music2, CloudRain, Flame, Pause, Play, SkipBack, SkipForward, Trees, Volume1, Volume2, Waves } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { Toggle } from '@/components/ui/Toggle';
 import { useApp } from '@/store/AppStore';
@@ -29,7 +29,7 @@ function Cassette({ track, spinning }: { track: LibraryTrack; spinning: boolean 
       <div className="absolute inset-x-[7%] top-[9%] h-[40%] rounded-lg bg-white/95 px-3 py-2">
         <div className="h-1.5 w-full rounded-full" style={{ background: c.label }} />
         <p className="mt-1.5 truncate text-center text-[15px] font-bold text-night-950">{track.title}</p>
-        <p className="truncate text-center text-[11px] text-night-950/55">{track.kind === 'file' ? `∞ ${track.subtitle}` : track.subtitle}</p>
+        <p className="truncate text-center text-[11px] text-night-950/55">∞ {track.subtitle}</p>
       </div>
       {/* テープ窓とリール */}
       <div className="absolute inset-x-[17%] bottom-[12%] flex h-[30%] items-center justify-between rounded-full bg-black/35 px-[5%] ring-1 ring-inset ring-white/10">
@@ -58,10 +58,11 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
   const [mixer, setMixer] = useState(false);
   const tracks = useBgmTracks();
   const status = useBgmStatus();
-  const track = tracks[settings.bgmTrack % tracks.length];
+  const index = Math.max(0, tracks.findIndex((t) => t.id === settings.bgmTrackId));
+  const track = tracks[index] as LibraryTrack | undefined;
   const playing = settings.bgmPlaying;
   // 読み込み中はリールを回さない
-  const spinning = playing && (status === 'playing' || status === 'synth');
+  const spinning = playing && status === 'playing';
 
   const setPlaying = (v: boolean) => {
     ambient.unlock();
@@ -69,7 +70,8 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
   };
   const step = (d: number) => {
     ambient.unlock();
-    updateSettings({ bgmTrack: (settings.bgmTrack + d + tracks.length) % tracks.length, bgmPlaying: true });
+    if (!tracks.length) return;
+    updateSettings({ bgmTrackId: tracks[(index + d + tracks.length) % tracks.length].id, bgmPlaying: true });
   };
   const toggleEnv = (k: AmbientChannel) => {
     ambient.unlock();
@@ -81,6 +83,19 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
   return (
     <Sheet open={open} onClose={onClose} title="集中音楽" action={<Toggle checked={playing} onChange={setPlaying} color="#34C759" label="集中音楽" />} maxHeight="92vh">
       <div className="pb-5">
+        {!track ? (
+          // 曲がまだないとき
+          <div className="glass-thin rounded-3xl px-5 py-7 text-center">
+            <Music2 size={30} className="mx-auto text-white/40" />
+            <p className="mt-3 text-[16px] font-semibold">BGM はまだありません</p>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-white/55">
+              曲を追加すると、ここで再生できます。
+              <br />
+              曲の終わりで途切れずに繰り返します。
+            </p>
+          </div>
+        ) : (
+          <>
         {/* 再生カード */}
         <div className="glass-thin rounded-3xl p-4">
           <AnimatePresence mode="popLayout" initial={false}>
@@ -116,9 +131,9 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
         <p className="section-label mb-2 mt-6">曲</p>
         <div className="glass-thin divide-y divide-white/[0.06] overflow-hidden rounded-2xl">
           {tracks.map((tr, i) => {
-            const active = i === settings.bgmTrack % tracks.length;
+            const active = i === index;
             return (
-              <button key={tr.id} onClick={() => { ambient.unlock(); updateSettings({ bgmTrack: i, bgmPlaying: true }); }} className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-white/5">
+              <button key={tr.id} onClick={() => { ambient.unlock(); updateSettings({ bgmTrackId: tr.id, bgmPlaying: true }); }} className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-white/5">
                 <span className="h-7 w-1.5 rounded-full" style={{ background: tr.colors.label }} />
                 <span className="min-w-0 flex-1">
                   <span className={`block text-[15px] ${active ? 'font-semibold' : 'font-medium'}`}>{tr.title}</span>
@@ -135,6 +150,8 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
             );
           })}
         </div>
+          </>
+        )}
 
         {/* 環境音：コントロールセンター風のタイル */}
         <p className="section-label mb-2 mt-6">環境音</p>

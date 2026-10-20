@@ -210,7 +210,8 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     const worker = new Worker(new URL('../timer/timer.worker.ts', import.meta.url), { type: 'module' });
     worker.onmessage = () => {
       const n = Date.now();
-      setNow(n);
+      // 表示は秒単位なので、秒が変わったときだけ再描画する（250ms ごとに全体を描き直さない）
+      setNow((prev) => (Math.floor(prev / 1000) === Math.floor(n / 1000) ? prev : n));
       evaluate(n);
     };
     worker.postMessage({ type: 'start', interval: 250 });

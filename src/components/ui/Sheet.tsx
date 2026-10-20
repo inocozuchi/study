@@ -36,7 +36,7 @@ export function Sheet({ open, onClose, title, subtitle, children, action, maxHei
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <div className="fixed inset-x-0 top-0 h-app z-50 flex items-end justify-center">
           <motion.div
             className="absolute inset-0 bg-black/45"
             initial={{ opacity: 0 }}
@@ -49,7 +49,8 @@ export function Sheet({ open, onClose, title, subtitle, children, action, maxHei
             role="dialog"
             aria-modal
             className="glass-strong relative flex w-full max-w-xl flex-col overflow-hidden rounded-t-[2rem] pb-safe sm:mb-4 sm:rounded-[2rem]"
-            style={{ maxHeight: height }}
+            // ステータスバーの下に潜らないよう、上に余白を残す
+            style={{ maxHeight: `min(${height}, calc(100% - env(safe-area-inset-top) - 12px))` }}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}

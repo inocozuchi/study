@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react';
+import { Baked } from '../Baked';
 import { seeded } from '@/lib/id';
 import type { SeasonLook } from '../palette';
 
@@ -106,21 +107,26 @@ interface TreeSpec {
   h?: number;
 }
 
-/** 1 本ずつ独立した合成レイヤー（div + フィルタ済み SVG）。揺れは div の回転だけなのでフィルタは再計算されない */
-function Tree({ t, look }: { t: TreeSpec; look: SeasonLook }) {
+/** 1 本ずつ独立した合成レイヤー（div + 焼き込んだキャンバス）。揺れは div の回転だけ */
+function Tree({ t, look, seasonKey }: { t: TreeSpec; look: SeasonLook; seasonKey: string }) {
   const th = t.h ?? 320;
-  const w = 170 * t.scale;
-  const hh = (th + 30) * t.scale;
+  // 枝先とフィルタのにじみが切れないよう、少し広めに焼く
+  const vw = 200;
+  const vh = th + 44;
+  const w = Math.round(vw * t.scale);
+  const hh = Math.round(vh * t.scale);
   return (
     <div
       className="ft-sway-div absolute"
       style={{ left: t.x - w / 2, top: t.y - hh, width: w, height: hh, animationDuration: `${t.dur}s`, animationDelay: `${t.delay}s` }}
     >
-      <svg width={w} height={hh} viewBox={`-85 ${-th - 30} 170 ${th + 30}`} className="block overflow-visible">
-        <g filter="url(#crayon)">
-          {t.kind === 'conifer' ? <Conifer seed={t.seed} snow={look.snow} lit={look.coniferLit} /> : <Birch seed={t.seed} h={th} look={look} />}
-        </g>
-      </svg>
+      <Baked width={w} height={hh} bakeKey={seasonKey}>
+        <svg viewBox={`${-vw / 2} ${-vh} ${vw} ${vh}`}>
+          <g filter="url(#crayon)">
+            {t.kind === 'conifer' ? <Conifer seed={t.seed} snow={look.snow} lit={look.coniferLit} /> : <Birch seed={t.seed} h={th} look={look} />}
+          </g>
+        </svg>
+      </Baked>
     </div>
   );
 }
@@ -137,7 +143,7 @@ export const TreeLayer = memo(function TreeLayer({ W, H, look }: { W: number; H:
   ];
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      {trees.map((t, i) => <Tree key={i} t={t} look={look} />)}
+      {trees.map((t, i) => <Tree key={i} t={t} look={look} seasonKey={look.label} />)}
     </div>
   );
 });
