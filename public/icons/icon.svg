@@ -1,26 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#1B2558"/>
-      <stop offset="0.55" stop-color="#6C4280"/>
-      <stop offset="1" stop-color="#F0805E"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22305A"/>
+      <stop offset="1" stop-color="#0A1022"/>
     </linearGradient>
-    <linearGradient id="m" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#2C2438"/>
-      <stop offset="1" stop-color="#0C1224"/>
-    </linearGradient>
-    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#FFE3A8"/>
-      <stop offset="1" stop-color="#FFE3A8" stop-opacity="0"/>
-    </radialGradient>
   </defs>
-  <rect width="512" height="512" fill="url(#sky)"/>
-  <circle cx="256" cy="300" r="150" fill="url(#sun)" opacity="0.8"/>
-  <circle cx="256" cy="300" r="46" fill="#FFE9C2"/>
-  <path d="M0 380 L90 300 L150 330 L230 250 L300 310 L380 260 L512 350 L512 512 L0 512Z" fill="#4A3358" opacity="0.8"/>
-  <path d="M-20 512 L120 400 L200 360 L256 150 L312 360 L392 400 L532 512Z" fill="url(#m)"/>
-  <path d="M256 150 L228 255 L246 240 L256 262 L268 238 L284 255Z" fill="#F4F8FF"/>
-  <path d="M256 150 L256 108" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
-  <path d="M256 108 L296 122 L256 136Z" fill="#FF8A4C"/>
-  <path d="M190 470 Q230 430 210 400 Q250 380 240 340" stroke="#FF8A4C" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="2 16"/>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <!-- 山：二色の三角形ひとつ -->
+  <path d="M92 396 L256 138 L420 396 Z" fill="#F4F7FC"/>
+  <path d="M256 138 L420 396 L292 396 Z" fill="#B7C6E4"/>
+  <!-- 灯り：点ひとつ -->
+  <circle cx="378" cy="138" r="24" fill="#FF8A4C"/>
 </svg>
