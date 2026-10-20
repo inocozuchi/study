@@ -136,6 +136,7 @@ function Shell() {
           animate="center"
           exit="exit"
           transition={springSoft}
+          layoutScroll
           className={`absolute inset-0 ${onHome ? 'overflow-hidden' : 'no-scrollbar overflow-y-auto overscroll-contain'}`}
         >
           {tab === 'trail' && <HomeScreen result={result} setResult={setResult} />}
@@ -159,6 +160,9 @@ function Shell() {
         </div>
         <TabBar tab={tab} onChange={setTab} />
       </div>
+
+      {/* 時刻の帯（白い文字）が明るい画面で読めるよう、ホーム以外のライトモードだけ上端をうっすら暗くする */}
+      <div className={`status-scrim pointer-events-none fixed inset-x-0 top-0 z-[80] ${!onHome || sceneHeld ? '' : 'hidden'}`} aria-hidden />
 
       <SummitModal />
     </div>

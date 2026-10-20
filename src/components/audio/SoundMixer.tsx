@@ -1,15 +1,20 @@
 import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { Bug, CloudRain, Flame, FolderOpen, Music2, Pause, Play, Trees, VolumeX, Waves } from 'lucide-react';
+import { BookOpen, Bird, Bug, Clock, CloudLightning, CloudRain, Coffee, Flame, FolderOpen, Headphones, Keyboard, Music2, PartyPopper, Pause, Play, Snowflake, TrainFront, Trees, VolumeX, Waves, Wind, type LucideIcon } from 'lucide-react';
 import { VolumeSlider } from '@/components/ui/VolumeSlider';
 import { useApp } from '@/store/AppStore';
 import { useBgmTracks } from '@/audio/bgmLibrary';
-import { useAmbientSounds } from '@/audio/ambientLibrary';
+import { useAmbientSounds, type AmbientKind } from '@/audio/ambientLibrary';
 import { ambient } from '@/audio/ambient';
 import { spring } from '@/lib/motion';
 import type { AmbientChannel, AmbientMix } from '@/types';
 
 /** 内蔵（ブラウザ内で合成）の環境音 */
+const KIND_ICON: Record<AmbientKind, LucideIcon> = {
+  storm: CloudLightning, rain: CloudRain, river: Waves, sea: Waves, fire: Flame, insects: Bug, birds: Bird, wind: Wind, forest: Trees,
+  snow: Snowflake, cafe: Coffee, train: TrainFront, book: BookOpen, clock: Clock, keyboard: Keyboard, festival: PartyPopper, other: Headphones,
+};
+
 const BUILTIN: { key: AmbientChannel; label: string; icon: typeof Trees }[] = [
   { key: 'wind', label: '森の風', icon: Trees },
   { key: 'river', label: '川', icon: Waves },
@@ -140,7 +145,7 @@ export function SoundMixer() {
           {sounds.map((s) => (
             <MixerRow
               key={s.id}
-              icon={<span aria-hidden>{s.emoji}</span>}
+              icon={(() => { const I = KIND_ICON[s.kind] ?? Headphones; return <I size={20} strokeWidth={2.2} />; })()}
               title={s.title}
               level={settings.ambientFiles[s.id] ?? 0}
               live={live}

@@ -1,6 +1,4 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Share } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { MIN, pad } from '@/lib/time';
 import { springBouncy, springSoft } from '@/lib/motion';
@@ -25,21 +23,7 @@ export function TrainResult({ result, onContinue }: DesignResultProps) {
   const name = subject?.name ?? '集中';
   const from = originName(settings);
   const to = goalName(settings);
-  const [copied, setCopied] = useState(false);
 
-  const share = async () => {
-    const text = `${date}、${from}から${to}へ。${name}に${spent}乗車しました。 #FocusTrail`;
-    try {
-      if (navigator.share) await navigator.share({ text });
-      else {
-        await navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1800);
-      }
-    } catch {
-      /* 共有をキャンセル */
-    }
-  };
 
   return (
     <div className="absolute inset-0 flex flex-col items-center px-6 pt-safe">
@@ -79,14 +63,10 @@ export function TrainResult({ result, onContinue }: DesignResultProps) {
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...springBouncy, delay: 1.1 }} className="mt-6 flex gap-3">
-        <motion.button whileTap={{ scale: 0.9 }} onClick={share} aria-label="共有" className="tr-btn grid h-12 w-16 place-items-center">
-          <Share size={20} />
-        </motion.button>
         <motion.button whileTap={{ scale: 0.94 }} onClick={onContinue} className="tr-btn px-8 text-[17px]">
           改札を出る
         </motion.button>
       </motion.div>
-      {copied && <p className="mt-2 text-[12px] text-[#F6ECD2]/80">クリップボードにコピーしました</p>}
     </div>
   );
 }

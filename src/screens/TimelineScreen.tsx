@@ -1,11 +1,13 @@
 import { useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { CalendarDays, Check, ChevronLeft, ChevronRight, ExternalLink, MapPin, Moon, Pencil, Play, Plus, RefreshCw, Sunrise, NotebookPen, CalendarPlus } from 'lucide-react';
+import { AnimatePresence, Reorder, motion, useDragControls } from 'framer-motion';
+import { ArrowUpDown, CalendarDays, Check, GripVertical, ChevronLeft, ChevronRight, ExternalLink, MapPin, Moon, Pencil, Play, Plus, RefreshCw, Sunrise, NotebookPen, CalendarPlus } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { useTimer } from '@/store/TimerStore';
 import { useNow } from '@/hooks/useNow';
 import { buildTimeline, type TimelineItem } from '@/components/timeline/buildTimeline';
 import { EntrySheet, draftFromNow, type EntryDraft } from '@/components/timeline/EntrySheet';
+import { DayHoursSheet } from '@/components/timeline/DayHoursSheet';
+import type { PlanBlock, Subject } from '@/types';
 import { Sheet } from '@/components/ui/Sheet';
 import { Pressable } from '@/components/ui/Pressable';
 import { SubjectIcon } from '@/components/ui/SubjectBadge';
@@ -17,8 +19,6 @@ import { addDays, dateKey, fmtClock, fmtDateJa, fmtDuration, fmtTime, minutesOfD
 import { alpha } from '@/lib/subjects';
 import { spring, springSoft } from '@/lib/motion';
 
-const DAY_START = 6 * 60;
-const DAY_END = 24 * 60;
 /** いまの線は操作の青（ほかの色を増やさない） */
 const NOW_COLOR = '#0A6CE0';
 /** Google カレンダーの予定はグレーで描く（色は科目のためにとっておく） */
@@ -28,7 +28,11 @@ type View = 'week' | 'month';
 const VIEW_KEY = 'focus-trail:timeline-view';
 
 export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
-  const { plans, sessions, subjectById, settings } = useApp();
+  const { plans, sessions, subjectById, settings, savePlan } = useApp();
+  const DAY_START = settings.wakeMin;
+  const DAY_END = Math.max(settings.sleepMin, DAY_START + 60);
+  const [hoursOpen, setHoursOpen] = useState(false);
+  const [reorder, setReorder] = useState(false);
   const { startPlanned, timer } = useTimer();
   const now = useNow(30_000);
   const [selected, setSelected] = useState(() => dateKey(now));
@@ -107,6 +111,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
     return m;
   }, [sessions, plans, google.events, subjectById]);
 
+  const dayPlans = useMemo(() => plans.filter((p) => p.date === selected).sort((a, b) => a.startMin - b.startMin), [plans, selected]);
   const nowMin = isToday ? minutesOfDay(now) : null;
   const focusMin = items.filter((i) => i.done && i.kind !== 'event').reduce((a, i) => a + (i.actual?.minutes ?? i.session?.minutes ?? 0), 0);
   const planCount = items.filter((i) => i.kind === 'plan').length;
@@ -257,7 +262,29 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
             ))}
           </div>
         )}
-        <Anchor icon={<Sunrise size={16} />} time="6:00" label="おはよう、旅のはじまり" />
+        {/* 予定が 2 つ以上ある日は並べ替えられる */}
+        {dayPlans.length >= 2 && (
+          <div className="mb-3 flex justify-end">
+            {!reorder && (
+              <button onClick={() => setReorder(true)} className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[12.5px] font-bold text-accent-ink shadow-card">
+                <ArrowUpDown size={14} strokeWidth={2.4} /> 予定を並べ替え
+              </button>
+            )}
+          </div>
+        )}
+        {reorder ? (
+          <ReorderPlans key={selected}
+            plans={dayPlans}
+            subjectById={subjectById}
+            onCancel={() => setReorder(false)}
+            onSave={(next) => {
+              for (const p of next) savePlan(p);
+              setReorder(false);
+            }}
+          />
+        ) : (
+        <>
+        <Anchor icon={<Sunrise size={16} />} time={fmtClock(DAY_START)} label="起床 · おはよう、旅のはじまり" onClick={() => setHoursOpen(true)} />
         {items.length === 0 && (
           <>
             <Gap minutes={0} height={28} fromColor={EVENT_COLOR} toColor={EVENT_COLOR} />
@@ -314,8 +341,12 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
           if (items.length) out.push(<Gap key="g-end" minutes={DAY_END - Math.max(prevEnd, DAY_START)} fromColor={prevColor} toColor={EVENT_COLOR} label />);
           return out;
         })()}
-        <Anchor icon={<Moon size={16} />} time="24:00" label="おやすみ、焚き火を消して" />
+        <Anchor icon={<Moon size={16} />} time={fmtClock(DAY_END)} label="就寝 · おやすみ、焚き火を消して" onClick={() => setHoursOpen(true)} />
+        </>
+        )}
       </motion.div>
+
+      <DayHoursSheet open={hoursOpen} onClose={() => setHoursOpen(false)} />
 
       {/* 追加メニュー */}
       <Sheet open={addMenu} onClose={() => setAddMenu(false)} title="タイムラインに追加" subtitle={fmtDateJa(selDate)}>
@@ -335,7 +366,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
             desc="学習ブロックを置いて、時間になったら出発"
             onClick={() => {
               setAddMenu(false);
-              setDraft(draftFromNow('plan', selected));
+              setDraft(draftFromNow('plan', selected, settings.wakeMin));
             }}
           />
         </div>
@@ -458,17 +489,91 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Anchor({ icon, time, label }: { icon: ReactNode; time: string; label: string }) {
+/** 起床・就寝の印。押すと時刻を変えられる */
+function Anchor({ icon, time, label, onClick }: { icon: ReactNode; time: string; label: string; onClick: () => void }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="ml-1.5 grid h-11 w-[44px] shrink-0 place-items-center rounded-full bg-surface text-fg-2 shadow-card">
+    <button onClick={onClick} className="flex w-full items-center gap-3 rounded-card text-left active:bg-accent-soft" aria-label={`${label} ${time}（時刻を変更）`}>
+      <span className="ml-1.5 grid h-11 w-[44px] shrink-0 place-items-center rounded-full bg-surface text-accent shadow-card">
         {icon}
       </span>
-      <div className="leading-tight">
-        <p className="tabular text-[12px] font-semibold text-fg-2">{time}</p>
-        <p className="text-[14px] font-medium text-fg-2">{label}</p>
+      <span className="min-w-0 flex-1 leading-tight">
+        <span className="tabular block text-[15px] font-extrabold">{time}</span>
+        <span className="block text-[12.5px] font-medium text-fg-2">{label}</span>
+      </span>
+      <span className="mr-1 flex items-center gap-1 rounded-full bg-fill px-2.5 py-1 text-[11.5px] font-bold text-fg-2">
+        <Pencil size={12} /> 変更
+      </span>
+    </button>
+  );
+}
+
+/**
+ * 予定の並べ替え：つまみをドラッグして順番を入れ替える。
+ * 時刻は「最初の予定の開始」から、元の並びの空き時間を保ったまま詰め直す（長さは各予定のまま）。
+ */
+function ReorderPlans({ plans, subjectById, onCancel, onSave }: { plans: PlanBlock[]; subjectById: (id: string | null | undefined) => Subject | undefined; onCancel: () => void; onSave: (p: PlanBlock[]) => void }) {
+  const [order, setOrder] = useState(() => plans.map((p) => p.id));
+  const byId = useMemo(() => new Map(plans.map((p) => [p.id, p])), [plans]);
+  const laid = useMemo(() => {
+    const orig = [...plans].sort((a, b) => a.startMin - b.startMin);
+    const gaps = orig.slice(0, -1).map((p, i) => Math.max(0, orig[i + 1].startMin - p.endMin));
+    let t = orig[0]?.startMin ?? 0;
+    return order.map((id, i) => {
+      const p = byId.get(id)!;
+      const len = p.endMin - p.startMin;
+      const start = i === 0 ? t : t + (gaps[i - 1] ?? 0);
+      t = Math.min(24 * 60, start + len);
+      return { ...p, startMin: start, endMin: t };
+    });
+  }, [order, plans, byId]);
+
+  return (
+    <div>
+      <p className="mb-2 px-1 text-[12.5px] text-fg-2">右のつまみをドラッグして順番を入れ替えます。時刻は自動で詰め直します。</p>
+      <Reorder.Group axis="y" values={order} onReorder={setOrder} className="space-y-2">
+        {laid.map((p) => (
+          <ReorderRow key={p.id} plan={p} subject={subjectById(p.subjectId)} />
+        ))}
+      </Reorder.Group>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <button onClick={onCancel} className="btn-secondary">やめる</button>
+        <button onClick={() => onSave(laid)} className="btn-primary">
+          <Check size={16} strokeWidth={3} /> 完了
+        </button>
       </div>
     </div>
+  );
+}
+
+function ReorderRow({ plan, subject }: { plan: PlanBlock; subject?: Subject }) {
+  const controls = useDragControls();
+  const color = subject?.color ?? EVENT_COLOR;
+  return (
+    <Reorder.Item
+      value={plan.id}
+      dragListener={false}
+      dragControls={controls}
+      className="card flex items-center gap-3 px-3 py-3"
+      whileDrag={{ scale: 1.03, boxShadow: '0 18px 36px -12px rgba(0,0,0,0.35)', zIndex: 10 }}
+    >
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-chip" style={{ background: alpha(color, 0.16), color }}>
+        {subject && <SubjectIcon subject={subject} />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="tabular block text-[12px] font-bold text-fg-2">
+          {fmtClock(plan.startMin)} – {fmtClock(plan.endMin)} · {fmtDuration(plan.endMin - plan.startMin)}
+        </span>
+        <span className="block truncate text-[15px] font-bold">{plan.title || subject?.name || '予定'}</span>
+      </span>
+      <span
+        onPointerDown={(e) => controls.start(e)}
+        className="grid h-11 w-9 shrink-0 cursor-grab touch-none place-items-center rounded-chip text-fg-3 active:bg-fill"
+        aria-label="ドラッグして並べ替え"
+        role="button"
+      >
+        <GripVertical size={20} />
+      </span>
+    </Reorder.Item>
   );
 }
 

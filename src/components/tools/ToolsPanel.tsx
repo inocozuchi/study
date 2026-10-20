@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, ChevronLeft, ChevronRight, ListTodo, NotebookPen, Plus, Sprout, Trash2, X } from 'lucide-react';
+import { Angry, BookOpen, ChevronDown, ChevronLeft, ChevronRight, Droplet, Flower2, Footprints, Frown, Headphones, Laugh, ListTodo, Meh, Moon, Mountain, NotebookPen, PenLine, Plus, Salad, Smile, Sparkles, Sprout, Trash2, X, type LucideIcon } from 'lucide-react';
 import { useNow } from '@/hooks/useNow';
 import { useApp } from '@/store/AppStore';
 import { CheckCircle } from '@/components/ui/CheckCircle';
@@ -81,11 +81,11 @@ export function ToolsPanel({ tab, onTab, onClose }: { tab: ToolTab | null; onTab
 // ───────────── ノート ─────────────
 
 const MOODS = [
-  { v: 1, e: '😣' },
-  { v: 2, e: '😕' },
-  { v: 3, e: '🙂' },
-  { v: 4, e: '😊' },
-  { v: 5, e: '🤩' },
+  { v: 1, Icon: Angry, label: 'つらい' },
+  { v: 2, Icon: Frown, label: 'いまいち' },
+  { v: 3, Icon: Meh, label: 'ふつう' },
+  { v: 4, Icon: Smile, label: 'いい' },
+  { v: 5, Icon: Laugh, label: 'さいこう' },
 ] as const;
 
 function DiaryView() {
@@ -130,8 +130,8 @@ function DiaryView() {
         {MOODS.map((m) => {
           const active = entry?.mood === m.v;
           return (
-            <motion.button key={m.v} whileTap={{ scale: 0.8 }} transition={springBouncy} onClick={() => saveDiary(date, { mood: m.v, text })} aria-label={`気分 ${m.v}`} className={`relative grid h-11 w-11 place-items-center rounded-full text-[22px] transition ${active ? 'bg-accent-soft ring-2 ring-accent' : 'opacity-50 grayscale-[40%]'}`}>
-              {m.e}
+            <motion.button key={m.v} whileTap={{ scale: 0.8 }} transition={springBouncy} onClick={() => saveDiary(date, { mood: m.v, text })} aria-label={`気分：${m.label}`} className={`relative grid h-11 w-11 place-items-center rounded-full transition ${active ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}>
+              <m.Icon size={22} strokeWidth={2} />
             </motion.button>
           );
         })}
@@ -143,7 +143,7 @@ function DiaryView() {
         className="mt-3 min-h-[240px] w-full flex-1 resize-none rounded-2xl border border-line bg-fill p-4 text-[15px] leading-[32px] text-fg outline-none placeholder:text-fg-3 focus:bg-fill"
         style={{ backgroundImage: 'repeating-linear-gradient(180deg, transparent 0 31px, rgb(var(--c-line)) 31px 32px)', backgroundAttachment: 'local', backgroundPositionY: '15px' }}
       />
-      <p className="mt-2 text-right text-[11px] text-fg-3">{saved ? (text ? '保存しました ✓' : '') : '保存中…'} {text.length > 0 && `· ${text.length}文字`}</p>
+      <p className="mt-2 text-right text-[11px] text-fg-3">{saved ? (text ? '保存しました' : '') : '保存中…'} {text.length > 0 && `· ${text.length}文字`}</p>
     </div>
   );
 }
@@ -183,7 +183,7 @@ function TodoView() {
             <TodoRow key={t.id} text={t.text} done={false} onToggle={() => toggleTodo(t.id)} onDelete={() => deleteTodo(t.id)} />
           ))}
         </AnimatePresence>
-        {open.length === 0 && <li className="py-6 text-center text-[13px] text-fg-3">ぜんぶ終わり！🎉</li>}
+        {open.length === 0 && <li className="py-6 text-center text-[13px] text-fg-3">ぜんぶ終わり！</li>}
       </ul>
       {done.length > 0 && (
         <>
@@ -226,7 +226,23 @@ function TodoRow({ text, done, onToggle, onDelete }: { text: string; done: boole
 
 // ───────────── 習慣 ─────────────
 
-const HABIT_EMOJI = ['📖', '⛰️', '🧘', '🏃', '💧', '🌙', '✍️', '🎧', '🥗', '🧹'];
+/** 習慣のアイコン。保存する値はキー（以前の絵文字で保存した習慣も同じアイコンで表示する） */
+const HABIT_ICONS: { key: string; Icon: LucideIcon; legacy: string }[] = [
+  { key: 'book', Icon: BookOpen, legacy: '📖' },
+  { key: 'mountain', Icon: Mountain, legacy: '⛰️' },
+  { key: 'mind', Icon: Flower2, legacy: '🧘' },
+  { key: 'run', Icon: Footprints, legacy: '🏃' },
+  { key: 'water', Icon: Droplet, legacy: '💧' },
+  { key: 'sleep', Icon: Moon, legacy: '🌙' },
+  { key: 'write', Icon: PenLine, legacy: '✍️' },
+  { key: 'listen', Icon: Headphones, legacy: '🎧' },
+  { key: 'food', Icon: Salad, legacy: '🥗' },
+  { key: 'tidy', Icon: Sparkles, legacy: '🧹' },
+];
+function HabitIcon({ value, size = 20 }: { value: string; size?: number }) {
+  const hit = HABIT_ICONS.find((h) => h.key === value || h.legacy === value) ?? HABIT_ICONS[0];
+  return <hit.Icon size={size} strokeWidth={2.1} />;
+}
 
 function streakOf(log: string[]) {
   const set = new Set(log);
@@ -245,7 +261,7 @@ function HabitView() {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
-  const [emoji, setEmoji] = useState(HABIT_EMOJI[0]);
+  const [emoji, setEmoji] = useState(HABIT_ICONS[0].key);
   const today = dateKey(Date.now());
   // 週が変わったら（月曜になったら）作り直す
   const weekStart = startOfWeek(useNow(60_000));
@@ -273,10 +289,10 @@ function HabitView() {
             return (
               <motion.div key={h.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} transition={springSoft} className="group-box rounded-2xl p-3">
                 <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-10 place-items-center rounded-2xl text-[20px]" style={{ background: `${h.color}22` }}>{h.emoji}</span>
+                  <span className="grid h-10 w-10 place-items-center rounded-2xl" style={{ background: `${h.color}22`, color: h.color }}><HabitIcon value={h.emoji} /></span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[15px] font-bold">{h.name}</p>
-                    <p className="text-[11px] text-fg-2">{streak > 0 ? `🔥 ${streak}日連続` : 'きょうから始めよう'} · 累計 {h.log.length}日</p>
+                    <p className="text-[11px] text-fg-2">{streak > 0 ? `${streak}日連続` : 'きょうから始めよう'} · 累計 {h.log.length}日</p>
                   </div>
                   {editing ? (
                     <button onClick={() => deleteHabit(h.id)} aria-label="削除" className="grid h-9 w-9 place-items-center rounded-full bg-danger-soft text-danger-ink">
@@ -323,9 +339,9 @@ function HabitView() {
           >
             <input className="field py-2.5" placeholder="習慣の名前（例：朝の音読）" value={name} onChange={(e) => setName(e.target.value)} maxLength={30} autoFocus />
             <div className="flex flex-wrap gap-1.5">
-              {HABIT_EMOJI.map((e) => (
-                <button type="button" key={e} onClick={() => setEmoji(e)} className={`grid h-9 w-9 place-items-center rounded-xl text-[18px] ${emoji === e ? 'bg-fill' : 'opacity-60'}`}>
-                  {e}
+              {HABIT_ICONS.map(({ key, Icon }) => (
+                <button type="button" key={key} onClick={() => setEmoji(key)} aria-pressed={emoji === key} className={`grid h-9 w-9 place-items-center rounded-xl ${emoji === key ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}>
+                  <Icon size={18} strokeWidth={2.1} />
                 </button>
               ))}
             </div>

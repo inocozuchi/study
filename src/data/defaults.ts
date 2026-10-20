@@ -23,6 +23,8 @@ export const DEFAULT_SETTINGS: Settings = {
   bgmVolume: 0.7,
   breathing: true,
   timerDesign: 'mountain',
+  wakeMin: 6 * 60,
+  sleepMin: 24 * 60,
   goal: '',
   departure: '',
   trainClass: 'local',

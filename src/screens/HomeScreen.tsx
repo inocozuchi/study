@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, IdCard, Music, Settings2 } from 'lucide-react';
+import { ChevronDown, Clock3, Flame, IdCard, Music, Settings2 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { useTimer, type JourneyResult } from '@/store/TimerStore';
 import { Pressable } from '@/components/ui/Pressable';
@@ -109,7 +109,7 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: {
         </Pressable>
         {/* 旅のモード（登山 / 列車 / 航空） */}
         <Pressable onClick={onMode} aria-label={`旅のモード：${mode?.mode.name}`} className="fabric-denim stitch mt-1 flex h-11 items-center gap-1.5 rounded-full pl-3.5 pr-3 text-[14px] font-bold">
-          <span className="text-[17px] leading-none">{mode?.emoji}</span>
+          {mode && <mode.Icon size={18} strokeWidth={2.1} />}
           {mode?.mode.name}
           <ChevronDown size={15} strokeWidth={2.6} className="opacity-80" />
         </Pressable>
@@ -132,9 +132,13 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: {
           <span className="text-[21px] font-semibold text-white/95">前へ進む準備はいい？</span>
         </h1>
         <div className="mt-3 flex flex-wrap gap-1.5">
-          {[`今日 ${fmtDuration(sum.today, true)}`, `🔥 ${st.current}日連続`].map((c) => (
-            <span key={c} className="fabric-denim stitch tabular rounded-full px-3 py-1.5 text-[12px] font-bold">
-              {c}
+          {[
+            { k: 'today', icon: <Clock3 size={13} strokeWidth={2.4} />, text: `今日 ${fmtDuration(sum.today, true)}` },
+            { k: 'streak', icon: <Flame size={13} strokeWidth={2.4} />, text: `${st.current}日連続` },
+          ].map((c) => (
+            <span key={c.k} className="fabric-denim stitch tabular flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold">
+              {c.icon}
+              {c.text}
             </span>
           ))}
         </div>
@@ -150,7 +154,7 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: {
       </motion.nav>
 
       {/* 下部：集中ボタン */}
-      <div className="absolute inset-x-0 bottom-[calc(max(env(safe-area-inset-bottom),8px)+84px)] flex flex-col items-center px-6">
+      <div className="absolute inset-x-0 bottom-[calc(max(env(safe-area-inset-bottom)-6px,14px)+84px)] flex flex-col items-center px-6">
         <FocusButton onClick={onFocus} />
       </div>
     </div>

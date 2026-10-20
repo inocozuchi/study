@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Lock, Pencil, Plus } from 'lucide-react';
+import { Check, Lock, Mountain, Pencil, Plus } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { useTimer } from '@/store/TimerStore';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -60,7 +60,7 @@ export function RoutesScreen() {
           ))}
           {activeSubjects.length === 0 && (
             <GlassCard className="p-6 text-center">
-              <p className="text-[32px]">🏔</p>
+              <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent-soft text-accent-ink"><Mountain size={28} strokeWidth={1.9} /></span>
               <p className="mt-2 text-[15px] font-semibold">まだルートがありません</p>
               <p className="mt-1 text-[13px] text-fg-2">勉強したい科目ごとに、登る山を決めましょう</p>
               <button onClick={() => setEditing(null)} className="mt-4 rounded-full bg-accent px-5 py-2.5 text-[14px] font-bold text-white">最初のルートをひらく</button>

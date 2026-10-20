@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react';
-import { HikerPreview, TentPreview } from './HikerPreview';
+import { CampPreview, HikerPreview, TentPreview } from './HikerPreview';
 import { TENTS } from './scene/tents';
 import type { DesignSetupProps } from '../types';
 
@@ -20,6 +20,9 @@ export function MountainCustomize({ draft, onChange }: DesignSetupProps) {
         ))}
       </div>
       <p className="section-label mb-2 mt-5">テント</p>
+      <div className="mb-2 overflow-hidden rounded-card">
+        <CampPreview tent={tent} />
+      </div>
       <div className="grid grid-cols-3 gap-2">
         {TENTS.map((t, i) => (
           <Cell key={t.name} label={t.name} active={tent === i} onClick={() => onChange({ tentStyle: i })}>
