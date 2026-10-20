@@ -59,6 +59,9 @@ export type SkyOverride = 'auto' | 'clock' | 'dawn' | 'day' | 'sunset' | 'night'
 /** 旅の季節（シーンの配色・木々・舞うものが変わる） */
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter' | 'sakura';
 
+/** 外観：端末に合わせる / ライト / ダーク */
+export type Appearance = 'system' | 'light' | 'dark';
+
 /** 文字のフォント（lib/fonts.ts の FONTS） */
 export type FontId = 'ud' | 'system' | 'noto' | 'rounded' | 'maru' | 'hand' | 'mincho';
 
@@ -95,6 +98,11 @@ export interface Settings {
   /** タイマーのデザイン（現在は登山のみ） */
   timerDesign: 'mountain';
   font: FontId;
+  appearance: Appearance;
+  /** Google カレンダー：OAuth クライアント ID（端末ごと。lib/googleCalendar の BUILTIN_CLIENT_ID があれば不要） */
+  googleClientId: string;
+  /** Google カレンダー：表示しないカレンダーの ID */
+  googleHiddenCalendars: string[];
 }
 
 export type TimerPhase = 'idle' | 'focus' | 'break';

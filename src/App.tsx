@@ -23,6 +23,7 @@ import { hourFor } from '@/lib/scene';
 import { getDesign } from '@/designs';
 import { hideBoot } from '@/lib/boot';
 import { applyFont } from '@/lib/fonts';
+import { applyAppearance } from '@/lib/theme';
 import { useNow } from '@/hooks/useNow';
 import { springSoft } from '@/lib/motion';
 
@@ -45,6 +46,10 @@ function Gate() {
   useEffect(() => {
     if (font) applyFont(font);
   }, [font]);
+  const appearance = ready ? settings.appearance : undefined;
+  useEffect(() => {
+    if (appearance) applyAppearance(appearance);
+  }, [appearance]);
   if (!ready) return <Splash />;
   return (
     <TimerProvider key={epoch}>
@@ -55,7 +60,7 @@ function Gate() {
 
 /** データの読み込み中。見た目は index.html の起動画面（#boot）が担うので、ここは同じ背景だけ */
 function Splash() {
-  return <div className="h-full bg-night-950" />;
+  return <div className="h-full bg-page" />;
 }
 
 const TAB_KEY = 'focus-trail:tab';
@@ -113,15 +118,11 @@ function Shell() {
   useEffect(() => setScrolled(false), [tab]);
 
   return (
-    <div className="app-frame overflow-hidden bg-night-950">
-      <SceneLayer ended={!!result} paused={!onHome} />
-      {/* タイマー以外の画面ではシーンを暗く沈める */}
-      <motion.div
-        className="pointer-events-none absolute inset-0"
-        style={{ background: 'linear-gradient(180deg, rgba(7,11,23,0.82) 0%, rgba(7,11,23,0.9) 45%, rgba(7,11,23,0.95) 100%)' }}
-        animate={{ opacity: onHome ? 0 : 1 }}
-        transition={{ duration: 0.45, ease: 'easeOut' }}
-      />
+    <div className="app-frame overflow-hidden bg-page">
+      {/* タイマーのシーンはホームでだけ見せる。ほかの画面では止めて隠す（地の色の上にカードを並べる） */}
+      <div className="absolute inset-0" style={{ visibility: onHome ? 'visible' : 'hidden' }}>
+        <SceneLayer ended={!!result} paused={!onHome} />
+      </div>
 
       <AnimatePresence mode="popLayout" initial={false} custom={direction}>
         <motion.main
@@ -154,7 +155,7 @@ function Shell() {
 
       {/* ステータスバーの下：スクロールして中身が下に潜ったときだけぼかす */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] border-b border-white/[0.06] bg-night-950/55 backdrop-blur-xl transition-opacity duration-200"
+        className="pointer-events-none absolute inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] border-b border-line bg-page/80 backdrop-blur-xl transition-opacity duration-200"
         style={{ opacity: scrolled && !onHome ? 1 : 0 }}
       />
 

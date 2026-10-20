@@ -17,18 +17,18 @@ export function StrayModal() {
           🧭
         </motion.div>
         <h2 className="mt-4 text-[20px] font-bold tracking-tight">立ち止まりました</h2>
-        <p className="mt-2 text-[14px] leading-relaxed text-white/60">
+        <p className="mt-2 text-[14px] leading-relaxed text-fg-2">
           よそ見検知がオンのまま画面を離れていました
           {stray && (
             <>
-              （約<span className="tabular font-semibold text-white/85">{fmtDuration(Math.max(1, stray.awayMs / MIN))}</span>）。
+              （約<span className="tabular font-semibold text-fg">{fmtDuration(Math.max(1, stray.awayMs / MIN))}</span>）。
               <br />
               離れた時点でタイマーを止めています。
             </>
           )}
         </p>
         <div className="mt-6 grid gap-2">
-          <motion.button whileTap={{ scale: 0.96 }} onClick={() => resolveStray('resume')} className="flex items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-[15px] font-bold text-night-950">
+          <motion.button whileTap={{ scale: 0.96 }} onClick={() => resolveStray('resume')} className="flex items-center justify-center gap-2 rounded-2xl bg-accent py-3.5 text-[15px] font-bold text-white">
             <Footprints size={17} /> 集中に戻る
           </motion.button>
           <motion.button whileTap={{ scale: 0.96 }} onClick={() => resolveStray('break')} className="flex items-center justify-center gap-2 rounded-2xl bg-ember/15 py-3.5 text-[15px] font-semibold text-ember">

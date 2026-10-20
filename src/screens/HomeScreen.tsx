@@ -95,10 +95,10 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool }: { onFocus: () => voi
     <div className="relative mx-auto h-full max-w-xl">
       {/* 上部 */}
       <div className="flex items-center justify-between px-5 pt-safe">
-        <Pressable onClick={onMusic} aria-label="サウンド" className={`glass-scene mt-1 grid h-10 w-10 place-items-center rounded-full ${settings.bgmPlaying || settings.ambientPlaying ? 'text-ember' : 'text-white/85'}`}>
+        <Pressable onClick={onMusic} aria-label="サウンド" className={`scene-chip mt-1 grid h-10 w-10 place-items-center rounded-full ${settings.bgmPlaying || settings.ambientPlaying ? 'text-ember' : 'text-fg'}`}>
           <Music size={18} />
         </Pressable>
-        <Pressable onClick={onSettings} aria-label="設定" className="glass-scene mt-1 grid h-10 w-10 place-items-center rounded-full text-white">
+        <Pressable onClick={onSettings} aria-label="設定" className="scene-chip mt-1 grid h-10 w-10 place-items-center rounded-full text-fg">
           <Settings2 size={18} />
         </Pressable>
       </div>
@@ -108,11 +108,11 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool }: { onFocus: () => voi
         <h1 className="text-[30px] font-bold leading-tight tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
           やあ！{settings.userName}、
           <br />
-          <span className="text-[21px] font-semibold text-white/90">前へ進む準備はいい？</span>
+          <span className="text-[21px] font-semibold text-fg">前へ進む準備はいい？</span>
         </h1>
         <div className="mt-3 flex flex-wrap gap-1.5">
           {[`今日 ${fmtDuration(sum.today, true)}`, `🔥 ${st.current}日連続`].map((c) => (
-            <span key={c} className="tabular rounded-full border border-white/10 bg-black/35 px-2.5 py-1 text-[12px] font-semibold text-white backdrop-blur-md">
+            <span key={c} className="tabular rounded-full border border-line bg-black/35 px-2.5 py-1 text-[12px] font-semibold text-fg backdrop-blur-md">
               {c}
             </span>
           ))}
@@ -120,9 +120,9 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool }: { onFocus: () => voi
       </motion.div>
 
       {/* サイドのツールタブ */}
-      <motion.nav initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ ...springBouncy, delay: 0.15 }} className="glass-scene absolute right-3 top-[30%] flex flex-col gap-1 rounded-full p-1.5" aria-label="ツール">
+      <motion.nav initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ ...springBouncy, delay: 0.15 }} className="scene-chip absolute right-3 top-[30%] flex flex-col gap-1 rounded-full p-1.5" aria-label="ツール">
         {TOOL_TABS.map(({ key, label, icon: Icon, color }) => (
-          <Pressable key={key} scale={0.85} onClick={() => onTool(key)} aria-label={label} className="grid h-11 w-11 place-items-center rounded-full bg-white/[0.08]">
+          <Pressable key={key} scale={0.85} onClick={() => onTool(key)} aria-label={label} className="grid h-11 w-11 place-items-center rounded-full bg-fill">
             <Icon size={19} color={color} strokeWidth={2.2} />
           </Pressable>
         ))}
@@ -143,7 +143,7 @@ function FocusButton({ onClick }: { onClick: () => void }) {
       {[0, 1].map((i) => (
         <motion.span
           key={i}
-          className="absolute inset-0 rounded-full border border-white/40"
+          className="absolute inset-0 rounded-full border border-line"
           animate={{ scale: [1, 1.3], opacity: [0.6, 0] }}
           transition={{ duration: 3.2, repeat: Infinity, delay: i * 1.6, ease: 'easeOut' }}
         />

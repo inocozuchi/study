@@ -41,7 +41,7 @@ export function BreathOverlay({ open, onDone }: { open: boolean; onDone: () => v
             {[1, 0.72, 0.44].map((s, i) => (
               <motion.span
                 key={s}
-                className="absolute rounded-full border border-white/15"
+                className="absolute rounded-full border border-line"
                 style={{ width: `${s * 100}%`, height: `${s * 100}%` }}
                 animate={{ scale: inhale ? 1 : 0.6, opacity: inhale ? 1 : 0.5 }}
                 transition={{ duration: inhale ? INHALE : EXHALE, ease, delay: i * 0.1 }}
@@ -74,7 +74,7 @@ export function BreathOverlay({ open, onDone }: { open: boolean; onDone: () => v
               {inhale ? '吸って…' : '吐いて…'}
             </motion.p>
           </div>
-          <span className="absolute bottom-[calc(env(safe-area-inset-bottom)+28px)] text-[12px] text-white/45">タップでスキップ</span>
+          <span className="absolute bottom-[calc(env(safe-area-inset-bottom)+28px)] text-[12px] text-fg-2">タップでスキップ</span>
         </motion.button>
       )}
     </AnimatePresence>

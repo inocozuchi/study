@@ -25,4 +25,7 @@ export const DEFAULT_SETTINGS: Settings = {
   breathing: true,
   timerDesign: 'mountain',
   font: 'ud',
+  appearance: 'system',
+  googleClientId: '',
+  googleHiddenCalendars: [],
 };

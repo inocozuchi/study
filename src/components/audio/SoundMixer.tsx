@@ -10,16 +10,13 @@ import { spring } from '@/lib/motion';
 import type { AmbientChannel, AmbientMix } from '@/types';
 
 /** 内蔵（ブラウザ内で合成）の環境音 */
-const BUILTIN: { key: AmbientChannel; label: string; icon: typeof Trees; color: string }[] = [
-  { key: 'wind', label: '森の風', icon: Trees, color: '#7FD1A8' },
-  { key: 'river', label: '川', icon: Waves, color: '#5EE0E6' },
-  { key: 'rain', label: '雨', icon: CloudRain, color: '#8EC5FF' },
-  { key: 'insects', label: '虫の音', icon: Bug, color: '#C3A6FF' },
-  { key: 'fire', label: '焚き火', icon: Flame, color: '#FF8A4C' },
+const BUILTIN: { key: AmbientChannel; label: string; icon: typeof Trees }[] = [
+  { key: 'wind', label: '森の風', icon: Trees },
+  { key: 'river', label: '川', icon: Waves },
+  { key: 'rain', label: '雨', icon: CloudRain },
+  { key: 'insects', label: '虫の音', icon: Bug },
+  { key: 'fire', label: '焚き火', icon: Flame },
 ];
-
-/** アップロードした環境音の色（並び順で回す） */
-const FILE_COLORS = ['#8EC5FF', '#7FD1A8', '#FFD27A', '#C3A6FF', '#FF8A4C', '#5EE0E6', '#F49AC1'];
 
 /** ミキサーで音を入れたときの最初の音量 */
 const DEFAULT_LEVEL = 0.6;
@@ -28,7 +25,7 @@ function anyOn(builtin: AmbientMix, files: Record<string, number>) {
   return Object.values(builtin).some((v) => v > 0.01) || Object.values(files).some((v) => v > 0.01);
 }
 
-function MixerRow({ icon, color, title, level, live, onLevel, onToggle }: { icon: ReactNode; color: string; title: string; level: number; live: boolean; onLevel: (v: number) => void; onToggle: () => void }) {
+function MixerRow({ icon, title, level, live, onLevel, onToggle }: { icon: ReactNode; title: string; level: number; live: boolean; onLevel: (v: number) => void; onToggle: () => void }) {
   const set = level > 0.01;
   // 音量が入っていて、環境音が再生中のときだけ「鳴っている」
   const on = set && live;
@@ -41,18 +38,17 @@ function MixerRow({ icon, color, title, level, live, onLevel, onToggle }: { icon
         role="switch"
         aria-checked={on}
         aria-label={`${title}を${on ? '止める' : '鳴らす'}`}
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-[20px] transition-colors"
-        style={{ background: on ? color : 'rgba(255,255,255,0.08)', color: on ? '#0C1224' : 'rgba(255,255,255,0.7)' }}
+        className={`grid h-11 w-11 shrink-0 place-items-center rounded-card text-[20px] transition-colors ${on ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}
       >
         {icon}
       </motion.button>
       <div className="min-w-0 flex-1">
         <div className="mb-1.5 flex items-baseline justify-between gap-2">
-          <span className="truncate text-[14px] font-semibold">{title}</span>
-          <span className="tabular shrink-0 text-[12px] text-white/50">{set ? `${Math.round(level * 100)}%` : 'オフ'}</span>
+          <span className="truncate text-[14px] font-bold">{title}</span>
+          <span className="tabular shrink-0 text-[12px] text-fg-2">{set ? `${Math.round(level * 100)}%` : 'オフ'}</span>
         </div>
         <div className={live ? '' : 'opacity-50'}>
-          <VolumeSlider value={level} onChange={onLevel} color={color} label={`${title}の音量`} />
+          <VolumeSlider value={level} onChange={onLevel} label={`${title}の音量`} />
         </div>
       </div>
     </div>
@@ -98,7 +94,7 @@ export function SoundMixer() {
     <div className="mb-2 flex items-center justify-between px-1">
       <p className="section-label">{title}</p>
       {ambientOn && (
-        <button onClick={toggleAmbient} className="hit flex items-center gap-1 text-[13px] font-semibold text-summit">
+        <button onClick={toggleAmbient} className="hit flex items-center gap-1 text-[13px] font-semibold text-accent-ink">
           {live ? <Pause size={13} fill="currentColor" strokeWidth={0} /> : <Play size={13} fill="currentColor" strokeWidth={0} />}
           {live ? '一時停止' : '再生'}
         </button>
@@ -111,7 +107,7 @@ export function SoundMixer() {
       {/* BGM */}
       <section>
         <p className="section-label mb-2 px-1">BGM</p>
-        <div className="glass-thin overflow-hidden rounded-2xl">
+        <div className="group-box overflow-hidden rounded-2xl">
           <div className="flex items-center gap-3 px-4 py-3">
             <motion.button
               whileTap={{ scale: 0.88 }}
@@ -122,15 +118,14 @@ export function SoundMixer() {
                 updateSettings({ bgmPlaying: !settings.bgmPlaying });
               }}
               aria-label={settings.bgmPlaying ? 'BGM を一時停止' : 'BGM を再生'}
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl transition-colors disabled:opacity-40"
-              style={{ background: settings.bgmPlaying && track ? '#fff' : 'rgba(255,255,255,0.08)', color: settings.bgmPlaying && track ? '#0C1224' : 'rgba(255,255,255,0.75)' }}
+              className={`grid h-11 w-11 shrink-0 place-items-center rounded-card transition-colors disabled:opacity-40 ${settings.bgmPlaying && track ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}
             >
               {settings.bgmPlaying && track ? <Pause size={20} fill="currentColor" strokeWidth={0} /> : <Play size={20} fill="currentColor" strokeWidth={0} className="translate-x-0.5" />}
             </motion.button>
             <div className="min-w-0 flex-1">
               <div className="mb-1.5 flex items-baseline justify-between gap-2">
-                <span className="truncate text-[14px] font-semibold">{track?.title ?? '曲がまだありません'}</span>
-                <span className="tabular shrink-0 text-[12px] text-white/50">{Math.round(settings.bgmVolume * 100)}%</span>
+                <span className="truncate text-[14px] font-bold">{track?.title ?? '曲がまだありません'}</span>
+                <span className="tabular shrink-0 text-[12px] text-fg-2">{Math.round(settings.bgmVolume * 100)}%</span>
               </div>
               <VolumeSlider value={settings.bgmVolume} onChange={(v) => updateSettings({ bgmVolume: v })} label="BGM の音量" disabled={!track} />
             </div>
@@ -141,12 +136,11 @@ export function SoundMixer() {
       {/* 追加した環境音 */}
       <section>
         {ambientHeader('環境音')}
-        <div className="glass-thin divide-y divide-white/[0.06] overflow-hidden rounded-2xl">
-          {sounds.map((s, i) => (
+        <div className="group-box divide-y divide-line overflow-hidden rounded-2xl">
+          {sounds.map((s) => (
             <MixerRow
               key={s.id}
               icon={<span aria-hidden>{s.emoji}</span>}
-              color={FILE_COLORS[i % FILE_COLORS.length]}
               title={s.title}
               level={settings.ambientFiles[s.id] ?? 0}
               live={live}
@@ -155,7 +149,7 @@ export function SoundMixer() {
             />
           ))}
           {sounds.length === 0 && (
-            <div className="flex items-center gap-3 px-4 py-3.5 text-white/55">
+            <div className="flex items-center gap-3 px-4 py-3.5 text-fg-2">
               <FolderOpen size={20} className="shrink-0" />
               <p className="text-[13px] leading-snug">追加した環境音はまだありません。音のファイルを追加すると、ここに並びます。</p>
             </div>
@@ -166,12 +160,11 @@ export function SoundMixer() {
       {/* 内蔵の環境音 */}
       <section>
         <p className="section-label mb-2 px-1">内蔵の環境音</p>
-        <div className="glass-thin divide-y divide-white/[0.06] overflow-hidden rounded-2xl">
-          {BUILTIN.map(({ key, label, icon: Icon, color }) => (
+        <div className="group-box divide-y divide-line overflow-hidden rounded-2xl">
+          {BUILTIN.map(({ key, label, icon: Icon }) => (
             <MixerRow
               key={key}
               icon={<Icon size={20} strokeWidth={2.2} />}
-              color={color}
               title={label}
               level={settings.ambient[key]}
               live={live}
@@ -180,7 +173,7 @@ export function SoundMixer() {
             />
           ))}
         </div>
-        <p className="mt-1.5 px-1 text-[12px] text-white/40">ブラウザの中で合成している音です。</p>
+        <p className="mt-1.5 px-1 text-[12px] text-fg-2">ブラウザの中で合成している音です。</p>
       </section>
 
       <motion.button
@@ -188,12 +181,12 @@ export function SoundMixer() {
         transition={spring}
         disabled={!ambientOn}
         onClick={stopAll}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white/[0.08] py-3 text-[14px] font-semibold text-white/80 disabled:opacity-40"
+        className="btn-secondary w-full text-[14px]"
       >
         <VolumeX size={17} /> 環境音をすべて止める
       </motion.button>
       {!track && (
-        <p className="flex items-center justify-center gap-1.5 text-[12px] text-white/40">
+        <p className="flex items-center justify-center gap-1.5 text-[12px] text-fg-2">
           <Music2 size={13} /> BGM は曲のファイルを追加すると選べます
         </p>
       )}

@@ -63,7 +63,7 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
       title={subject ? 'ルートを編集' : '新しいルート'}
       subtitle="科目ごとに、登る山をひとつ決めましょう"
       action={
-        <Pressable onClick={save} disabled={!valid} className="hit flex h-8 items-center gap-1 rounded-full bg-white px-3.5 text-[13px] font-bold text-night-950">
+        <Pressable onClick={save} disabled={!valid} className="hit flex h-8 items-center gap-1 rounded-full bg-accent px-3.5 text-[13px] font-bold text-white">
           <Check size={14} strokeWidth={3} /> 保存
         </Pressable>
       }
@@ -117,12 +117,12 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
         <section>
           <p className="section-label mb-2">登る山</p>
           <div className="relative">
-            <Mountain size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+            <Mountain size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-fg-2" />
             <input className="field pl-10" placeholder="山の名前" value={mountainName} onChange={(e) => setMountainName(e.target.value)} />
           </div>
           <div className="no-scrollbar -mx-5 mt-2 flex gap-2 overflow-x-auto px-5">
             {MOUNTAIN_SUGGESTIONS.slice(0, 10).map((m) => (
-              <button key={m} onClick={() => setMountainName(m)} className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-medium ${mountainName === m ? 'bg-white text-night-950' : 'bg-white/[0.07] text-white/65'}`}>
+              <button key={m} onClick={() => setMountainName(m)} className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-medium ${mountainName === m ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}>
                 {m}
               </button>
             ))}
@@ -132,29 +132,29 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
         <section>
           <div className="mb-2 flex items-baseline justify-between">
             <p className="section-label">登頂までの目標</p>
-            <p className="tabular text-[13px] text-white/50">標高 {fmtMeters(hours * 60 * METERS_PER_MINUTE)}</p>
+            <p className="tabular text-[13px] text-fg-2">標高 {fmtMeters(hours * 60 * METERS_PER_MINUTE)}</p>
           </div>
-          <div className="glass-thin flex items-center gap-3 rounded-2xl p-3">
+          <div className="group-box flex items-center gap-3 rounded-2xl p-3">
             <input type="range" min={1} max={200} value={hours} onChange={(e) => setHours(Number(e.target.value))} className="flex-1 accent-white" aria-label="目標時間" />
             <span className="tabular w-16 text-right text-[17px] font-bold">{hours}時間</span>
           </div>
           <div className="mt-2 flex gap-2">
             {HOURS.map((h) => (
-              <button key={h} onClick={() => setHours(h)} className={`flex-1 rounded-xl py-1.5 text-[12px] font-semibold ${hours === h ? 'bg-white/20 text-white' : 'bg-white/[0.06] text-white/55'}`}>
+              <button key={h} onClick={() => setHours(h)} className={`flex-1 rounded-xl py-1.5 text-[12px] font-semibold ${hours === h ? 'bg-fill text-fg' : 'bg-fill text-fg-2'}`}>
                 {h}h
               </button>
             ))}
           </div>
-          {subject && <p className="mt-2 text-[12px] text-white/40">これまでに {Math.round(studied / 6) / 10} 時間登っています</p>}
+          {subject && <p className="mt-2 text-[12px] text-fg-2">これまでに {Math.round(studied / 6) / 10} 時間登っています</p>}
         </section>
 
         {subject && (
           <div className="pt-2">
             {confirmDelete ? (
-              <div className="glass-thin flex items-center justify-between gap-3 rounded-2xl p-3">
-                <p className="text-[13px] text-white/70">記録もすべて削除されます</p>
+              <div className="group-box flex items-center justify-between gap-3 rounded-2xl p-3">
+                <p className="text-[13px] text-fg-2">記録もすべて削除されます</p>
                 <div className="flex gap-2">
-                  <button onClick={() => setConfirmDelete(false)} className="rounded-xl bg-white/10 px-3 py-2 text-[13px] font-semibold">やめる</button>
+                  <button onClick={() => setConfirmDelete(false)} className="rounded-xl bg-fill px-3 py-2 text-[13px] font-semibold">やめる</button>
                   <button
                     onClick={() => {
                       deleteSubject(subject.id);

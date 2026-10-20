@@ -1,9 +1,11 @@
 import type { FocusSession, PlanBlock, Subject } from '@/types';
+import type { CalendarEvent } from '@/lib/googleCalendar';
 import { MIN, minutesOfDay, startOfDay } from '@/lib/time';
 
 export interface TimelineItem {
   key: string;
-  kind: 'plan' | 'session';
+  /** event は Google カレンダーの予定（読み取りだけ） */
+  kind: 'plan' | 'session' | 'event';
   startMin: number;
   endMin: number;
   subject?: Subject;
@@ -13,11 +15,19 @@ export interface TimelineItem {
   done: boolean;
   plan?: PlanBlock;
   session?: FocusSession;
+  event?: CalendarEvent;
   /** 予定と一致した実績の時刻 */
   actual?: { startMin: number; endMin: number; minutes: number };
 }
 
-export function buildTimeline(dayKey: string, dayStart: number, plans: PlanBlock[], sessions: FocusSession[], subjectById: (id: string) => Subject | undefined): TimelineItem[] {
+export function buildTimeline(
+  dayKey: string,
+  dayStart: number,
+  plans: PlanBlock[],
+  sessions: FocusSession[],
+  subjectById: (id: string) => Subject | undefined,
+  events: CalendarEvent[] = [],
+): TimelineItem[] {
   const day0 = startOfDay(dayStart);
   const daySessions = sessions.filter((s) => s.start >= day0 && s.start < day0 + 24 * 60 * MIN);
   const dayPlans = plans.filter((p) => p.date === dayKey);
@@ -67,6 +77,15 @@ export function buildTimeline(dayKey: string, dayStart: number, plans: PlanBlock
       done: true,
       session: s,
     });
+  }
+
+  // Google カレンダーの時間のある予定（終日の予定は画面の上に別に並べる）。日をまたぐ予定はこの日の分だけ
+  const dayEnd = day0 + 24 * 60 * MIN;
+  for (const e of events) {
+    if (e.allDay || e.end <= day0 || e.start >= dayEnd) continue;
+    const sm = e.start <= day0 ? 0 : minutesOfDay(e.start);
+    const em = e.end >= dayEnd ? 24 * 60 : minutesOfDay(e.end);
+    items.push({ key: `e-${e.id}`, kind: 'event', startMin: sm, endMin: Math.max(sm + 5, em), title: e.title, done: false, event: e });
   }
 
   return items.sort((a, b) => a.startMin - b.startMin || a.endMin - b.endMin);

@@ -38,7 +38,8 @@ export function Sheet({ open, onClose, title, subtitle, children, action, maxHei
       {open && (
         <div className="fixed inset-x-0 top-0 h-app z-50 flex items-end justify-center">
           <motion.div
-            className="absolute inset-0 bg-black/45"
+            className="absolute inset-0"
+            style={{ background: 'var(--scrim)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -48,7 +49,7 @@ export function Sheet({ open, onClose, title, subtitle, children, action, maxHei
           <motion.div
             role="dialog"
             aria-modal
-            className="glass-strong relative flex w-full max-w-xl flex-col overflow-hidden rounded-t-[2rem] pb-safe sm:mb-4 sm:rounded-[2rem]"
+            className="relative flex w-full max-w-xl flex-col overflow-hidden rounded-t-sheet bg-surface pb-safe text-fg shadow-raised sm:mb-4 sm:rounded-sheet"
             // ステータスバーの下に潜らないよう、上に余白を残す
             style={{ maxHeight: `min(${height}, calc(100% - env(safe-area-inset-top) - 12px))` }}
             initial={{ y: '100%' }}
@@ -63,17 +64,17 @@ export function Sheet({ open, onClose, title, subtitle, children, action, maxHei
             onDragEnd={onDragEnd}
           >
             <div className="flex shrink-0 cursor-grab touch-none justify-center pb-1 pt-2.5 active:cursor-grabbing" onPointerDown={(e) => controls.start(e)}>
-              <div className="h-1.5 w-10 rounded-full bg-white/25" />
+              <div className="h-1.5 w-10 rounded-full bg-line-strong" />
             </div>
             {(title || action) && (
               <div className="flex shrink-0 items-start justify-between gap-3 px-5 pb-3 pt-1" onPointerDown={(e) => controls.start(e)}>
                 <div className="min-w-0">
-                  {title && <h2 className="text-[20px] font-bold tracking-tight">{title}</h2>}
-                  {subtitle && <p className="mt-0.5 text-[13px] text-white/50">{subtitle}</p>}
+                  {title && <h2 className="text-[21px] font-extrabold tracking-[-0.01em]">{title}</h2>}
+                  {subtitle && <p className="mt-0.5 text-[13px] text-fg-2">{subtitle}</p>}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {action}
-                  <Pressable onClick={onClose} aria-label="閉じる" className="relative grid h-8 w-8 place-items-center rounded-full bg-white/10 text-white/70 after:absolute after:-inset-1.5 after:content-['']">
+                  <Pressable onClick={onClose} aria-label="閉じる" className="relative grid h-8 w-8 place-items-center rounded-full bg-fill text-fg-2 after:absolute after:-inset-1.5 after:content-['']">
                     <X size={16} strokeWidth={2.5} />
                   </Pressable>
                 </div>

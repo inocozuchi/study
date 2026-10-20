@@ -30,26 +30,26 @@ export function PickerModal<T extends string | number>({
 }) {
   return (
     <Sheet open={open} onClose={onClose} title={title} subtitle={subtitle}>
-      <div className="glass-thin mb-4 divide-y divide-white/[0.06] overflow-hidden rounded-2xl">
+      <div className="group-box mb-4 divide-y divide-line overflow-hidden rounded-2xl">
         {options.map((o) => {
           const active = o.value === value;
           return (
             <motion.button
               key={String(o.value)}
-              whileTap={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+              whileTap={{ scale: 0.99 }}
               onClick={() => {
                 onSelect(o.value);
                 onClose();
               }}
-              className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-accent-soft"
             >
               {o.icon && <span className="grid h-8 w-8 shrink-0 place-items-center text-[18px]">{o.icon}</span>}
               <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-medium">{o.label}</span>
-                {o.detail && <span className="mt-0.5 block text-[12px] text-white/45">{o.detail}</span>}
+                <span className="block text-[15px] font-bold">{o.label}</span>
+                {o.detail && <span className="mt-0.5 block text-[12px] text-fg-2">{o.detail}</span>}
               </span>
               {active && (
-                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-summit">
+                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-accent-ink">
                   <Check size={18} strokeWidth={2.8} />
                 </motion.span>
               )}

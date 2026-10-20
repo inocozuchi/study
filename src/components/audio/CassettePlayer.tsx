@@ -17,19 +17,19 @@ function Cassette({ track, spinning }: { track: LibraryTrack; spinning: boolean 
   const c = track.colors;
   return (
     <div className="relative aspect-[1.6] w-full overflow-hidden rounded-2xl shadow-[0_18px_40px_-18px_rgba(0,0,0,0.8)]" style={{ background: `linear-gradient(160deg, ${c.band}, ${alpha(c.band, 0.85)})` }}>
-      <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/15" />
+      <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-line" />
       {/* ラベル */}
-      <div className="absolute inset-x-[7%] top-[9%] h-[40%] rounded-lg bg-white/95 px-3 py-2">
+      <div className="absolute inset-x-[7%] top-[9%] h-[40%] rounded-lg bg-surface px-3 py-2">
         <div className="h-1.5 w-full rounded-full" style={{ background: c.label }} />
         <p className="mt-1.5 truncate text-center text-[15px] font-bold text-night-950">{track.title}</p>
         <p className="truncate text-center text-[11px] text-night-950/55">∞ {track.subtitle}</p>
       </div>
       {/* テープ窓とリール */}
-      <div className="absolute inset-x-[17%] bottom-[12%] flex h-[30%] items-center justify-between rounded-full bg-black/35 px-[5%] ring-1 ring-inset ring-white/10">
+      <div className="absolute inset-x-[17%] bottom-[12%] flex h-[30%] items-center justify-between rounded-full bg-black/35 px-[5%] ring-1 ring-inset ring-line">
         {[0, 1].map((i) => (
           <motion.div
             key={i}
-            className="relative grid aspect-square h-[78%] place-items-center rounded-full bg-white/90"
+            className="relative grid aspect-square h-[78%] place-items-center rounded-full bg-surface"
             animate={{ rotate: spinning ? 360 : 0 }}
             transition={spinning ? { duration: 2.4, repeat: Infinity, ease: 'linear' } : { duration: 0.4 }}
           >
@@ -69,7 +69,7 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
     updateSettings({ bgmTrackId: tracks[(index + d + tracks.length) % tracks.length].id, bgmPlaying: true });
   };
   return (
-    <Sheet open={open} onClose={onClose} title="サウンド" action={<Toggle checked={playing} onChange={setPlaying} color="#34C759" label="BGM" />} maxHeight="92vh">
+    <Sheet open={open} onClose={onClose} title="サウンド" action={<Toggle checked={playing} onChange={setPlaying} label="BGM" />} maxHeight="92vh">
       <div className="pb-5">
         <Segmented<Pane>
           value={pane}
@@ -84,10 +84,10 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
           <SoundMixer />
         ) : !track ? (
           // 曲がまだないとき
-          <div className="glass-thin rounded-3xl px-5 py-7 text-center">
-            <Music2 size={30} className="mx-auto text-white/40" />
+          <div className="group-box rounded-3xl px-5 py-7 text-center">
+            <Music2 size={30} className="mx-auto text-fg-2" />
             <p className="mt-3 text-[16px] font-semibold">BGM はまだありません</p>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-white/55">
+            <p className="mt-1.5 text-[13px] leading-relaxed text-fg-2">
               曲を追加すると、ここで再生できます。
               <br />
               曲の終わりで途切れずに繰り返します。
@@ -96,7 +96,7 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
         ) : (
           <>
         {/* 再生カード */}
-        <div className="glass-thin rounded-3xl p-4">
+        <div className="group-box rounded-3xl p-4">
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.div key={track.id} initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -40, opacity: 0 }} transition={springSoft}>
               <Cassette track={track} spinning={spinning} />
@@ -104,22 +104,22 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
           </AnimatePresence>
           <div className="mt-4 text-center">
             <p className="text-[17px] font-semibold">{track.title}</p>
-            <p className="mt-0.5 text-[13px] text-white/50">
+            <p className="mt-0.5 text-[13px] text-fg-2">
               {status === 'loading' ? '読み込み中…' : status === 'error' ? '曲を読み込めませんでした' : track.detail}
             </p>
           </div>
           <div className="mt-4 flex items-center justify-center gap-8">
-            <motion.button whileTap={{ scale: 0.85 }} transition={springBouncy} onClick={() => step(-1)} aria-label="前の曲" className="text-white/85">
+            <motion.button whileTap={{ scale: 0.85 }} transition={springBouncy} onClick={() => step(-1)} aria-label="前の曲" className="text-fg">
               <SkipBack size={28} fill="currentColor" />
             </motion.button>
-            <motion.button whileTap={{ scale: 0.88 }} transition={springBouncy} onClick={() => setPlaying(!playing)} aria-label={playing ? '一時停止' : '再生'} className="grid h-16 w-16 place-items-center rounded-full bg-white text-night-950">
+            <motion.button whileTap={{ scale: 0.88 }} transition={springBouncy} onClick={() => setPlaying(!playing)} aria-label={playing ? '一時停止' : '再生'} className="grid h-16 w-16 place-items-center rounded-full bg-accent text-white">
               {playing ? <Pause size={28} fill="currentColor" strokeWidth={0} /> : <Play size={28} fill="currentColor" strokeWidth={0} className="translate-x-0.5" />}
             </motion.button>
-            <motion.button whileTap={{ scale: 0.85 }} transition={springBouncy} onClick={() => step(1)} aria-label="次の曲" className="text-white/85">
+            <motion.button whileTap={{ scale: 0.85 }} transition={springBouncy} onClick={() => step(1)} aria-label="次の曲" className="text-fg">
               <SkipForward size={28} fill="currentColor" />
             </motion.button>
           </div>
-          <label className="mt-4 flex items-center gap-3 text-white/50">
+          <label className="mt-4 flex items-center gap-3 text-fg-2">
             <Volume1 size={16} />
             <input type="range" min={0} max={1} step={0.01} value={settings.bgmVolume} onChange={(e) => updateSettings({ bgmVolume: Number(e.target.value) })} className="flex-1 accent-white" aria-label="BGM の音量" />
             <Volume2 size={16} />
@@ -128,20 +128,20 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
 
         {/* 曲リスト */}
         <p className="section-label mb-2 mt-6">曲</p>
-        <div className="glass-thin divide-y divide-white/[0.06] overflow-hidden rounded-2xl">
+        <div className="group-box divide-y divide-line overflow-hidden rounded-2xl">
           {tracks.map((tr, i) => {
             const active = i === index;
             return (
-              <button key={tr.id} onClick={() => { ambient.unlock(); updateSettings({ bgmTrackId: tr.id, bgmPlaying: true }); }} className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-white/5">
+              <button key={tr.id} onClick={() => { ambient.unlock(); updateSettings({ bgmTrackId: tr.id, bgmPlaying: true }); }} className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-fill">
                 <span className="h-7 w-1.5 rounded-full" style={{ background: tr.colors.label }} />
                 <span className="min-w-0 flex-1">
                   <span className={`block text-[15px] ${active ? 'font-semibold' : 'font-medium'}`}>{tr.title}</span>
-                  <span className="block text-[11px] text-white/45">{tr.subtitle} · {tr.detail}</span>
+                  <span className="block text-[11px] text-fg-2">{tr.subtitle} · {tr.detail}</span>
                 </span>
                 {active && spinning && (
                   <span className="flex h-4 items-end gap-0.5">
                     {[0, 1, 2].map((b) => (
-                      <motion.span key={b} className="w-1 rounded-full bg-moss" animate={{ height: ['30%', '100%', '45%', '80%', '30%'] }} transition={{ duration: 1.1, repeat: Infinity, delay: b * 0.15 }} />
+                      <motion.span key={b} className="w-1 rounded-full bg-accent" animate={{ height: ['30%', '100%', '45%', '80%', '30%'] }} transition={{ duration: 1.1, repeat: Infinity, delay: b * 0.15 }} />
                     ))}
                   </span>
                 )}
