@@ -73,8 +73,8 @@ export function SetupSheet({ open, onClose, onStarted }: { open: boolean; onClos
                   onClick={() => setName(s.name)}
                   className="flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors"
                   style={{
-                    background: active ? alpha(s.color, 0.22) : 'rgba(255,255,255,0.06)',
-                    color: active ? s.color : 'rgba(255,255,255,0.65)',
+                    background: active ? alpha(s.color, 0.22) : 'rgb(var(--c-fill))',
+                    color: active ? s.color : 'rgb(var(--c-fg2))',
                     boxShadow: active ? `inset 0 0 0 1.5px ${alpha(s.color, 0.6)}` : 'none',
                   }}
                 >

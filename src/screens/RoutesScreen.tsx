@@ -91,19 +91,20 @@ function RouteCard({ subject, minutes, delay, onClick }: { subject: Subject; min
       <div className="relative h-36">
         <MountainArt stage={stage.index} color={subject.color} progress={prog} summited={!!subject.summitedAt} className="absolute inset-0 h-full w-full" />
         <div className="absolute inset-0 bg-gradient-to-t from-night-950/80 via-night-950/10 to-transparent" />
-        <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-semibold backdrop-blur-md">
+        {/* 絵の上の文字は外観に関係なく白 */}
+        <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-bold text-white">
           <span className="h-1.5 w-1.5 rounded-full" style={{ background: stage.tint }} />
           {subject.summitedAt ? '登頂済み' : `${stage.index + 1}. ${stage.name}`}
         </div>
-        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
+        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.35)]">
           <div className="flex items-center gap-2.5">
             <SubjectBadge subject={subject} size={38} />
             <div className="leading-tight">
               <p className="text-[17px] font-bold">{subject.name}</p>
-              <p className="text-[12px] text-fg-2">{subject.mountainName}</p>
+              <p className="text-[12px] text-white/75">{subject.mountainName}</p>
             </div>
           </div>
-          <p className="tabular text-[22px] font-bold tracking-tight">{Math.floor(prog * 100)}<span className="text-[13px] text-fg-2">%</span></p>
+          <p className="tabular text-[22px] font-bold tracking-tight">{Math.floor(prog * 100)}<span className="text-[13px] text-white/75">%</span></p>
         </div>
       </div>
       <div className="px-4 py-3">
@@ -195,8 +196,7 @@ function RouteDetailSheet({ subject, onClose, onEdit }: { subject: Subject | nul
                 setSubject(live.id);
                 onClose();
               }}
-              className="mt-5 w-full rounded-2xl py-3.5 text-[15px] font-bold text-night-950"
-              style={{ background: live.color }}
+              className="btn-primary mt-5 w-full"
             >
               このルートを次の登山に選ぶ
             </motion.button>
@@ -252,7 +252,7 @@ function Journal({ summited }: { summited: Subject[] }) {
                 </div>
                 {!unlocked && (
                   <div className="absolute inset-0 grid place-items-center bg-night-950/40">
-                    <span className="flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1.5 text-[12px] font-semibold text-fg-2"><Lock size={13} /> 未踏の風景</span>
+                    <span className="flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5 text-[12px] font-bold text-white"><Lock size={13} /> 未踏の風景</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between px-4 py-3">

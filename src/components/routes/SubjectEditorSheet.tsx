@@ -105,7 +105,7 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
                   onClick={() => setIcon(k)}
                   aria-label={SUBJECT_ICONS[k].label}
                   className="grid aspect-square place-items-center rounded-2xl transition-colors"
-                  style={{ background: active ? alpha(color, 0.22) : 'rgba(255,255,255,0.06)', color: active ? color : 'rgba(255,255,255,0.6)', boxShadow: active ? `inset 0 0 0 1.5px ${alpha(color, 0.6)}` : 'none' }}
+                  style={{ background: active ? alpha(color, 0.22) : 'rgb(var(--c-fill))', color: active ? color : 'rgb(var(--c-fg2))', boxShadow: active ? `inset 0 0 0 1.5px ${alpha(color, 0.6)}` : 'none' }}
                 >
                   <Icon size={20} />
                 </motion.button>

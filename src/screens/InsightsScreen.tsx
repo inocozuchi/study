@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Flame, Mountain, TrendingDown, TrendingUp } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
@@ -53,7 +53,7 @@ export function InsightsScreen() {
           </div>
           <div className="text-right">
             <p className="text-[12px] font-semibold text-fg-2">獲得標高</p>
-            <p className="tabular text-[20px] font-bold text-sun">+{fmtMeters(sum.today * METERS_PER_MINUTE)}</p>
+            <p className="tabular text-[20px] font-bold text-accent-ink">+{fmtMeters(sum.today * METERS_PER_MINUTE)}</p>
           </div>
         </div>
       </GlassCard>
@@ -301,47 +301,40 @@ function HeatmapCard({ grid }: { grid: number[][] }) {
       <div className="flex items-start justify-between">
         <CardTitle title="集中しやすい時間帯" sub={peak.v > 0 ? `直近 4 週間 · いちばん登れているのは ${peak.h}時台` : '直近 4 週間'} />
         {cell && (
-          <div className="rounded-xl bg-black/40 px-3 py-2 text-right text-[12px]">
+          <div className="rounded-chip bg-sunken px-3 py-2 text-right text-[12px]">
             <p className="font-semibold text-fg-2">{WEEK[cell[0]]}曜 {cell[1]}時台</p>
             <p className="tabular text-[15px] font-bold">{fmtDuration(grid[cell[0]][cell[1]] / 4)}<span className="text-[11px] font-medium text-fg-2"> /週</span></p>
           </div>
         )}
       </div>
-      <div className="flex gap-2" onMouseLeave={() => setCell(null)}>
-        <div className="grid grid-rows-7 gap-[3px] pt-px">
-          {WEEK.map((w) => (
-            <span key={w} className="flex h-full items-center text-[11px] font-semibold text-fg-2">{w}</span>
-          ))}
-        </div>
-        <div className="flex-1">
-          <div className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${HOURS.length}, minmax(0, 1fr))` }}>
-            {grid.map((row, d) =>
-              HOURS.map((h) => {
-                const v = row[h];
-                const a = v > 0 ? 0.18 + 0.82 * Math.pow(v / max, 0.75) : 0;
-                const on = cell && cell[0] === d && cell[1] === h;
-                return (
-                  <button
-                    key={`${d}-${h}`}
-                    aria-label={`${WEEK[d]}曜 ${h}時台 ${Math.round(v)}分`}
-                    onMouseEnter={() => setCell([d, h])}
-                    onClick={() => setCell(on ? null : [d, h])}
-                    className="aspect-square rounded-[4px] transition-transform hover:scale-110"
-                    style={{ background: v > 0 ? `rgba(57,135,229,${a})` : 'rgba(255,255,255,0.05)', boxShadow: on ? '0 0 0 1.5px #fff' : 'none' }}
-                  />
-                );
-              }),
-            )}
-          </div>
-          {/* 時刻ラベルは各列の中央に置く */}
-          <div className="relative mt-1.5 h-3.5 text-[11px] text-fg-2">
-            {[6, 9, 12, 15, 18, 21].map((h) => (
-              <span key={h} className="tabular absolute -translate-x-1/2" style={{ left: `${((HOURS.indexOf(h) + 0.5) / HOURS.length) * 100}%` }}>
-                {h}
-              </span>
-            ))}
-          </div>
-        </div>
+      {/* 曜日・時刻のラベルもマスと同じグリッドに置き、行と列が必ずそろうようにする */}
+      <div className="grid gap-[3px]" style={{ gridTemplateColumns: `auto repeat(${HOURS.length}, minmax(0, 1fr))` }} onMouseLeave={() => setCell(null)}>
+        {grid.map((row, d) => (
+          <Fragment key={d}>
+            <span className="flex items-center pr-1.5 text-[11px] font-semibold text-fg-2">{WEEK[d]}</span>
+            {HOURS.map((h) => {
+              const v = row[h];
+              const a = v > 0 ? 0.18 + 0.82 * Math.pow(v / max, 0.75) : 0;
+              const on = cell && cell[0] === d && cell[1] === h;
+              return (
+                <button
+                  key={h}
+                  aria-label={`${WEEK[d]}曜 ${h}時台 ${Math.round(v)}分`}
+                  onMouseEnter={() => setCell([d, h])}
+                  onClick={() => setCell(on ? null : [d, h])}
+                  className="aspect-square rounded-[4px] transition-transform hover:scale-110"
+                  style={{ background: v > 0 ? `rgba(57,135,229,${a})` : 'rgb(var(--c-fill))', boxShadow: on ? '0 0 0 1.5px rgb(var(--c-fg))' : 'none' }}
+                />
+              );
+            })}
+          </Fragment>
+        ))}
+        <span />
+        {HOURS.map((h) => (
+          <span key={h} className="tabular mt-1 whitespace-nowrap text-center text-[11px] text-fg-2">
+            {h % 3 === 0 ? h : ''}
+          </span>
+        ))}
       </div>
       <div className="mt-3 flex items-center justify-end gap-1.5 text-[11px] text-fg-2">
         少 {[0.18, 0.4, 0.6, 0.8, 1].map((a) => <span key={a} className="h-2.5 w-2.5 rounded-[3px]" style={{ background: `rgba(57,135,229,${a})` }} />)} 多
@@ -364,10 +357,9 @@ function AltitudeCard({ total }: { total: number }) {
 
   return (
     <GlassCard className="relative mt-3 overflow-hidden p-5" delay={0.12}>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 opacity-40" style={{ background: 'linear-gradient(180deg, transparent, rgba(255,210,122,0.12))' }} />
       <div className="relative">
-        <p className="flex items-center gap-1.5 text-[13px] font-semibold text-fg-2"><Mountain size={15} className="text-sun" /> これまでの獲得標高</p>
-        <p className="tabular mt-1 text-[40px] font-bold leading-none tracking-tight text-sun">{fmtMeters(meters)}</p>
+        <p className="flex items-center gap-1.5 text-[13px] font-semibold text-fg-2"><Mountain size={15} className="text-accent" /> これまでの獲得標高</p>
+        <p className="tabular mt-1 text-[40px] font-bold leading-none tracking-tight text-accent-ink">{fmtMeters(meters)}</p>
         <p className="mt-2 text-[13px] text-fg-2">
           富士山 <span className="tabular font-bold text-fg">{fuji.toFixed(1)}</span> 座分 · エベレスト <span className="tabular font-bold text-fg">{everest.toFixed(2)}</span> 座分
         </p>
@@ -377,7 +369,7 @@ function AltitudeCard({ total }: { total: number }) {
             <span className="font-semibold">{target.name} <span className="tabular text-fg-2">{fmtMeters(target.meters)}</span></span>
           </div>
           <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-fill">
-            <motion.div className="h-full rounded-full bg-gradient-to-r from-sun/60 to-sun" initial={{ width: 0 }} animate={{ width: `${p * 100}%` }} transition={springSoft} />
+            <motion.div className="h-full rounded-full bg-accent"initial={{ width: 0 }} animate={{ width: `${p * 100}%` }} transition={springSoft} />
           </div>
           <p className="tabular mt-1 text-right text-[11px] text-fg-2">あと {fmtMeters(target.meters - meters)}（{fmtDuration((target.meters - meters) / METERS_PER_MINUTE)}）</p>
         </div>
@@ -385,7 +377,7 @@ function AltitudeCard({ total }: { total: number }) {
           {LANDMARKS.map((l) => {
             const done = meters >= l.meters;
             return (
-              <span key={l.name} className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${done ? 'bg-sun/15 text-sun' : 'bg-fill text-fg-2'}`}>
+              <span key={l.name} className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${done ? 'bg-accent-soft text-accent-ink' : 'bg-fill text-fg-2'}`}>
                 {done && <Check size={11} strokeWidth={3} />}
                 {l.name}
                 <span className="tabular font-normal opacity-70">{l.meters.toLocaleString()}</span>

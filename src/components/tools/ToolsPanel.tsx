@@ -11,10 +11,10 @@ import { spring, springBouncy, springSoft } from '@/lib/motion';
 
 export type ToolTab = 'note' | 'todo' | 'habit';
 
-export const TOOL_TABS: { key: ToolTab; label: string; icon: typeof NotebookPen; color: string }[] = [
-  { key: 'note', label: 'ノート', icon: NotebookPen, color: '#8EC5FF' },
-  { key: 'todo', label: 'ToDo', icon: ListTodo, color: '#FF8A4C' },
-  { key: 'habit', label: '習慣', icon: Sprout, color: '#7FD1A8' },
+export const TOOL_TABS: { key: ToolTab; label: string; icon: typeof NotebookPen }[] = [
+  { key: 'note', label: 'ノート', icon: NotebookPen },
+  { key: 'todo', label: 'ToDo', icon: ListTodo },
+  { key: 'habit', label: '習慣', icon: Sprout },
 ];
 
 /** 記録・ToDo・習慣のマルチツール（左に縦タブ、右に中身） */
@@ -43,16 +43,16 @@ export function ToolsPanel({ tab, onTab, onClose }: { tab: ToolTab | null; onTab
             <nav className="relative flex w-[74px] shrink-0 flex-col items-center gap-2 border-r border-line bg-fill py-4">
               {/* 選択ピル（layoutId は退場アニメーションを止めることがあるため、位置を直接動かす） */}
               <motion.span
-                className="absolute left-[7px] top-4 h-[66px] w-[60px] rounded-2xl bg-fill shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                className="absolute left-[7px] top-4 h-[66px] w-[60px] rounded-card bg-surface shadow-card"
                 initial={false}
                 animate={{ y: TOOL_TABS.findIndex((x) => x.key === tab) * 74 }}
                 transition={spring}
               />
-              {TOOL_TABS.map(({ key, label, icon: Icon, color }) => {
+              {TOOL_TABS.map(({ key, label, icon: Icon }) => {
                 const active = key === tab;
                 return (
                   <button key={key} onClick={() => onTab(key)} className="relative flex h-[66px] w-[60px] flex-col items-center justify-center gap-1 rounded-2xl" aria-current={active ? 'page' : undefined}>
-                    <Icon size={22} className="relative" color={active ? color : 'rgba(255,255,255,0.4)'} strokeWidth={2.2} />
+                    <Icon size={22} className={`relative ${active ? 'text-accent' : 'text-fg-3'}`} strokeWidth={2.2} />
                     <span className={`relative text-[11px] font-bold ${active ? 'text-fg' : 'text-fg-2'}`}>{label}</span>
                   </button>
                 );
@@ -130,7 +130,7 @@ function DiaryView() {
         {MOODS.map((m) => {
           const active = entry?.mood === m.v;
           return (
-            <motion.button key={m.v} whileTap={{ scale: 0.8 }} transition={springBouncy} onClick={() => saveDiary(date, { mood: m.v, text })} aria-label={`気分 ${m.v}`} className={`relative grid h-11 w-11 place-items-center rounded-full text-[22px] transition ${active ? 'bg-fill ring-2 ring-sun' : 'opacity-50 grayscale-[40%]'}`}>
+            <motion.button key={m.v} whileTap={{ scale: 0.8 }} transition={springBouncy} onClick={() => saveDiary(date, { mood: m.v, text })} aria-label={`気分 ${m.v}`} className={`relative grid h-11 w-11 place-items-center rounded-full text-[22px] transition ${active ? 'bg-accent-soft ring-2 ring-accent' : 'opacity-50 grayscale-[40%]'}`}>
               {m.e}
             </motion.button>
           );
@@ -141,7 +141,7 @@ function DiaryView() {
         onChange={(e) => onChange(e.target.value)}
         placeholder={'今日はどんな一日だった？\nできたこと、気づいたこと、明日の自分へ。'}
         className="mt-3 min-h-[240px] w-full flex-1 resize-none rounded-2xl border border-line bg-fill p-4 text-[15px] leading-[32px] text-fg outline-none placeholder:text-fg-3 focus:bg-fill"
-        style={{ backgroundImage: 'repeating-linear-gradient(180deg, transparent 0 31px, rgba(255,255,255,0.08) 31px 32px)', backgroundAttachment: 'local', backgroundPositionY: '15px' }}
+        style={{ backgroundImage: 'repeating-linear-gradient(180deg, transparent 0 31px, rgb(var(--c-line)) 31px 32px)', backgroundAttachment: 'local', backgroundPositionY: '15px' }}
       />
       <p className="mt-2 text-right text-[11px] text-fg-3">{saved ? (text ? '保存しました ✓' : '') : '保存中…'} {text.length > 0 && `· ${text.length}文字`}</p>
     </div>
@@ -208,12 +208,12 @@ function TodoView() {
 function TodoRow({ text, done, onToggle, onDelete }: { text: string; done: boolean; onToggle: () => void; onDelete: () => void }) {
   return (
     <motion.li layout initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 30, height: 0 }} transition={springSoft} className="group flex items-center gap-3 rounded-2xl bg-fill px-3 py-2.5">
-      <CheckCircle checked={done} onChange={onToggle} color="#FF8A4C" label={text} />
+      <CheckCircle checked={done} onChange={onToggle} label={text} />
       <span className={`relative min-w-0 flex-1 text-[14px] ${done ? 'text-fg-3' : ''}`}>
         {text}
         {done && (
           <motion.svg className="absolute left-0 top-1/2 h-2 w-full -translate-y-1/2 overflow-visible" viewBox="0 0 100 4" preserveAspectRatio="none">
-            <motion.path d="M0 2 Q30 0.6 60 2.4 T100 1.6" stroke="#FF8A4C" strokeWidth="1.6" fill="none" vectorEffect="non-scaling-stroke" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.35 }}  />
+            <motion.path d="M0 2 Q30 0.6 60 2.4 T100 1.6" stroke="rgb(var(--c-fg3))" strokeWidth="1.6" fill="none" vectorEffect="non-scaling-stroke" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.35 }}  />
           </motion.svg>
         )}
       </span>
@@ -279,7 +279,7 @@ function HabitView() {
                     <p className="text-[11px] text-fg-2">{streak > 0 ? `🔥 ${streak}日連続` : 'きょうから始めよう'} · 累計 {h.log.length}日</p>
                   </div>
                   {editing ? (
-                    <button onClick={() => deleteHabit(h.id)} aria-label="削除" className="grid h-9 w-9 place-items-center rounded-full bg-[#FF5A5F]/15 text-[#FF8A8E]">
+                    <button onClick={() => deleteHabit(h.id)} aria-label="削除" className="grid h-9 w-9 place-items-center rounded-full bg-danger-soft text-danger-ink">
                       <Trash2 size={15} />
                     </button>
                   ) : (
@@ -294,7 +294,7 @@ function HabitView() {
                     return (
                       <button key={k} disabled={future} onClick={() => toggleHabit(h.id, k)} className="flex flex-col items-center gap-0.5 disabled:opacity-30" aria-label={`${weekdayJa(d)} ${on ? '達成' : '未達成'}`}>
                         <span className={`text-[11px] font-bold ${k === today ? 'text-fg' : 'text-fg-2'}`}>{weekdayJa(d)}</span>
-                        <motion.span className="relative block h-6 w-6 rounded-full" animate={{ scale: on ? 1 : 0.86 }} transition={springBouncy} style={{ background: on ? h.color : 'rgba(255,255,255,0.08)' }} />
+                        <motion.span className="relative block h-6 w-6 rounded-full" animate={{ scale: on ? 1 : 0.86 }} transition={springBouncy} style={{ background: on ? h.color : 'rgb(var(--c-fill))' }} />
                       </button>
                     );
                   })}

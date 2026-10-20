@@ -106,8 +106,8 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
                   onClick={() => setSubjectId(sub.id)}
                   className="flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold transition-colors"
                   style={{
-                    background: active ? alpha(sub.color, 0.22) : 'rgba(255,255,255,0.06)',
-                    color: active ? sub.color : 'rgba(255,255,255,0.65)',
+                    background: active ? alpha(sub.color, 0.22) : 'rgb(var(--c-fill))',
+                    color: active ? sub.color : 'rgb(var(--c-fg2))',
                     boxShadow: active ? `inset 0 0 0 1.5px ${alpha(sub.color, 0.6)}` : 'none',
                   }}
                 >

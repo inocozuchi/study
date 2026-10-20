@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Bell, ChevronLeft, ChevronRight, Clock, Coffee, Database, Leaf, Mountain, Music, PlusSquare, Repeat, Smartphone, Sun, Timer, Trash2,
+  Bell, CalendarDays, ChevronLeft, ChevronRight, Clock, Coffee, Database, Leaf, Mountain, Music, PlusSquare, Repeat, Smartphone, Sun, Timer, Trash2,
   Contrast, IdCard, Moon, TrainFront, Type, User, Volume2, Waves, Wind,
 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
@@ -19,6 +19,8 @@ import { springSheet } from '@/lib/motion';
 import { useHoldScene } from '@/lib/sceneHold';
 import { ambient } from '@/audio/ambient';
 import { FONTS, fontById, loadFontPreviews, unloadFontPreviews } from '@/lib/fonts';
+import { GoogleCalendarSheet, googleStatusLabel } from '@/components/settings/GoogleCalendarSheet';
+import { isConnected, useGoogleCalendar } from '@/lib/googleCalendar';
 import { ModeSheet } from '@/components/profile/ModeSheet';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import type { AmbientChannel, AmbientMix, Appearance, FontId, Season, Settings, SkyOverride, TrainClass } from '@/types';
@@ -94,6 +96,8 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
   const [installOpen, setInstallOpen] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [googleOpen, setGoogleOpen] = useState(false);
+  const google = useGoogleCalendar();
   // 設定は画面全体を覆うので、開いて少したったら下のシーンを止める（スライドの間は見えている）
   const [covered, setCovered] = useState(false);
   useEffect(() => {
@@ -255,6 +259,10 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                 <Row icon={<Volume2 size={19} />} title="列車：走行音" right={<Toggle checked={settings.trainSound} onChange={set('trainSound')} label="走行音" />} />
               </Group>
 
+              <Group title="連携" footer="Google カレンダーの予定をタイムライン（週・月）にグレーで表示します。">
+                <Row icon={<CalendarDays size={21} />} title="Google カレンダー" value={googleStatusLabel(google.status, isConnected())} onClick={() => setGoogleOpen(true)} />
+              </Group>
+
               <Group title="データ" footer="記録はこの端末のブラウザ内に保存されます。ホーム画面に追加するとアプリとして全画面で使えます。">
                 <Row icon={<Trash2 size={21} />} title="すべての記録を消去" onClick={() => setConfirm(true)} danger />
                 <Row icon={<Database size={21} />} title="Focus Trail" value="v2.1" />
@@ -269,6 +277,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
       <InstallSheet open={installOpen} onClose={() => setInstallOpen(false)} />
       <ModeSheet open={modeOpen} onClose={() => setModeOpen(false)} />
       <ProfileSheet open={profileOpen} onClose={() => setProfileOpen(false)} />
+      <GoogleCalendarSheet open={googleOpen} onClose={() => setGoogleOpen(false)} />
 
       <Sheet open={nameOpen} onClose={() => setNameOpen(false)} title="名前" subtitle="ホームの挨拶で呼ぶ名前です">
         <form
