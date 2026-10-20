@@ -30,7 +30,7 @@ export function TabBar({ tab, onChange }: { tab: TabKey; onChange: (t: TabKey) =
             whileTap={{ scale: 0.92 }}
             transition={spring}
             aria-current={active ? 'page' : undefined}
-            className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-[1.35rem] py-2 text-[10.5px] font-semibold transition-colors ${active ? 'text-white' : 'text-white/45'}`}
+            className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-[1.35rem] py-2 text-[11px] font-semibold transition-colors ${active ? 'text-white' : 'text-white/45'}`}
           >
             <motion.span className="relative" animate={{ y: active ? -1 : 0, scale: active ? 1.08 : 1 }} transition={spring}>
               <Icon size={21} strokeWidth={active ? 2.4 : 2} />

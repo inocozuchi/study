@@ -15,10 +15,10 @@ export function SummitModal() {
     if (!summit) return;
     const colors = [summit.subject.color, '#FFD27A', '#ffffff', '#FF8A4C'];
     const end = Date.now() + 1600;
-    confetti({ particleCount: 120, spread: 80, origin: { y: 0.55 }, colors, zIndex: 100 });
+    confetti({ particleCount: 120, spread: 80, origin: { y: 0.55 }, colors, zIndex: 100, disableForReducedMotion: true });
     const frame = () => {
-      confetti({ particleCount: 4, angle: 60, spread: 55, origin: { x: 0, y: 0.7 }, colors, zIndex: 100 });
-      confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1, y: 0.7 }, colors, zIndex: 100 });
+      confetti({ particleCount: 4, angle: 60, spread: 55, origin: { x: 0, y: 0.7 }, colors, zIndex: 100, disableForReducedMotion: true });
+      confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1, y: 0.7 }, colors, zIndex: 100, disableForReducedMotion: true });
       if (Date.now() < end) requestAnimationFrame(frame);
     };
     frame();

@@ -44,7 +44,8 @@ src/
   audio/bgm.ts          BGM エンジン（ファイル曲 → LoopPlayer / 合成曲 → プロシージャル Lo-Fi）
   audio/loopPlayer.ts   音声ファイルのシームレス無限ループ（AudioBuffer + loopStart/loopEnd、無音の自動トリム）
   audio/bgmLibrary.ts   曲リスト：public/bgm/tracks.json（実行時に読む）+ 合成曲 4 曲（synthTracks.ts）
-  lib/                  純粋関数：time / altitude（標高・ステージ）/ stats / scene（空の配色）/ id
+  lib/                  純粋関数：time / altitude（標高・ステージ）/ stats / scene（空の配色・旅の時間）/ id
+  lib/fonts.ts          フォント設定（FONTS。選んだ書体を Google Fonts から読み込み、CSS 変数で全体に反映）
   hooks/                useNow, useWakeLock, useMultiRoom（BroadcastChannel の部屋）など
   designs/              ポモドーロタイマーのデザイン（下記「タイマーのデザイン」）
     types.ts            TimerDesign の契約（Scene / Session / Result / SetupOptions）
@@ -85,8 +86,9 @@ scripts/generate-assets.mjs  icon.svg → アイコン PNG と iOS 起動画像�
 - **タイマーは「開始時刻 + 累積ms」モデル**。`elapsed = accumulatedMs + (now - startedAt)`。
   Worker は tick の合図だけ。タブ非表示・スリープ復帰でもズレない。実行中状態は永続化され、
   リロードしても継続する。カウントダウン終了時のセッション終了時刻は「予定終了時刻」で記録する。
-- **ディープ集中**：非表示になった時刻を記録し、5 秒以上離れて戻ったら離脱時刻で遡って一時停止 →
-  警告モーダル（集中に戻る / 休憩へ）。
+- **ディープ集中**：非表示になった時刻を記録し（`ActiveTimer.hiddenAt` に保存。離れている間にアプリが閉じられても起動時に判定）、
+  5 秒以上離れて戻ったら離脱時刻で遡って一時停止 → 警告モーダル（集中に戻る / 休憩へ）。
+- 休憩明けの自動出発は、休憩が終わって 1 分以内に気づいたときだけ。長く閉じていた間の集中を作り出さない。
 - 時刻は epoch ms（number）、日付キーは `YYYY-MM-DD`（ローカル）、予定は「0時からの分」。
 - 標高換算：**1 分 = 10 m**。科目ルートは `targetMinutes` で登頂、進捗で 5 ステージ。
 
@@ -118,6 +120,18 @@ interface TimerDesign {
 
 タイマーは「旅（journey）」単位：`startJourney` → 集中/休憩を繰り返す → `endJourney`（長押し）。
 
+## 空の時間（Settings.sky）
+- `auto`＝**旅の時間（既定）**：集中を始めると朝（6.1 時）、集中の進み具合に合わせて昼・夕方（18.4 時）へ進み、
+  休憩に入ると 40 秒かけて夜（21.6 時）になる。フリー（時間なし）は `pomodoroFocus` を 1 日分の長さとみなす。
+  ホーム（旅の外）は今の時刻。計算は `lib/scene.ts` の `journeyHour` / `hourFor`、値は `App.tsx` の SceneLayer からデザインへ渡す。
+- `clock`＝今の時刻、`dawn` / `day` / `sunset` / `night`＝固定。設定画面と支度シート（登山の SetupOptions）で選べる。
+
+## フォント（Settings.font）
+- 既定は **BIZ UDPゴシック**（見やすさ優先）。ほかにシステム / Noto Sans JP / M PLUS Rounded / Zen 丸ゴシック / Klee / しっぽり明朝。
+- `applyFont()` が `--font-text` / `--font-digits` を `<html>` に設定。Tailwind の `font-sans` / `font-maru` / `font-digits` はこの変数を使うので、
+  **登山デザインの文字もフォント設定に従う**。新しいフォントは `lib/fonts.ts` の `FONTS` に足すだけ。
+- 起動直後は `main.tsx` の `applyCachedFont()` で前回の書体を当てる。SW は Google Fonts をキャッシュし、オフラインでも同じ書体で表示する。
+
 ## 登山シーンの構成（src/designs/mountain/scene）
 
 すべて `position:absolute` の 6 層。下から：
@@ -142,12 +156,15 @@ interface TimerDesign {
   いずれも「輪郭の揺れ（displacement）」+「紙目でワックスが乗らない粒（noise → alpha）」。
 - キャラクター・小道具は焦げ茶 `#2E221C` の輪郭線 + 斜線の陰影で描く。
 - HUD は `.mt-ink-btn`（焦げ茶のフェルト）、休憩カードとリザルトのボタンは `.mt-paper`（生成りのキャンバス地）。
-- 書体：Zen Maru Gothic（`font-maru`）、時間の数字は Fredoka（`font-digits`）。**登山デザインの中だけ**で使う。
+- 書体はフォント設定に従う（`font-maru` / `font-digits` は CSS 変数）。「Zen 丸ゴシック」を選ぶと以前の Zen Maru Gothic + Fredoka の見た目になる。
 
 ## アニメーションの注意（アプリ全体）
 - **layoutId を使わない**：退場中の AnimatePresence の中にあると退場が止まり、モーダルが閉じなくなる。
   選択ピルは「index × 100%」の x で動かす（Segmented / TabBar を参照）。
 - **退場するもの（シート・モーダル・オーバーレイ）の中に AnimatePresence mode="wait" を入れ子にしない**（同じく退場が止まる）。
+  どうしても必要なら `useIsPresent()` で退場中は表示を固定する（MountainSession を参照）。
+- 閉じるアニメーションの間に中身が消えないよう、シートに渡すデータは最後の値を ref に残して表示する（PickerModal / EntrySheet / 予定の詳細）。
+- アプリ全体を `<MotionConfig reducedMotion="user">` で包んでいる。登山シーンは視差を減らす設定で歩く速さと地面の流れを一緒に落とす。
 
 ## デザインシステム（アプリ本体 = iOS 風）
 
@@ -171,11 +188,13 @@ interface TimerDesign {
 ### ガラス
 - `.glass`：`bg-white/[0.08] backdrop-blur-2xl border border-white/[0.12]` + 内側ハイライト
 - `.glass-strong`：シート・モーダル用（`bg-night-900/70`）
+- `.glass-scene`：シートなしでシーンの上に直接浮かぶボタン用（暗めの下敷き。昼の明るい空でも見える）
+- `.hit`：見た目は小さいまま、押せる範囲を四方 6px 広げる（44px 前後のタップ領域）
 - 角丸：カード `rounded-3xl`、ピル/ボタン `rounded-2xl`〜`rounded-full`
 - 1px 半透明ボーダー必須。影は `shadow-glass`（柔らかく大きく）
 
 ### タイポグラフィ
-- システムフォント（SF Pro / Hiragino Sans / Noto Sans JP）
+- フォント設定の書体（既定 BIZ UDPゴシック。下記「フォント」）
 - 大見出し 28–34px bold tracking-tight / セクション 13px semibold uppercase white/50 /
   本文 15px / 補足 12–13px。数字は `tabular-nums`。タイマーは 72–88px thin。
 

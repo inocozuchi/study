@@ -10,6 +10,8 @@ type NoiseColor = 'white' | 'pink' | 'brown';
 
 interface Channel {
   bus: GainNode;
+  /** ループし続ける音源（ノイズ・LFO）。止めるときに stop する */
+  nodes?: AudioScheduledSourceNode[];
   /** 粒状イベントをスケジュールする（雨粒・パチパチ等） */
   schedule?: (until: number) => void;
 }
@@ -24,6 +26,10 @@ class AmbientEngine {
   private mix: AmbientMix = { rain: 0, fire: 0, wind: 0, river: 0, insects: 0 };
   private playing = false;
   private timer: ReturnType<typeof setInterval> | null = null;
+  /** build 中に作られたループ音源 */
+  private building: AudioScheduledSourceNode[] = [];
+  /** フェードし終えたチャンネルを片付けるタイマー */
+  private teardown: Partial<Record<AmbientChannel, ReturnType<typeof setTimeout>>> = {};
 
   get isPlaying() {
     return this.playing;
@@ -47,6 +53,13 @@ class AmbientEngine {
       this.master = this.ctx.createGain();
       this.master.gain.value = 0;
       this.master.connect(comp).connect(this.ctx.destination);
+      // iOS では電話や他アプリの音で止められる（interrupted）。戻ってきたら再開する
+      const revive = () => {
+        if (this.ctx && this.ctx.state !== 'running' && document.visibilityState === 'visible') this.ctx.resume().catch(() => {});
+      };
+      document.addEventListener('visibilitychange', revive);
+      document.addEventListener('pointerdown', revive, { passive: true });
+      this.ctx.addEventListener('statechange', revive);
     }
     if (this.ctx.state !== 'running') this.ctx.resume().catch(() => {});
   }
@@ -56,10 +69,34 @@ class AmbientEngine {
     if (!this.ctx) return;
     for (const key of Object.keys(mix) as AmbientChannel[]) {
       const v = mix[key];
-      if (v > 0.001 && !this.channels[key]) this.channels[key] = this.build(key);
+      const audible = this.playing && v > 0.001;
+      if (audible) {
+        clearTimeout(this.teardown[key]);
+        delete this.teardown[key];
+        if (!this.channels[key]) this.channels[key] = this.build(key);
+      }
       const ch = this.channels[key];
-      if (ch) ch.bus.gain.setTargetAtTime(v * v * CHANNEL_LEVEL[key], this.ctx.currentTime, 0.12);
+      if (!ch) continue;
+      ch.bus.gain.setTargetAtTime(v * v * CHANNEL_LEVEL[key], this.ctx.currentTime, 0.12);
+      // 聞こえなくなったチャンネルはフェード後に音源を止める（電池と CPU を使い続けない）
+      if (!audible && !this.teardown[key]) this.teardown[key] = setTimeout(() => this.dispose(key), 2000);
     }
+  }
+
+  private dispose(key: AmbientChannel) {
+    delete this.teardown[key];
+    const ch = this.channels[key];
+    if (!ch || (this.playing && this.mix[key] > 0.001)) return;
+    ch.nodes?.forEach((n) => {
+      try {
+        n.stop();
+      } catch {
+        /* 既に止まっている */
+      }
+      n.disconnect();
+    });
+    ch.bus.disconnect();
+    delete this.channels[key];
   }
 
   setPlaying(on: boolean) {
@@ -166,6 +203,7 @@ class AmbientEngine {
     src.loop = true;
     src.playbackRate.value = rate;
     src.start(ctx.currentTime, Math.random() * 6);
+    this.building.push(src);
     return src;
   }
 
@@ -191,6 +229,7 @@ class AmbientEngine {
     const g = this.gain(depth);
     osc.connect(g).connect(target);
     osc.start();
+    this.building.push(osc);
   }
 
   /** 短いノイズバースト（雨粒・はぜる音） */
@@ -209,6 +248,14 @@ class AmbientEngine {
   }
 
   private build(key: AmbientChannel): Channel {
+    this.building = [];
+    const ch = this.buildChannel(key);
+    ch.nodes = this.building;
+    this.building = [];
+    return ch;
+  }
+
+  private buildChannel(key: AmbientChannel): Channel {
     const ctx = this.ctx!;
     const bus = this.gain(0);
     bus.connect(this.master);

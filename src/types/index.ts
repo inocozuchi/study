@@ -53,10 +53,14 @@ export interface PlanBlock {
 export type AmbientChannel = 'rain' | 'fire' | 'wind' | 'river' | 'insects';
 export type AmbientMix = Record<AmbientChannel, number>;
 
-export type SkyOverride = 'auto' | 'dawn' | 'day' | 'sunset' | 'night';
+/** 空の時間。auto＝旅の時間（集中の進み具合で朝→昼→夕、休憩は夜）、clock＝今の時刻 */
+export type SkyOverride = 'auto' | 'clock' | 'dawn' | 'day' | 'sunset' | 'night';
 
 /** 旅の季節（シーンの配色・木々・舞うものが変わる） */
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter' | 'sakura';
+
+/** 文字のフォント（lib/fonts.ts の FONTS） */
+export type FontId = 'ud' | 'system' | 'noto' | 'rounded' | 'maru' | 'hand' | 'mincho';
 
 export type StudyStyle = 'solo' | 'multi';
 
@@ -91,6 +95,7 @@ export interface Settings {
   breathing: boolean;
   /** タイマーのデザイン（現在は登山のみ） */
   timerDesign: 'mountain';
+  font: FontId;
 }
 
 export type TimerPhase = 'idle' | 'focus' | 'break';
@@ -115,6 +120,8 @@ export interface ActiveTimer {
   /** 旅（集中開始〜長押しで終了まで）の開始時刻と、記録済みの集中 ms */
   journeyStartedAt?: number | null;
   journeyFocusMs?: number;
+  /** ディープ集中：画面を離れた時刻（アプリが閉じられても復帰時に判定できるよう保存） */
+  hiddenAt?: number | null;
 }
 
 /** ノート（その日の振り返り） */

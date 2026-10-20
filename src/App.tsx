@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { AppProvider, useApp } from '@/store/AppStore';
 import { TimerProvider, useTimer, type JourneyResult } from '@/store/TimerStore';
 import { TabBar, TABS, type TabKey } from '@/components/nav/TabBar';
@@ -17,25 +17,32 @@ import { useMultiRoom } from '@/hooks/useMultiRoom';
 import { hourFor } from '@/lib/scene';
 import { getDesign } from '@/designs';
 import { hideBoot } from '@/lib/boot';
+import { applyFont } from '@/lib/fonts';
 import { useNow } from '@/hooks/useNow';
 import { springBouncy, springSoft } from '@/lib/motion';
 
 export default function App() {
   return (
-    <AppProvider>
-      <Gate />
-    </AppProvider>
+    <MotionConfig reducedMotion="user">
+      <AppProvider>
+        <Gate />
+      </AppProvider>
+    </MotionConfig>
   );
 }
 
 function Gate() {
-  const { ready } = useApp();
+  const { ready, settings, epoch } = useApp();
   useEffect(() => {
     if (ready) hideBoot();
   }, [ready]);
+  const font = ready ? settings.font : undefined;
+  useEffect(() => {
+    if (font) applyFont(font);
+  }, [font]);
   if (!ready) return <Splash />;
   return (
-    <TimerProvider>
+    <TimerProvider key={epoch}>
       <Shell />
     </TimerProvider>
   );
@@ -114,7 +121,8 @@ function Shell() {
           custom={direction}
           variants={{
             enter: (d: number) => ({ opacity: 0, x: d * 36, scale: 0.985, filter: 'blur(6px)' }),
-            center: { opacity: 1, x: 0, scale: 1, filter: 'blur(0px)' },
+            // 終わったら filter を外す（残っているとガラスの backdrop-filter が効かなくなる）
+            center: { opacity: 1, x: 0, scale: 1, filter: 'blur(0px)', transitionEnd: { filter: 'none' } },
             exit: (d: number) => ({ opacity: 0, x: d * -36, scale: 0.985, filter: 'blur(6px)' }),
           }}
           initial="enter"
@@ -156,11 +164,18 @@ function Shell() {
 /** 背景シーン：選択中のタイマーデザインに描画を任せる */
 function SceneLayer({ ended, companions, paused }: { ended: boolean; companions: number; paused: boolean }) {
   const { settings } = useApp();
+  const { timer, elapsedMs } = useTimer();
   const now = useNow(60_000);
   const { Scene } = getDesign(settings.timerDesign);
+  const hour = hourFor(settings.sky, new Date(now), {
+    phase: timer.phase,
+    elapsedMs,
+    targetMs: timer.targetMs,
+    freeSpanMs: settings.pomodoroFocus * 60_000,
+  });
   return (
     <div className="absolute inset-0">
-      <Scene hour={hourFor(settings.sky, new Date(now))} ended={ended} companions={companions} paused={paused} />
+      <Scene hour={hour} ended={ended} companions={companions} paused={paused} />
     </div>
   );
 }

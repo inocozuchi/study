@@ -2,9 +2,12 @@
  * - インストール時に index.html を取得し、参照しているハッシュ付きアセットも事前キャッシュ
  * - ナビゲーション：ネットワーク優先（オフライン時はキャッシュの index.html）
  * - BGM の曲リスト（bgm/tracks.json）：ネットワーク優先（アップロードした曲がすぐ反映される）
+ * - Google Fonts（フォント設定で選んだ書体）：キャッシュ優先。版をまたいで残し、オフラインでも同じ書体で表示する
  * - 同一オリジンの静的アセット（BGM の音声ファイルを含む）：キャッシュ優先 + 裏で更新（stale-while-revalidate）
  */
-const VERSION = 'focus-trail-v4';
+// 公開時に deploy.yml がビルド番号を付け足す（毎回 SW が更新され、古いアセットのキャッシュが消える）
+const VERSION = 'focus-trail-v5';
+const FONT_CACHE = 'focus-trail-fonts';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
@@ -29,7 +32,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
-      await Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k)));
+      await Promise.all(keys.filter((k) => k !== VERSION && k !== FONT_CACHE).map((k) => caches.delete(k)));
       await self.clients.claim();
     })(),
   );
@@ -39,6 +42,19 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  if ((url.hostname === 'fonts.googleapis.com' && !url.searchParams.has('text')) || url.hostname === 'fonts.gstatic.com') {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(FONT_CACHE);
+        const cached = await cache.match(req);
+        if (cached) return cached;
+        const res = await fetch(req);
+        if (res.ok || res.type === 'opaque') cache.put(req, res.clone());
+        return res;
+      })(),
+    );
+    return;
+  }
   if (url.origin !== self.location.origin) return;
 
   if (req.mode === 'navigate') {
@@ -47,7 +63,7 @@ self.addEventListener('fetch', (event) => {
         try {
           const fresh = await fetch(req);
           const cache = await caches.open(VERSION);
-          cache.put('./index.html', fresh.clone());
+          if (fresh.ok) cache.put('./index.html', fresh.clone());
           return fresh;
         } catch {
           return (await caches.match('./index.html')) || Response.error();

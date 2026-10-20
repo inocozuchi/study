@@ -6,6 +6,8 @@ import { ambient } from '@/audio/ambient';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { MIN, fmtTimer } from '@/lib/time';
 
+/** 休憩明けに自動で次の集中へ進めるのは、休憩が終わってからこの時間内に気づいたときだけ */
+const AUTO_CONTINUE_WINDOW_MS = 60_000;
 /** ディープ集中で「離脱」とみなすまでの猶予 */
 const STRAY_GRACE_MS = 5_000;
 
@@ -76,7 +78,7 @@ function elapsedOf(t: ActiveTimer, now: number) {
 }
 
 export function TimerProvider({ children }: { children: ReactNode }) {
-  const { settings, updateSettings, addSession, ready, activeSubjects } = useApp();
+  const { settings, updateSettings, addSession, ready, activeSubjects, subjects } = useApp();
   const [timer, setTimerState] = useState<ActiveTimer>(() => repository.loadActiveTimer() ?? IDLE);
   const [now, setNow] = useState(() => Date.now());
   const [stray, setStray] = useState<StrayEvent | null>(null);
@@ -84,7 +86,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const timerRef = useRef(timer);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
-  const hiddenAtRef = useRef<number | null>(null);
+  const hiddenAtRef = useRef<number | null>(timer.hiddenAt ?? null);
 
   const setTimer = useCallback((next: ActiveTimer) => {
     timerRef.current = next;
@@ -99,6 +101,12 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       if (activeSubjects[0]) updateSettings({ selectedSubjectId: activeSubjects[0].id });
     }
   }, [ready, activeSubjects, settings?.selectedSubjectId, updateSettings]);
+
+  // 実行中の科目が削除されたら、記録先のない旅は片付ける
+  useEffect(() => {
+    if (!ready || !timer.subjectId || subjects.some((x) => x.id === timer.subjectId)) return;
+    if (timer.phase !== 'idle' || timer.journeyStartedAt) setTimer({ ...IDLE, mode: timer.mode });
+  }, [ready, subjects, timer.subjectId, timer.phase, timer.journeyStartedAt, timer.mode, setTimer]);
 
   const focusTargetMs = useCallback((mode: TimerMode) => {
     const s = settingsRef.current;
@@ -186,7 +194,8 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         evaluate(at);
       } else if (t.phase === 'break') {
         if (settingsRef.current.chime) ambient.chime('break');
-        if (settingsRef.current.autoContinue && t.journeyStartedAt) {
+        // 休憩明けの自動出発は「いま終わった」ときだけ。長く閉じていた間の集中を作り出さない
+        if (settingsRef.current.autoContinue && t.journeyStartedAt && at - doneAt < AUTO_CONTINUE_WINDOW_MS) {
           nextFocus(doneAt);
           evaluate(at);
         } else toIdle();
@@ -211,17 +220,16 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     };
   }, [timer.running, evaluate]);
 
-  // Page Visibility：ディープ集中の離脱検知 + 復帰時の即時再計算
-  useEffect(() => {
-    const onVis = () => {
-      const n = Date.now();
-      const t = timerRef.current;
-      if (document.visibilityState === 'hidden') {
-        if (settingsRef.current.deepFocus && t.phase === 'focus' && t.running) hiddenAtRef.current = n;
-        return;
-      }
+  /** 画面に戻ったとき：離れていた時間が長ければ離脱時刻まで遡って一時停止、そうでなければ経過を判定 */
+  const onReturn = useCallback(
+    (n: number) => {
       const hiddenAt = hiddenAtRef.current;
       hiddenAtRef.current = null;
+      let t = timerRef.current;
+      if (t.hiddenAt != null) {
+        t = { ...t, hiddenAt: null };
+        setTimer(t);
+      }
       setNow(n);
       if (hiddenAt != null && t.phase === 'focus' && t.running && t.startedAt && n - hiddenAt > STRAY_GRACE_MS) {
         const focusedAtHide = t.accumulatedMs + (hiddenAt - t.startedAt);
@@ -234,15 +242,35 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         }
       }
       evaluate(n);
+    },
+    [evaluate, setTimer],
+  );
+
+  // Page Visibility：ディープ集中の離脱検知 + 復帰時の即時再計算
+  useEffect(() => {
+    const onVis = () => {
+      const n = Date.now();
+      const t = timerRef.current;
+      if (document.visibilityState === 'hidden') {
+        if (settingsRef.current.deepFocus && t.phase === 'focus' && t.running && hiddenAtRef.current == null) {
+          hiddenAtRef.current = n;
+          setTimer({ ...t, hiddenAt: n });
+        }
+        return;
+      }
+      onReturn(n);
     };
     document.addEventListener('visibilitychange', onVis);
     return () => document.removeEventListener('visibilitychange', onVis);
-  }, [evaluate, setTimer]);
+  }, [onReturn, setTimer]);
 
-  // 起動時に復元したタイマーの経過を判定
+  // 起動時に復元したタイマーの経過を判定（離れている間にアプリが閉じられていた場合もここで離脱を判定）
+  const restored = useRef(false);
   useEffect(() => {
-    evaluate(Date.now());
-  }, [evaluate]);
+    if (restored.current) return;
+    restored.current = true;
+    onReturn(Date.now());
+  }, [onReturn]);
 
   const start = useCallback(() => {
     ambient.unlock();

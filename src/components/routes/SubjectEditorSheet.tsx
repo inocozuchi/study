@@ -63,7 +63,7 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
       title={subject ? 'ルートを編集' : '新しいルート'}
       subtitle="科目ごとに、登る山をひとつ決めましょう"
       action={
-        <Pressable onClick={save} disabled={!valid} className="flex h-8 items-center gap-1 rounded-full bg-white px-3.5 text-[13px] font-bold text-night-950">
+        <Pressable onClick={save} disabled={!valid} className="hit flex h-8 items-center gap-1 rounded-full bg-white px-3.5 text-[13px] font-bold text-night-950">
           <Check size={14} strokeWidth={3} /> 保存
         </Pressable>
       }

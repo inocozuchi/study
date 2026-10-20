@@ -14,7 +14,8 @@ import { SettingsScreen } from './SettingsScreen';
 import { getDesign } from '@/designs';
 import { multiSupported, randomRoomCode, type Peer } from '@/hooks/useMultiRoom';
 import { streaks, summary } from '@/lib/stats';
-import { fmtDuration } from '@/lib/time';
+import { dateKey, fmtDuration } from '@/lib/time';
+import { useNow } from '@/hooks/useNow';
 import { springBouncy, springSoft } from '@/lib/motion';
 import type { StudyStyle } from '@/types';
 
@@ -93,8 +94,10 @@ export function HomeScreen({ result, setResult, peers }: Props) {
 
 function HomeIdle({ onFocus, onMusic, onSettings, onTool, onRoom, peers }: { onFocus: () => void; onMusic: () => void; onSettings: () => void; onTool: (t: ToolTab) => void; onRoom: () => void; peers: Peer[] }) {
   const { settings, updateSettings, sessions } = useApp();
-  const sum = useMemo(() => summary(sessions), [sessions]);
-  const st = useMemo(() => streaks(sessions), [sessions]);
+  // 日付が変わったら「今日」と連続日数を数え直す
+  const today = dateKey(useNow(60_000));
+  const sum = useMemo(() => summary(sessions), [sessions, today]); // eslint-disable-line react-hooks/exhaustive-deps
+  const st = useMemo(() => streaks(sessions), [sessions, today]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setStyle = (s: StudyStyle) => {
     updateSettings(s === 'multi' && !settings.roomCode ? { style: s, roomCode: randomRoomCode() } : { style: s });
@@ -104,10 +107,10 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onRoom, peers }: { onF
     <div className="relative mx-auto h-full max-w-xl">
       {/* 上部 */}
       <div className="flex items-center justify-between px-5 pt-safe">
-        <Pressable onClick={onMusic} aria-label="集中音楽" className={`glass mt-1 grid h-10 w-10 place-items-center rounded-full ${settings.bgmPlaying ? 'text-ember' : 'text-white/85'}`}>
+        <Pressable onClick={onMusic} aria-label="集中音楽" className={`glass-scene mt-1 grid h-10 w-10 place-items-center rounded-full ${settings.bgmPlaying ? 'text-ember' : 'text-white/85'}`}>
           <Music size={18} />
         </Pressable>
-        <Pressable onClick={onSettings} aria-label="設定" className="glass mt-1 grid h-10 w-10 place-items-center rounded-full text-white/85">
+        <Pressable onClick={onSettings} aria-label="設定" className="glass-scene mt-1 grid h-10 w-10 place-items-center rounded-full text-white">
           <Settings2 size={18} />
         </Pressable>
       </div>
@@ -121,7 +124,7 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onRoom, peers }: { onF
         </h1>
         <div className="mt-3 flex flex-wrap gap-1.5">
           {[`今日 ${fmtDuration(sum.today, true)}`, `🔥 ${st.current}日連続`].map((c) => (
-            <span key={c} className="glass-thin tabular rounded-full px-2.5 py-1 text-[12px] font-semibold text-white/85">
+            <span key={c} className="tabular rounded-full border border-white/10 bg-black/35 px-2.5 py-1 text-[12px] font-semibold text-white backdrop-blur-md">
               {c}
             </span>
           ))}
@@ -129,7 +132,7 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onRoom, peers }: { onF
       </motion.div>
 
       {/* サイドのツールタブ */}
-      <motion.nav initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ ...springBouncy, delay: 0.15 }} className="glass absolute right-3 top-[30%] flex flex-col gap-1 rounded-full p-1.5" aria-label="ツール">
+      <motion.nav initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ ...springBouncy, delay: 0.15 }} className="glass-scene absolute right-3 top-[30%] flex flex-col gap-1 rounded-full p-1.5" aria-label="ツール">
         {TOOL_TABS.map(({ key, label, icon: Icon, color }) => (
           <Pressable key={key} scale={0.85} onClick={() => onTool(key)} aria-label={label} className="grid h-11 w-11 place-items-center rounded-full bg-white/[0.08]">
             <Icon size={19} color={color} strokeWidth={2.2} />
@@ -152,7 +155,7 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onRoom, peers }: { onF
           />
           <AnimatePresence>
             {settings.style === 'multi' && (
-              <motion.button initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} onClick={onRoom} className="glass-thin flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold text-white/85">
+              <motion.button initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} onClick={onRoom} className="glass-scene flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold text-white/85">
                 <Users size={13} /> 部屋 {settings.roomCode} · {peers.length + 1}人
               </motion.button>
             )}
@@ -209,8 +212,12 @@ function RoomSheet({ open, onClose, peers }: { open: boolean; onClose: () => voi
               className="field tabular text-center text-[22px] font-semibold uppercase tracking-[0.3em]"
               value={code}
               maxLength={8}
-              onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-              onBlur={() => code && updateSettings({ roomCode: code })}
+              onChange={(e) => {
+                const c = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                setCode(c);
+                // 閉じ方によっては blur が来ないので、入力のたびに保存する
+                if (c.trim()) updateSettings({ roomCode: c.trim() });
+              }}
               aria-label="部屋コード"
             />
             <Pressable aria-label="新しいコード" onClick={() => { const c = randomRoomCode(); setCode(c); updateSettings({ roomCode: c }); }} className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/10">

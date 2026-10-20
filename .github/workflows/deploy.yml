@@ -27,6 +27,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      # Service Worker のキャッシュ名に公開ごとの番号を付ける（更新が確実に届き、古いアセットが消える）
+      - run: sed -i "s/const VERSION = 'focus-trail-v\([0-9]*\)'/const VERSION = 'focus-trail-v\1-${GITHUB_RUN_NUMBER}'/" dist/sw.js && grep -n "const VERSION" dist/sw.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

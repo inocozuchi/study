@@ -22,17 +22,10 @@ interface Presence {
   since: number;
 }
 
-const SELF_KEY = 'focus-trail:peer-id';
+// タブごとに別の ID（sessionStorage は「タブを複製」でコピーされるため使わない）
+const SELF_ID = uid('peer-');
 function selfId() {
-  try {
-    const v = sessionStorage.getItem(SELF_KEY);
-    if (v) return v;
-    const id = uid('peer-');
-    sessionStorage.setItem(SELF_KEY, id);
-    return id;
-  } catch {
-    return uid('peer-');
-  }
+  return SELF_ID;
 }
 
 export const multiSupported = typeof BroadcastChannel !== 'undefined';
@@ -76,18 +69,24 @@ export function useMultiRoom(enabled: boolean, room: string, me: { name: string;
       post();
       const now = Date.now();
       let changed = false;
-      for (const [k, p] of map) if (now - p.seen > 7000) {
+      // 背景のタブはタイマーが間引かれる（最大 1 分に 1 回）ので、見失うまで長めに待つ
+      for (const [k, p] of map) if (now - p.seen > 75_000) {
         map.delete(k);
         changed = true;
       }
       if (changed) flush();
     }, 2500);
     const bye = () => post('bye');
+    const onVis = () => {
+      if (document.visibilityState === 'visible') post();
+    };
     window.addEventListener('pagehide', bye);
+    document.addEventListener('visibilitychange', onVis);
     return () => {
       bye();
       clearInterval(beat);
       window.removeEventListener('pagehide', bye);
+      document.removeEventListener('visibilitychange', onVis);
       chan.close();
       chanRef.current = null;
       setPeers([]);

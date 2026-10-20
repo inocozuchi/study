@@ -25,4 +25,5 @@ export const DEFAULT_SETTINGS: Settings = {
   bgmVolume: 0.7,
   breathing: true,
   timerDesign: 'mountain',
+  font: 'ud',
 };

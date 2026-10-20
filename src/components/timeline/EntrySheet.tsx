@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { AlertCircle, Check, Trash2 } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
@@ -40,7 +40,11 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
     setText(draft.session?.note ?? draft.plan?.title ?? '');
   }, [open, draft]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const editing = !!(draft?.session || draft?.plan);
+  // 閉じるアニメーションの間も、開いていたときの内容を表示しておく
+  const lastDraft = useRef<EntryDraft | null>(null);
+  if (draft) lastDraft.current = draft;
+  const shown = lastDraft.current;
+  const editing = !!(shown?.session || shown?.plan);
   const s = inputToMin(start);
   const e = inputToMin(end);
   const minutes = e - s;
@@ -52,17 +56,17 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
     if (!valid) return;
     if (kind === 'record') {
       const base = { subjectId, start: startTs, end: startTs + minutes * MIN, minutes, note: text.trim() || undefined };
-      if (draft?.session) updateSession({ ...draft.session, ...base });
+      if (shown?.session) updateSession({ ...shown.session, ...base });
       else addSession({ ...base, source: 'manual' });
     } else {
-      savePlan({ id: draft?.plan?.id, subjectId, date, startMin: s, endMin: e, title: text.trim() || undefined });
+      savePlan({ id: shown?.plan?.id, subjectId, date, startMin: s, endMin: e, title: text.trim() || undefined });
     }
     onClose();
   };
 
   const remove = () => {
-    if (draft?.session && kind === 'record') deleteSession(draft.session.id);
-    else if (draft?.plan) deletePlan(draft.plan.id);
+    if (shown?.session && kind === 'record') deleteSession(shown.session.id);
+    else if (shown?.plan) deletePlan(shown.plan.id);
     onClose();
   };
 
@@ -73,7 +77,7 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
       title={editing ? (kind === 'record' ? '記録を編集' : '予定を編集') : kind === 'record' ? 'あとから記録' : '予定を立てる'}
       subtitle={kind === 'record' ? '電車の中や紙の勉強も、旅の一部に' : 'タイムラインに学習ブロックを置きましょう'}
       action={
-        <Pressable onClick={save} disabled={!valid} className="flex h-8 items-center gap-1 rounded-full bg-white px-3.5 text-[13px] font-bold text-night-950">
+        <Pressable onClick={save} disabled={!valid} className="hit flex h-8 items-center gap-1 rounded-full bg-white px-3.5 text-[13px] font-bold text-night-950">
           <Check size={14} strokeWidth={3} /> 保存
         </Pressable>
       }
@@ -116,18 +120,18 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
           </div>
         </section>
 
-        <section className="grid grid-cols-[1.3fr_1fr_1fr] gap-2">
-          <label className="block">
+        <section className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)] gap-2">
+          <label className="block min-w-0">
             <span className="section-label mb-1.5 block">日付</span>
-            <input type="date" className="field px-3" value={date} onChange={(ev) => ev.target.value && setDate(ev.target.value)} />
+            <input type="date" className="field min-w-0 px-2.5" value={date} onChange={(ev) => ev.target.value && setDate(ev.target.value)} />
           </label>
-          <label className="block">
+          <label className="block min-w-0">
             <span className="section-label mb-1.5 block">開始</span>
-            <input type="time" className="field px-3" value={start} onChange={(ev) => setStart(ev.target.value)} />
+            <input type="time" className="field min-w-0 px-2.5" value={start} onChange={(ev) => setStart(ev.target.value)} />
           </label>
-          <label className="block">
+          <label className="block min-w-0">
             <span className="section-label mb-1.5 block">終了</span>
-            <input type="time" className="field px-3" value={end} onChange={(ev) => setEnd(ev.target.value)} />
+            <input type="time" className="field min-w-0 px-2.5" value={end} onChange={(ev) => setEnd(ev.target.value)} />
           </label>
         </section>
 
@@ -142,7 +146,7 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
           )}
         </div>
 
-        <label className="block">
+        <label className="block min-w-0">
           <span className="section-label mb-1.5 block">{kind === 'record' ? 'メモ' : 'タイトル'}</span>
           <textarea
             className="field min-h-[84px] resize-none"

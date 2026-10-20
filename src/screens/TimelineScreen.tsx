@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactElement, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, ChevronLeft, ChevronRight, Moon, Pencil, Play, Plus, Sunrise, NotebookPen, CalendarPlus } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
@@ -24,6 +24,9 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
   const [selected, setSelected] = useState(() => dateKey(now));
   const [draft, setDraft] = useState<EntryDraft | null>(null);
   const [planItem, setPlanItem] = useState<TimelineItem | null>(null);
+  const lastPlan = useRef<TimelineItem | null>(null);
+  if (planItem) lastPlan.current = planItem;
+  const pi = lastPlan.current;
   const [addMenu, setAddMenu] = useState(false);
 
   const selDate = parseDateKey(selected);
@@ -69,7 +72,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
 
       {/* 週ストリップ */}
       <div className="mt-4 flex items-center gap-1">
-        <button aria-label="前の週" onClick={() => shiftWeek(-1)} className="grid h-8 w-6 place-items-center text-white/40">
+        <button aria-label="前の週" onClick={() => shiftWeek(-1)} className="hit grid h-8 w-6 place-items-center text-white/50">
           <ChevronLeft size={18} />
         </button>
         <div className="relative grid flex-1 grid-cols-7">
@@ -100,7 +103,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
             );
           })}
         </div>
-        <button aria-label="次の週" onClick={() => shiftWeek(1)} className="grid h-8 w-6 place-items-center text-white/40">
+        <button aria-label="次の週" onClick={() => shiftWeek(1)} className="hit grid h-8 w-6 place-items-center text-white/50">
           <ChevronRight size={18} />
         </button>
       </div>
@@ -228,43 +231,43 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
 
       <EntrySheet open={!!draft} draft={draft} onClose={() => setDraft(null)} />
 
-      {/* 予定の詳細 */}
-      <Sheet open={!!planItem} onClose={() => setPlanItem(null)} title={planItem?.title} subtitle={planItem && `${fmtClock(planItem.startMin)} – ${fmtClock(planItem.endMin)} · ${fmtDuration(planItem.endMin - planItem.startMin)}`}>
-        {planItem && (
+      {/* 予定の詳細（閉じるアニメーションの間も中身を残す） */}
+      <Sheet open={!!planItem} onClose={() => setPlanItem(null)} title={pi?.title} subtitle={pi && `${fmtClock(pi.startMin)} – ${fmtClock(pi.endMin)} · ${fmtDuration(pi.endMin - pi.startMin)}`}>
+        {pi && (
           <div className="space-y-3 pb-4">
             <div className="flex items-center gap-3 rounded-2xl bg-white/[0.05] p-3">
-              <span className="grid h-10 w-10 place-items-center rounded-xl" style={{ background: alpha(planItem.subject?.color ?? '#fff', 0.2), color: planItem.subject?.color }}>
-                {planItem.subject && <SubjectIcon subject={planItem.subject} />}
+              <span className="grid h-10 w-10 place-items-center rounded-xl" style={{ background: alpha(pi.subject?.color ?? '#fff', 0.2), color: pi.subject?.color }}>
+                {pi.subject && <SubjectIcon subject={pi.subject} />}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-semibold">{planItem.subject?.name}</p>
-                <p className="text-[12px] text-white/50">{planItem.subject?.mountainName}</p>
+                <p className="text-[15px] font-semibold">{pi.subject?.name}</p>
+                <p className="text-[12px] text-white/50">{pi.subject?.mountainName}</p>
               </div>
-              {planItem.done && <span className="flex items-center gap-1 rounded-full bg-moss/15 px-2.5 py-1 text-[12px] font-semibold text-moss"><Check size={13} /> 達成</span>}
+              {pi.done && <span className="flex items-center gap-1 rounded-full bg-moss/15 px-2.5 py-1 text-[12px] font-semibold text-moss"><Check size={13} /> 達成</span>}
             </div>
-            {planItem.actual && (
+            {pi.actual && (
               <p className="px-1 text-[13px] text-white/60">
-                実績 {fmtClock(planItem.actual.startMin)} – {fmtClock(planItem.actual.endMin)}（{fmtDuration(planItem.actual.minutes)}）{planItem.note ? ` · ${planItem.note}` : ''}
+                実績 {fmtClock(pi.actual.startMin)} – {fmtClock(pi.actual.endMin)}（{fmtDuration(pi.actual.minutes)}）{pi.note ? ` · ${pi.note}` : ''}
               </p>
             )}
-            {!planItem.done && isToday && timer.phase !== 'focus' && planItem.subject && (
+            {!pi.done && isToday && timer.phase !== 'focus' && pi.subject && (
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => {
-                  if (startPlanned(planItem.subject!.id, planItem.endMin - planItem.startMin)) {
+                  if (startPlanned(pi.subject!.id, pi.endMin - pi.startMin)) {
                     setPlanItem(null);
                     onStartFocus();
                   }
                 }}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-[15px] font-bold text-night-950"
               >
-                <Play size={16} fill="currentColor" /> この予定で出発する（{fmtDuration(Math.min(180, planItem.endMin - planItem.startMin))}）
+                <Play size={16} fill="currentColor" /> この予定で出発する（{fmtDuration(Math.min(180, pi.endMin - pi.startMin))}）
               </motion.button>
             )}
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => {
-                  const p = planItem;
+                  const p = pi;
                   setPlanItem(null);
                   setDraft({ kind: 'plan', date: p.plan!.date, startMin: p.startMin, endMin: p.endMin, plan: p.plan });
                 }}
@@ -274,14 +277,19 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
               </button>
               <button
                 onClick={() => {
-                  const p = planItem;
+                  const p = pi;
                   setPlanItem(null);
                   if (p.session) setDraft({ kind: 'record', date: selected, startMin: p.actual!.startMin, endMin: p.actual!.endMin, session: p.session });
-                  else setDraft({ kind: 'record', date: selected, startMin: p.startMin, endMin: Math.min(p.endMin, isToday ? Math.floor(minutesOfDay(Date.now())) : p.endMin), plan: undefined });
+                  else {
+                    // 今日のまだ終わっていない予定は「今」までにする。まだ始まっていなければ予定の長さぶん遡る
+                    const end = Math.min(p.endMin, isToday ? Math.floor(minutesOfDay(Date.now())) : p.endMin);
+                    const start = end - p.startMin >= 5 ? p.startMin : Math.max(0, end - (p.endMin - p.startMin));
+                    setDraft({ kind: 'record', date: selected, startMin: start, endMin: end, plan: undefined });
+                  }
                 }}
                 className="flex items-center justify-center gap-2 rounded-2xl bg-white/[0.08] py-3 text-[14px] font-semibold"
               >
-                <NotebookPen size={15} /> {planItem.session ? '実績を編集' : '実績を記録'}
+                <NotebookPen size={15} /> {pi.session ? '実績を編集' : '実績を記録'}
               </button>
             </div>
           </div>
@@ -385,7 +393,7 @@ function Row({ item, live, past, nowMin, onClick }: { item: TimelineItem; live: 
         <span className="min-w-0">
           <span className="tabular block text-[12px] font-medium text-white/45">
             {fmtClock(item.startMin)} – {fmtClock(item.endMin)} · {fmtDuration(dur)}
-            {item.kind === 'session' && item.session?.source === 'manual' && <span className="ml-1.5 rounded bg-white/10 px-1 py-px text-[10px]">手動</span>}
+            {item.kind === 'session' && item.session?.source === 'manual' && <span className="ml-1.5 rounded bg-white/10 px-1 py-px text-[11px]">手動</span>}
           </span>
           <span className={`mt-0.5 block truncate text-[16px] font-semibold ${missed ? 'text-white/40 line-through decoration-white/20' : ''}`}>{item.title}</span>
           <span className="mt-0.5 block truncate text-[12px] text-white/45">

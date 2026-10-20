@@ -1,9 +1,9 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bell, ChevronLeft, ChevronRight, Clock, Coffee, Database, Eye, Leaf, Mountain, Music, PlusSquare, Repeat, RotateCcw, Smartphone, Sun, Timer, Trash2,
-  User, Volume2, Waves, Wind,
+  Type, User, Volume2, Waves, Wind,
 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { Toggle } from '@/components/ui/Toggle';
@@ -16,7 +16,9 @@ import { SEASONS, SEASON_ORDER } from '@/designs/mountain/scene/palette';
 import { getDesign } from '@/designs';
 import { wakeLockSupported } from '@/hooks/useWakeLock';
 import { springSheet } from '@/lib/motion';
-import type { AmbientChannel, AmbientMix, Season, Settings, SkyOverride } from '@/types';
+import { ambient } from '@/audio/ambient';
+import { FONTS, fontById, loadFontPreviews, unloadFontPreviews } from '@/lib/fonts';
+import type { AmbientChannel, AmbientMix, FontId, Season, Settings, SkyOverride } from '@/types';
 
 function Row({ icon, color, title, detail, value, onClick, right }: { icon: ReactNode; color: string; title: string; detail?: string; value?: ReactNode; onClick?: () => void; right?: ReactNode }) {
   const Comp = onClick ? motion.button : motion.div;
@@ -46,7 +48,11 @@ function Group({ title, children, footer }: { title: string; children: ReactNode
   );
 }
 
-type PickerKey = 'focus' | 'short' | 'long' | 'every' | 'bgm' | 'ambient' | 'sky' | 'season';
+const SKY_LABEL: Record<SkyOverride, string> = { auto: '旅の時間', clock: '今の時刻', dawn: '朝', day: '昼', sunset: '夕', night: '夜' };
+
+const FONT_SAMPLE = Array.from(new Set(FONTS.map((f) => `${f.label}${f.detail}　集中 25:00`).join(''))).join('');
+
+type PickerKey = 'focus' | 'short' | 'long' | 'every' | 'bgm' | 'ambient' | 'sky' | 'season' | 'font';
 
 const AMBIENT_PRESETS: { key: string; label: string; mix: AmbientMix; icon: string }[] = [
   { key: 'none', label: 'なし', icon: '🔇', mix: { rain: 0, fire: 0, wind: 0, river: 0, insects: 0 } },
@@ -86,6 +92,8 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
       options: AMBIENT_PRESETS.map((p) => ({ value: p.key, label: p.label, icon: p.icon })),
       onSelect: (v) => {
         const p = AMBIENT_PRESETS.find((x) => x.key === v)!;
+        // iOS はタップの中で音を有効にしないと鳴らない
+        ambient.unlock();
         updateSettings({ ambient: p.mix, ambientPlaying: p.key !== 'none' });
       },
     },
@@ -93,7 +101,8 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
       title: '空の時間',
       value: settings.sky,
       options: [
-        { value: 'auto', label: '自動', detail: '現在時刻に合わせてうつろう', icon: '🕰' },
+        { value: 'auto', label: '旅の時間', detail: '集中を始めると朝。進むほど昼・夕方になり、休憩は夜', icon: '🧭' },
+        { value: 'clock', label: '今の時刻', detail: '現在時刻に合わせてうつろう', icon: '🕰' },
         { value: 'dawn', label: '朝', icon: '🌅' },
         { value: 'day', label: '昼', icon: '☀️' },
         { value: 'sunset', label: '夕', icon: '🌇' },
@@ -101,10 +110,29 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
       ],
       onSelect: (v) => updateSettings({ sky: v as SkyOverride }),
     },
+    font: {
+      title: 'フォント',
+      value: settings.font,
+      options: FONTS.map((f) => ({
+        value: f.id,
+        label: <span style={{ fontFamily: f.text }}>{f.label}　集中 25:00</span>,
+        detail: <span style={{ fontFamily: f.text }}>{f.detail}</span>,
+      })),
+      onSelect: (v) => updateSettings({ font: v as FontId }),
+    },
     season: { title: 'シーズン', value: settings.season, options: SEASON_ORDER.map((s) => ({ value: s, label: SEASONS[s].label, icon: SEASONS[s].emoji })), onSelect: (v) => updateSettings({ season: v as Season }) },
   };
-  const p = picker ? pickers[picker] : null;
-  const skyLabel = { auto: '自動', dawn: '朝', day: '昼', sunset: '夕', night: '夜' }[settings.sky];
+  // 閉じるアニメーションの間も中身を表示しておく
+  const lastPicker = useRef<PickerKey | null>(null);
+  if (picker) lastPicker.current = picker;
+  const p = lastPicker.current ? pickers[lastPicker.current] : null;
+  // フォントの見本は選択画面を開いている間だけ、見本の文字に絞って読み込む
+  useEffect(() => {
+    if (picker !== 'font') return;
+    loadFontPreviews(FONT_SAMPLE);
+    return () => unloadFontPreviews();
+  }, [picker]);
+  const skyLabel = SKY_LABEL[settings.sky];
 
   return createPortal(
     <>
@@ -150,6 +178,10 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                 />
                 <Row icon={<Leaf size={16} />} color="#34C759" title="環境音" value={AMBIENT_PRESETS.find((x) => x.key === ambientKey(settings.ambient))?.label} onClick={() => setPicker('ambient')} />
                 <Row icon={<Bell size={16} />} color="#F2B33D" title="完了チャイム" right={<Toggle checked={settings.chime} onChange={set('chime')} color="#34C759" label="完了チャイム" />} />
+              </Group>
+
+              <Group title="表示">
+                <Row icon={<Type size={16} />} color="#6E7BF2" title="フォント" value={fontById(settings.font).label} onClick={() => setPicker('font')} />
               </Group>
 
               <Group title="システム設定">
