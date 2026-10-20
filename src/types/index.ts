@@ -72,7 +72,10 @@ export interface Settings {
   deepFocus: boolean;
   wakeLock: boolean;
   chime: boolean;
+  /** 内蔵（合成）の環境音の音量 */
   ambient: AmbientMix;
+  /** アップロードした環境音（public/ambient）の音量。キーは音の ID */
+  ambientFiles: Record<string, number>;
   ambientPlaying: boolean;
   selectedSubjectId: ID | null;
   sky: SkyOverride;

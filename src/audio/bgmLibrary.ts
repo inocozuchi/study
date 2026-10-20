@@ -21,7 +21,7 @@ interface Common {
   detail: string;
 }
 
-export type LibraryTrack = Common & { url: string; loopStart?: number; loopEnd?: number; trimSilence: boolean; gain: number };
+export type LibraryTrack = Common & { url: string; loopStart?: number; loopEnd?: number; trimSilence: boolean; gain: number; crossfade: number };
 
 /** tracks.json の 1 曲 */
 interface ManifestTrack {
@@ -34,6 +34,8 @@ interface ManifestTrack {
   trimSilence?: boolean;
   /** 0..2（曲ごとの音量差をそろえる） */
   gain?: number;
+  /** 秒。ループ用に作られていない曲の継ぎ目を重ねてつなぐ（既定 0 = そのままつなぐ） */
+  crossfade?: number;
 }
 
 const FILE_COLORS: TrackColors[] = [
@@ -75,7 +77,7 @@ export async function loadLibrary() {
     const files: LibraryTrack[] = (json.tracks ?? [])
       .filter((t) => t && typeof t.file === 'string' && t.file.trim())
       .map((t, i) => {
-        const url = /^https?:\/\//.test(t.file) ? t.file : `./bgm/${t.file.replace(/^\.?\/?(bgm\/)?/, '')}`;
+        const url = /^https?:\/\//.test(t.file) ? t.file : `./bgm/${t.file.replace(/^\.?\/?(bgm\/)?/, '').split('/').map(encodeURIComponent).join('/')}`;
         return {
           id: `file-${t.file}`,
           url,
@@ -87,6 +89,7 @@ export async function loadLibrary() {
           loopEnd: t.loopEnd,
           trimSilence: t.trimSilence !== false,
           gain: Math.max(0, Math.min(2, t.gain ?? 1)),
+          crossfade: Math.max(0, Math.min(10, t.crossfade ?? 0)),
         };
       });
     tracks = files;

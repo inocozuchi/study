@@ -48,6 +48,7 @@ function mergeSettings(stored: Partial<Settings>): Settings {
     ...DEFAULT_SETTINGS,
     ...stored,
     ambient: { ...DEFAULT_SETTINGS.ambient, ...(stored.ambient ?? {}) },
+    ambientFiles: { ...(stored.ambientFiles ?? {}) },
     ambientPlaying: false,
     bgmPlaying: false,
   };

@@ -77,7 +77,7 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
     >
       {/* 上部：音楽・時間・完了 */}
       <div className="pointer-events-none flex items-start justify-between px-5 pt-safe">
-        <motion.button whileTap={{ scale: 0.88 }} transition={springBouncy} onClick={onMusic} aria-label="集中音楽" className="mt-ink-btn pointer-events-auto relative mt-2 grid h-12 w-12 place-items-center">
+        <motion.button whileTap={{ scale: 0.88 }} transition={springBouncy} onClick={onMusic} aria-label="サウンド" className="mt-ink-btn pointer-events-auto relative mt-2 grid h-12 w-12 place-items-center">
           <Music size={20} />
           <CrayonOutline shape="circle" color="rgba(255,248,234,0.4)" width={1.4} />
         </motion.button>

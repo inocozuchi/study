@@ -17,6 +17,8 @@ const InsightsScreen = lazy(() => loadInsights().then((m) => ({ default: m.Insig
 import { ambient } from '@/audio/ambient';
 import { bgm } from '@/audio/bgm';
 import { loadLibrary } from '@/audio/bgmLibrary';
+import { ambientFiles } from '@/audio/ambientFiles';
+import { loadAmbientLibrary } from '@/audio/ambientLibrary';
 import { hourFor } from '@/lib/scene';
 import { getDesign } from '@/designs';
 import { hideBoot } from '@/lib/boot';
@@ -86,6 +88,7 @@ function Shell() {
   // BGM ライブラリ（public/bgm/tracks.json）と、ほかの画面の先読み
   useEffect(() => {
     void loadLibrary();
+    void loadAmbientLibrary();
     const id = setTimeout(() => {
       void loadTimeline();
       void loadRoutes();
@@ -97,6 +100,7 @@ function Shell() {
   // 音の同期（環境音・BGM）
   useEffect(() => ambient.setMix(settings.ambient), [settings.ambient]);
   useEffect(() => ambient.setPlaying(settings.ambientPlaying), [settings.ambientPlaying]);
+  useEffect(() => ambientFiles.set(settings.ambientFiles, settings.ambientPlaying), [settings.ambientFiles, settings.ambientPlaying]);
   useEffect(() => bgm.setVolume(settings.bgmVolume), [settings.bgmVolume]);
   useEffect(() => bgm.setTrack(settings.bgmTrackId), [settings.bgmTrackId]);
   useEffect(() => bgm.setPlaying(settings.bgmPlaying), [settings.bgmPlaying]);

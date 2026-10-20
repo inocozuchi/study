@@ -95,7 +95,7 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool }: { onFocus: () => voi
     <div className="relative mx-auto h-full max-w-xl">
       {/* 上部 */}
       <div className="flex items-center justify-between px-5 pt-safe">
-        <Pressable onClick={onMusic} aria-label="集中音楽" className={`glass-scene mt-1 grid h-10 w-10 place-items-center rounded-full ${settings.bgmPlaying ? 'text-ember' : 'text-white/85'}`}>
+        <Pressable onClick={onMusic} aria-label="サウンド" className={`glass-scene mt-1 grid h-10 w-10 place-items-center rounded-full ${settings.bgmPlaying || settings.ambientPlaying ? 'text-ember' : 'text-white/85'}`}>
           <Music size={18} />
         </Pressable>
         <Pressable onClick={onSettings} aria-label="設定" className="glass-scene mt-1 grid h-10 w-10 place-items-center rounded-full text-white">

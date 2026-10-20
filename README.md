@@ -41,26 +41,19 @@ iPhone でホーム画面に追加：Safari で URL を開く → 共有ボタ�
 
 アイコンと iOS の起動画像は `public/icons/icon.svg` から `scripts/generate-assets.mjs` で生成しています。
 
-## BGM（自分の曲を追加する）
+## 音を追加する（BGM・環境音）
 
-1. 音声ファイルを `public/bgm/` に置く（GitHub なら「Add file → Upload files」で `public/bgm/` へ）
-2. `public/bgm/tracks.json` に曲を書く
+| フォルダ | アプリでの場所 |
+|---|---|
+| `public/bgm/` | サウンド → BGM |
+| `public/ambient/` | サウンド → ミキサー → 環境音 |
 
-```json
-{
-  "tracks": [
-    { "file": "morning-field.mp3", "title": "朝の草原", "subtitle": "My Lo-Fi" },
-    { "file": "campfire.m4a", "title": "焚き火", "gain": 0.8 }
-  ]
-}
-```
+1. 音声ファイルをフォルダに置く（GitHub なら、フォルダを開いて「Add file → Upload files」）
+2. `main` に入ると自動で公開される。ビルド時にフォルダの中のファイルが一覧に自動で足されるので、json を書かなくても出てくる
 
-- 曲は終わった瞬間に頭へ戻り、**フェードも無音もなく無限ループ**します（Web Audio の AudioBuffer ループ）。
-- MP3 / AAC がエンコード時に足す先頭・末尾の短い無音は自動で外します（各端 0.25 秒まで）。
-  意図した無音まで外れる場合は `"trimSilence": false`、ループ位置を秒で決めたい場合は `"loopStart"` / `"loopEnd"`。
-- 一番きれいにつながるのは **WAV / FLAC**（パディングなし）。容量を抑えるなら MP3 / AAC でも自動トリムで継ぎ目は出ません。
-- 1 ファイルは GitHub の制限（Web からのアップロードは 25MB まで、100MB 超は不可）に収めてください。
-- `tracks.json` がない・空のときは BGM は流れません（環境音は使えます）。
-- 再配布できる（自分で作った / ライセンス上 OK な）曲だけを置いてください。公開リポジトリだと誰でもダウンロードできます。
+- 題名・絵文字・音量・継ぎ目の重ね方を決めたいときは `tracks.json` / `sounds.json` に書く（書き方は各フォルダの `README.md`）。
+- 再生は Web Audio API のバッファループで、途切れずに無限ループする。環境音は継ぎ目で終わりを頭に重ねるので、録音をそのまま入れても「プチッ」と鳴らない。
+- ミキサーで BGM・追加した環境音・内蔵の環境音（雨・川・森の風・虫・焚き火）の音量をそれぞれ変えられる。
+- 再配布できる（自分で作った / ライセンス上 OK な）音だけを置いてください。公開リポジトリだと誰でもダウンロードできます。
 
 設計とデザインシステムの詳細は [CLAUDE.md](./CLAUDE.md) を参照。

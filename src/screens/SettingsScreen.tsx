@@ -96,7 +96,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
         const p = AMBIENT_PRESETS.find((x) => x.key === v)!;
         // iOS はタップの中で音を有効にしないと鳴らない
         ambient.unlock();
-        updateSettings({ ambient: p.mix, ambientPlaying: p.key !== 'none' });
+        updateSettings({ ambient: p.mix, ambientPlaying: p.key !== 'none' || Object.values(settings.ambientFiles).some((v) => v > 0.01) });
       },
     },
     sky: {
@@ -176,7 +176,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                 <Row icon={<Wind size={16} />} color="#5EA8B8" title="集中前の深呼吸" right={<Toggle checked={settings.breathing} onChange={set('breathing')} color="#34C759" label="深呼吸" />} />
               </Group>
 
-              <Group title="音楽設定" footer="BGM は public/bgm に置いた曲が流れます（曲の終わりで途切れず繰り返します）。環境音はブラウザ内で合成しています。">
+              <Group title="音楽設定" footer="BGM は public/bgm、環境音は public/ambient に置いた音が流れ、途切れずに繰り返します。音ごとの音量はホームの音符ボタン → ミキサーで変えられます。">
                 <Row icon={<Music size={16} />} color="#3E86C9" title="集中を始めたら音楽を流す" right={<Toggle checked={settings.bgmOnFocus} onChange={set('bgmOnFocus')} color="#34C759" label="音楽を流す" />} />
                 <Row icon={<span className="text-[15px]">📼</span>} color="#4A3A34" title="BGM" value={currentTrack?.title ?? 'まだありません'} onClick={tracks.length ? () => setPicker('bgm') : undefined} />
                 <Row

@@ -39,9 +39,11 @@ src/
     AppStore.tsx        データ（科目/セッション/予定/設定）の Context + アクション
     TimerStore.tsx      タイマー状態機械（Worker tick + タイムスタンプ差分）+ ディープ集中 + Wake Lock
   timer/timer.worker.ts 250ms ごとの tick を投げるだけの Worker（時間計算は常に Date.now() 差分）
-  audio/ambient.ts      プロシージャル環境音シンセ（雨・焚き火・森の風・川・虫）+ チャイム
+  audio/ambient.ts      内蔵の環境音シンセ（雨・焚き火・森の風・川・虫）+ チャイム。環境音のまとめ（output）を持つ
+  audio/ambientFiles.ts 追加した環境音（public/ambient）のミキサー。音ごとに LoopPlayer + GainNode
+  audio/ambientLibrary.ts 環境音リスト：public/ambient/sounds.json（実行時に読む。絵文字はファイル名から推測）
   audio/bgm.ts          BGM エンジン（アップロードした曲を LoopPlayer で鳴らす。曲は ID で選ぶ）
-  audio/loopPlayer.ts   音声ファイルのシームレス無限ループ（AudioBuffer + loopStart/loopEnd、無音の自動トリム）
+  audio/loopPlayer.ts   音声ファイルのシームレス無限ループ（AudioBuffer ループ、無音の自動トリム、継ぎ目のクロスフェードを焼き込む）
   audio/bgmLibrary.ts   曲リスト：public/bgm/tracks.json（実行時に読む）。曲がなければ BGM は鳴らない
   lib/                  純粋関数：time / altitude（標高・ステージ）/ stats / scene（空の配色・旅の時間）/ id
   lib/fonts.ts          フォント設定（FONTS。選んだ書体を Google Fonts から読み込み、CSS 変数で全体に反映）
@@ -70,12 +72,15 @@ src/
     nav/                TabBar（画面の最下部に固定。端から端まで）+ IslandPlayer（ダイナミックアイランド風）
     home/               SetupSheet（科目・時間 + デザイン固有の設定）
     focus/              BreathOverlay（深呼吸。Apple Watch の「呼吸」風）
-    audio/              CassettePlayer（カセット柄の再生カード + コントロールセンター風の環境音）
+    audio/              CassettePlayer（サウンドのシート：BGM / ミキサー）+ SoundMixer（音ごとの音量）
     tools/              ToolsPanel（ノート / ToDo / 習慣、縦のサイドタブ）
     …                   画面ごとの部品（timeline/ routes/ insights/ trail/）
   screens/              HomeScreen / TimelineScreen / RoutesScreen / InsightsScreen / SettingsScreen
 public/
   manifest.webmanifest, sw.js, icons/（icon.svg が元絵）, splash/（iOS 起動画像）
+  bgm/      BGM のフォルダ（tracks.json は任意。README.md に書き方）
+  ambient/  環境音のフォルダ（sounds.json は任意。README.md に書き方）
+vite.config.ts             audioManifests：ビルド時に bgm/・ambient/ の音声ファイルを一覧（json）へ自動で足す
 scripts/generate-assets.mjs  icon.svg → アイコン PNG と iOS 起動画像（playwright-core を --no-save で入れて実行）
 .github/workflows/deploy.yml main への push で GitHub Pages に公開
 ```
@@ -226,10 +231,15 @@ interface TimerDesign {
 - アプリの準備ができたら `lib/boot.ts` の `hideBoot()` でフェードして消す（`App.tsx` の `Gate`）。
 - アイコンを変えたら `scripts/generate-assets.mjs` を実行し、`index.html` の #boot の SVG も同じ図柄に揃える。
 
-## BGM のループ原則
-- 曲の継ぎ目にフェード・無音・クロスフェードを入れない。ループは `AudioBufferSourceNode.loop` に任せる（HTMLAudio の loop は使わない）。
-- フェードはユーザーが再生/一時停止したときだけ。一時停止は位置を覚え、続きから再開する。
-- 追加の曲は `public/bgm/` + `tracks.json`（コード変更不要）。SW は tracks.json だけネットワーク優先。
+## 音のループ原則（BGM・環境音）
+- ループは `AudioBufferSourceNode.loop` に任せる（HTMLAudio の loop は使わない）。再生中に継ぎ目の処理をしない。
+- 継ぎ目は読み込み時に一度だけ作る（`seamlessBuffer`）：
+  - BGM（既定 crossfade 0）：ループ用の曲は長さを変えずにそのままつなぐ。波形が飛ぶときだけ 8ms 重ねて「プチッ」を消す。
+  - 環境音（既定 crossfade 1.5 秒）：録音をそのまま入れても鳴らないよう、終わりを頭に等パワーで重ねる（音量は下がらない）。
+  - 先頭・末尾の無音はエンコーダーのパディング（1.5ms 以上・各端 0.25 秒まで）だけを外す。
+- フェードはユーザーが再生/一時停止・音量を変えたときだけ。一時停止は位置を覚え、続きから再開する。
+- 音の追加は `public/bgm/`・`public/ambient/` にファイルを置くだけ（json は題名などを決めたいときだけ）。SW は一覧の json だけネットワーク優先。
+- 音量は設定に保存（`bgmVolume` / `ambient`（内蔵）/ `ambientFiles`（追加した音、ID ごと））。起動時は再生を止めた状態から（iOS はタップが必要）。
 
 ## 規約
 - 文言は日本語。コンポーネントは関数 + 名前付き export。
