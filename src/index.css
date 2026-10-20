@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html, body, #root {
+    height: 100%;
+    background: #070b17;
+    color: #fff;
+    overscroll-behavior: none;
+  }
+  body {
+    @apply font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  button { -webkit-tap-highlight-color: transparent; }
+  ::selection { background: rgba(142, 197, 255, 0.35); }
+}
+
+@layer components {
+  .glass {
+    @apply border border-white/[0.12] bg-white/[0.07] shadow-glass;
+    backdrop-filter: blur(28px) saturate(170%);
+    -webkit-backdrop-filter: blur(28px) saturate(170%);
+  }
+  .glass-strong {
+    @apply border border-white/[0.12] bg-night-900/75 shadow-float;
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+  }
+  .glass-thin {
+    @apply border border-white/[0.08] bg-white/[0.05];
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+  }
+  .section-label {
+    @apply text-[12px] font-semibold uppercase tracking-[0.08em] text-white/45;
+  }
+  .field {
+    @apply w-full rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-[15px] text-white outline-none transition placeholder:text-white/30 focus:border-white/25 focus:bg-white/[0.09];
+  }
+}
+
+@layer utilities {
+  .pt-safe { padding-top: max(env(safe-area-inset-top), 16px); }
+  .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 12px); }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+  .tabular { font-variant-numeric: tabular-nums; }
+}
+
+input[type='range'].ios-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  width: 100%;
+}
+input[type='range'].ios-range::-webkit-slider-thumb { -webkit-appearance: none; width: 0; height: 0; }
+input[type='range'].ios-range::-moz-range-thumb { width: 0; height: 0; border: 0; }
+
+input[type='time']::-webkit-calendar-picker-indicator,
+input[type='date']::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.6; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; }
+}
