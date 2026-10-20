@@ -10,7 +10,7 @@ import { Toggle } from '@/components/ui/Toggle';
 import { PickerModal, type PickerOption } from '@/components/ui/PickerModal';
 import { Sheet } from '@/components/ui/Sheet';
 import { Modal } from '@/components/ui/Modal';
-import { BGM_TRACKS } from '@/audio/bgm';
+import { useBgmTracks } from '@/audio/bgmLibrary';
 import { SEASONS, SEASON_ORDER } from '@/components/scene/stage/palette';
 import { wakeLockSupported } from '@/hooks/useWakeLock';
 import { springSheet } from '@/lib/motion';
@@ -63,6 +63,7 @@ function ambientKey(mix: AmbientMix) {
 /** iOS 設定アプリ風（紙のトーン）。ホームの歯車から右へスライドして開く */
 export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { settings, updateSettings, resetToSample, clearAll } = useApp();
+  const tracks = useBgmTracks();
   const [picker, setPicker] = useState<PickerKey | null>(null);
   const [nameOpen, setNameOpen] = useState(false);
   const [name, setName] = useState('');
@@ -75,7 +76,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
     short: { title: '休憩時間', value: settings.pomodoroShortBreak, options: minutes([3, 5, 7, 10, 15]), onSelect: (v) => updateSettings({ pomodoroShortBreak: Number(v) }) },
     long: { title: '長い休憩', value: settings.pomodoroLongBreak, options: minutes([10, 15, 20, 25, 30]), onSelect: (v) => updateSettings({ pomodoroLongBreak: Number(v) }) },
     every: { title: '長い休憩の間隔', value: settings.longBreakEvery, options: [2, 3, 4, 5, 6].map((n) => ({ value: n, label: `${n}回の登りごと` })), onSelect: (v) => updateSettings({ longBreakEvery: Number(v) }) },
-    bgm: { title: 'BGM', value: settings.bgmTrack, options: BGM_TRACKS.map((t, i) => ({ value: i, label: t.title, detail: `${t.subtitle} · ${t.bpm} BPM`, icon: '📼' })), onSelect: (v) => updateSettings({ bgmTrack: Number(v) }) },
+    bgm: { title: 'BGM', value: settings.bgmTrack, options: tracks.map((t, i) => ({ value: i, label: t.title, detail: `${t.subtitle} · ${t.detail}`, icon: t.kind === 'file' ? '🎵' : '📼' })), onSelect: (v) => updateSettings({ bgmTrack: Number(v) }) },
     ambient: {
       title: '環境音',
       value: ambientKey(settings.ambient),
@@ -137,7 +138,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
 
               <Group title="音楽設定" footer="音楽・環境音はすべてブラウザ内でリアルタイムに合成しています。">
                 <Row icon={<Music size={16} />} color="#3E86C9" title="集中を始めたら音楽を流す" right={<Toggle tone="paper" checked={settings.bgmOnFocus} onChange={set('bgmOnFocus')} color="#3E86C9" label="音楽を流す" />} />
-                <Row icon={<span className="text-[15px]">📼</span>} color="#4A3A34" title="BGM" value={BGM_TRACKS[settings.bgmTrack]?.title} onClick={() => setPicker('bgm')} />
+                <Row icon={<span className="text-[15px]">📼</span>} color="#4A3A34" title="BGM" value={tracks[settings.bgmTrack % tracks.length]?.title} onClick={() => setPicker('bgm')} />
                 <Row
                   icon={<Volume2 size={16} />}
                   color="#6E5D52"

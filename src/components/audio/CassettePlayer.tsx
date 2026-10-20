@@ -6,7 +6,8 @@ import { Toggle } from '@/components/ui/Toggle';
 import { CrayonCheck } from '@/components/ui/PaperControls';
 import { CrayonOutline } from '@/components/ui/CrayonDefs';
 import { useApp } from '@/store/AppStore';
-import { BGM_TRACKS, type BgmTrack } from '@/audio/bgm';
+import { useBgmTracks, type LibraryTrack } from '@/audio/bgmLibrary';
+import { useBgmStatus } from '@/audio/useBgmStatus';
 import { ambient } from '@/audio/ambient';
 import { springBouncy, springSoft } from '@/lib/motion';
 import type { AmbientChannel } from '@/types';
@@ -19,7 +20,7 @@ const ENV: { key: AmbientChannel; label: string; icon: typeof Trees }[] = [
   { key: 'fire', label: '焚き火', icon: Flame },
 ];
 
-function TrackScreen({ track }: { track: BgmTrack }) {
+function TrackScreen({ track }: { track: LibraryTrack }) {
   const c = track.colors;
   return (
     <svg viewBox="0 0 120 90" className="h-full w-full" aria-hidden>
@@ -36,14 +37,14 @@ function TrackScreen({ track }: { track: BgmTrack }) {
   );
 }
 
-function Cassette({ track, playing }: { track: BgmTrack; playing: boolean }) {
+function Cassette({ track, playing }: { track: LibraryTrack; playing: boolean }) {
   const c = track.colors;
   return (
     <div className="relative h-full w-full overflow-hidden rounded-xl" style={{ background: c.band, backgroundImage: 'var(--noise-light), var(--twill)' }}>
       <div className="absolute inset-x-[6%] top-[10%] h-[44%] rounded-md px-2 py-1.5" style={{ background: '#F6EFDD', backgroundImage: 'var(--noise-warm), var(--weave)' }}>
         <div className="h-1 w-full rounded" style={{ background: c.label }} />
         <p className="mt-1 truncate text-center font-maru text-[13px] font-bold text-ink">{track.title}</p>
-        <p className="truncate text-center text-[10px] text-ink-soft">Focus Trail · {track.subtitle}</p>
+        <p className="truncate text-center text-[10px] text-ink-soft">{track.kind === 'file' ? `∞ ${track.subtitle}` : `Focus Trail · ${track.subtitle}`}</p>
       </div>
       {/* テープ窓とリール */}
       <div className="absolute inset-x-[16%] bottom-[12%] flex h-[30%] items-center justify-between rounded-full px-[6%]" style={{ background: c.label }}>
@@ -70,8 +71,12 @@ function Cassette({ track, playing }: { track: BgmTrack; playing: boolean }) {
 export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { settings, updateSettings } = useApp();
   const [mixer, setMixer] = useState(false);
-  const track = BGM_TRACKS[settings.bgmTrack % BGM_TRACKS.length];
+  const tracks = useBgmTracks();
+  const status = useBgmStatus();
+  const track = tracks[settings.bgmTrack % tracks.length];
   const playing = settings.bgmPlaying;
+  // 読み込み中はリールを回さない
+  const spinning = playing && (status === 'playing' || status === 'synth');
 
   const setPlaying = (v: boolean) => {
     ambient.unlock();
@@ -79,7 +84,7 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
   };
   const step = (d: number) => {
     ambient.unlock();
-    updateSettings({ bgmTrack: (settings.bgmTrack + d + BGM_TRACKS.length) % BGM_TRACKS.length, bgmPlaying: true });
+    updateSettings({ bgmTrack: (settings.bgmTrack + d + tracks.length) % tracks.length, bgmPlaying: true });
   };
   const toggleEnv = (k: AmbientChannel) => {
     ambient.unlock();
@@ -102,7 +107,7 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
         <div className="relative mt-3">
           <div className="absolute -top-3 right-8 flex gap-1.5">
             {['#B9B2A6', '#B9B2A6', '#D9573B'].map((c, i) => (
-              <motion.span key={i} className="h-4 w-8 rounded-t-md" style={{ background: c }} animate={{ y: i === 2 && playing ? 3 : 0 }} transition={springBouncy} />
+              <motion.span key={i} className="h-4 w-8 rounded-t-md" style={{ background: c }} animate={{ y: i === 2 && spinning ? 3 : 0 }} transition={springBouncy} />
             ))}
           </div>
           <div className="tex-kraft relative flex gap-3 rounded-[1.6rem] p-3.5 shadow-[0_14px_30px_-16px_rgba(58,46,40,0.7)]">
@@ -126,7 +131,7 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
             <div className="relative flex-1 rounded-xl bg-[#CFC6B6] p-1.5">
               <AnimatePresence mode="popLayout">
                 <motion.div key={track.title} className="h-full" initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -40, opacity: 0 }} transition={springSoft}>
-                  <Cassette track={track} playing={playing} />
+                  <Cassette track={track} playing={spinning} />
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -135,16 +140,18 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
 
         {/* 曲リスト */}
         <div className="paper-card mt-4 divide-y divide-ink/10 overflow-hidden">
-          {BGM_TRACKS.map((tr, i) => {
+          {tracks.map((tr, i) => {
             const active = i === settings.bgmTrack;
             return (
               <button key={tr.title} onClick={() => { ambient.unlock(); updateSettings({ bgmTrack: i, bgmPlaying: true }); }} className="flex w-full items-center gap-3 px-4 py-3 text-left">
                 <span className="h-7 w-2 rounded-full" style={{ background: tr.colors.label }} />
                 <span className="min-w-0 flex-1">
                   <span className="block font-maru text-[15px] font-bold">{tr.title}</span>
-                  <span className="block text-[11px] text-ink-soft">{tr.subtitle} · {tr.bpm} BPM</span>
+                  <span className="block text-[11px] text-ink-soft">
+                    {tr.subtitle} · {active && status === 'loading' ? '読み込み中…' : active && status === 'error' ? '読み込めませんでした' : tr.detail}
+                  </span>
                 </span>
-                {active && playing && (
+                {active && spinning && (
                   <span className="flex h-4 items-end gap-0.5">
                     {[0, 1, 2].map((b) => (
                       <motion.span key={b} className="w-1 rounded-full bg-crayon-blue" animate={{ height: ['30%', '100%', '45%', '80%', '30%'] }} transition={{ duration: 1.1, repeat: Infinity, delay: b * 0.15 }} />

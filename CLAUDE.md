@@ -36,7 +36,9 @@ src/
     TimerStore.tsx      タイマー状態機械（Worker tick + タイムスタンプ差分）+ ディープ集中 + Wake Lock
   timer/timer.worker.ts 250ms ごとの tick を投げるだけの Worker（時間計算は常に Date.now() 差分）
   audio/ambient.ts      プロシージャル環境音シンセ（雨・焚き火・森の風・川・虫）+ チャイム
-  audio/bgm.ts          プロシージャル Lo-Fi BGM（コード進行・ベース・ドラム・旋律・テープの揺れ）4 曲
+  audio/bgm.ts          BGM エンジン（ファイル曲 → LoopPlayer / 合成曲 → プロシージャル Lo-Fi）
+  audio/loopPlayer.ts   音声ファイルのシームレス無限ループ（AudioBuffer + loopStart/loopEnd、無音の自動トリム）
+  audio/bgmLibrary.ts   曲リスト：public/bgm/tracks.json（実行時に読む）+ 合成曲 4 曲（synthTracks.ts）
   lib/                  純粋関数：time / altitude（標高・ステージ）/ stats / scene（空の配色）/ id
   hooks/                useNow, useWakeLock, useMultiRoom（BroadcastChannel の部屋）など
   components/
@@ -158,6 +160,11 @@ public/
 - シートは下からスプリング、ドラッグで閉じる。モーダルは scale 0.94→1 + fade。
 - タブの選択インジケータは `layoutId` で滑らかに移動。
 - `prefers-reduced-motion` を尊重（Canvas の粒子量・視差を削減）。
+
+## BGM のループ原則
+- 曲の継ぎ目にフェード・無音・クロスフェードを入れない。ループは `AudioBufferSourceNode.loop` に任せる（HTMLAudio の loop は使わない）。
+- フェードはユーザーが再生/一時停止したときだけ。一時停止は位置を覚え、続きから再開する。
+- 追加の曲は `public/bgm/` + `tracks.json`（コード変更不要）。SW は tracks.json だけネットワーク優先。
 
 ## 規約
 - 文言は日本語。コンポーネントは関数 + 名前付き export。

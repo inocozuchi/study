@@ -1,9 +1,10 @@
 /* Focus Trail Service Worker
  * - インストール時に index.html を取得し、参照しているハッシュ付きアセットも事前キャッシュ
  * - ナビゲーション：ネットワーク優先（オフライン時はキャッシュの index.html）
- * - 同一オリジンの静的アセット：キャッシュ優先 + 裏で更新（stale-while-revalidate）
+ * - BGM の曲リスト（bgm/tracks.json）：ネットワーク優先（アップロードした曲がすぐ反映される）
+ * - 同一オリジンの静的アセット（BGM の音声ファイルを含む）：キャッシュ優先 + 裏で更新（stale-while-revalidate）
  */
-const VERSION = 'focus-trail-v2';
+const VERSION = 'focus-trail-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
@@ -50,6 +51,22 @@ self.addEventListener('fetch', (event) => {
           return fresh;
         } catch {
           return (await caches.match('./index.html')) || Response.error();
+        }
+      })(),
+    );
+    return;
+  }
+
+  if (url.pathname.endsWith('/bgm/tracks.json')) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(VERSION);
+        try {
+          const fresh = await fetch(req, { cache: 'no-store' });
+          if (fresh.ok) cache.put(req, fresh.clone());
+          return fresh;
+        } catch {
+          return (await cache.match(req)) || Response.error();
         }
       })(),
     );

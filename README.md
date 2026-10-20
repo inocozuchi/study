@@ -27,4 +27,26 @@ npm run preview  # ビルド成果物を確認（Service Worker 有効）
 - **データ**：Repository パターン（`src/data/`）。現在は LocalStorage 実装、Firestore 等へ差し替え可能
 - **PWA**：manifest / Service Worker / iOS メタタグ。ホーム画面に追加して全画面で動作
 
+## BGM（自分の曲を追加する）
+
+1. 音声ファイルを `public/bgm/` に置く（GitHub なら「Add file → Upload files」で `public/bgm/` へ）
+2. `public/bgm/tracks.json` に曲を書く
+
+```json
+{
+  "tracks": [
+    { "file": "morning-field.mp3", "title": "朝の草原", "subtitle": "My Lo-Fi" },
+    { "file": "campfire.m4a", "title": "焚き火", "gain": 0.8 }
+  ]
+}
+```
+
+- 曲は終わった瞬間に頭へ戻り、**フェードも無音もなく無限ループ**します（Web Audio の AudioBuffer ループ）。
+- MP3 / AAC がエンコード時に足す先頭・末尾の短い無音は自動で外します（各端 0.25 秒まで）。
+  意図した無音まで外れる場合は `"trimSilence": false`、ループ位置を秒で決めたい場合は `"loopStart"` / `"loopEnd"`。
+- 一番きれいにつながるのは **WAV / FLAC**（パディングなし）。容量を抑えるなら MP3 / AAC でも自動トリムで継ぎ目は出ません。
+- 1 ファイルは GitHub の制限（Web からのアップロードは 25MB まで、100MB 超は不可）に収めてください。
+- `tracks.json` がない・空のときは、ブラウザ内で合成する 4 曲が流れます。
+- 再配布できる（自分で作った / ライセンス上 OK な）曲だけを置いてください。公開リポジトリだと誰でもダウンロードできます。
+
 設計とデザインシステムの詳細は [CLAUDE.md](./CLAUDE.md) を参照。

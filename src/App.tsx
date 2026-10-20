@@ -14,6 +14,7 @@ import { RoutesScreen } from '@/screens/RoutesScreen';
 import { InsightsScreen } from '@/screens/InsightsScreen';
 import { ambient } from '@/audio/ambient';
 import { bgm } from '@/audio/bgm';
+import { loadLibrary } from '@/audio/bgmLibrary';
 import { useMultiRoom } from '@/hooks/useMultiRoom';
 import { routeProgress, stageFor } from '@/lib/altitude';
 import { hourFor } from '@/lib/scene';
@@ -77,6 +78,11 @@ function Shell() {
       /* noop */
     }
   };
+
+  // BGM ライブラリ（public/bgm/tracks.json）
+  useEffect(() => {
+    void loadLibrary();
+  }, []);
 
   // 音の同期（環境音・BGM）
   useEffect(() => ambient.setMix(settings.ambient), [settings.ambient]);

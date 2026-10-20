@@ -1,62 +1,14 @@
 import { ambient } from './ambient';
+import type { SynthTrack } from './synthTracks';
+import { onLibraryChange, trackAt, type LibraryTrack } from './bgmLibrary';
+import { LoopPlayer, type LoopStatus } from './loopPlayer';
 
 /**
- * プロシージャル Lo-Fi BGM。音源ファイルなしで、コード進行・ベース・
- * スウィングしたドラム・ペンタトニックの旋律・テープ風の揺れとノイズをその場で合成する。
+ * BGM エンジン。曲には 2 種類ある：
+ *  - file  ：アップロードした音声ファイル。LoopPlayer でサンプル単位のシームレス無限ループ
+ *  - synth ：プロシージャル Lo-Fi。コード進行・ベース・スウィングしたドラム・
+ *            ペンタトニックの旋律・テープ風の揺れとノイズをその場で合成し、終わりなく鳴り続ける
  */
-
-export interface BgmTrack {
-  title: string;
-  subtitle: string;
-  bpm: number;
-  /** ルート音（MIDI） */
-  root: number;
-  /** 小節ごとのコード（ルートからの半音） */
-  chords: number[][];
-  /** 旋律に使う音階（ルートからの半音） */
-  scale: number[];
-  /** カセットのラベル・小窓の配色 */
-  colors: { label: string; band: string; sky: string; ground: string };
-}
-
-export const BGM_TRACKS: BgmTrack[] = [
-  {
-    title: '朝の草原',
-    subtitle: 'Morning Meadow',
-    bpm: 74,
-    root: 53,
-    chords: [[0, 4, 7, 11], [-1, 2, 7, 11], [-3, 0, 4, 7], [-5, -1, 2, 7]],
-    scale: [0, 2, 4, 7, 9, 12, 14, 16],
-    colors: { label: '#F4C64E', band: '#2F6FB5', sky: '#8CC8EE', ground: '#9BC85A' },
-  },
-  {
-    title: '焚き火のワルツ',
-    subtitle: 'Campfire Waltz',
-    bpm: 68,
-    root: 57,
-    chords: [[0, 3, 7, 10], [-4, 0, 3, 7], [3, 7, 10, 14], [-2, 2, 5, 9]],
-    scale: [0, 3, 5, 7, 10, 12, 15, 17],
-    colors: { label: '#E8743A', band: '#3B2F4A', sky: '#2B3560', ground: '#D9822B' },
-  },
-  {
-    title: '雨上がりの尾根',
-    subtitle: 'After the Rain',
-    bpm: 70,
-    root: 50,
-    chords: [[0, 3, 7, 10, 14], [5, 9, 12, 16], [10, 14, 17, 21], [7, 10, 14, 17]],
-    scale: [0, 2, 3, 5, 7, 9, 10, 12, 14],
-    colors: { label: '#7FB8A4', band: '#2E4A44', sky: '#A9BFD0', ground: '#5E8A6A' },
-  },
-  {
-    title: '星降る稜線',
-    subtitle: 'Starfall Ridge',
-    bpm: 62,
-    root: 51,
-    chords: [[0, 4, 7, 11], [4, 7, 11, 14], [-3, 0, 3, 7], [-2, 2, 5, 10]],
-    scale: [0, 2, 4, 7, 9, 12, 14, 16],
-    colors: { label: '#B9A6E8', band: '#1E2550', sky: '#1C2550', ground: '#36406E' },
-  },
-];
 
 const mtof = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 
@@ -72,8 +24,41 @@ class BgmEngine {
   private nextTime = 0;
   private melodyIdx = 3;
   private volume = 0.7;
+  /** 合成曲のバス / 音声ファイルのバス（どちらも out へ） */
+  private synthBus!: GainNode;
+  private fileBus!: GainNode;
+  private loop: LoopPlayer | null = null;
+  private synthRunning = false;
+  private currentId: string | null = null;
+  private stopTimer: ReturnType<typeof setTimeout> | null = null;
+  private listeners = new Set<() => void>();
   track = 0;
   playing = false;
+
+  constructor() {
+    // tracks.json の読み込みで曲順が変わったら、今の曲を鳴らし直す
+    onLibraryChange(() => {
+      if (this.playing && trackAt(this.track).id !== this.currentId) this.startCurrent();
+      this.emit();
+    });
+  }
+
+  /** UI 用：読み込み中・エラーなどの状態 */
+  get status(): LoopStatus | 'synth' {
+    return trackAt(this.track).kind === 'synth' ? 'synth' : this.loop?.status ?? 'idle';
+  }
+  get loopInfo() {
+    return this.loop?.loop ?? null;
+  }
+  subscribe(l: () => void) {
+    this.listeners.add(l);
+    return () => {
+      this.listeners.delete(l);
+    };
+  }
+  private emit() {
+    this.listeners.forEach((l) => l());
+  }
 
   private ensure() {
     if (this.ctx) return this.ctx;
@@ -82,6 +67,14 @@ class BgmEngine {
     this.ctx = ctx;
     this.out = ctx.createGain();
     this.out.gain.value = 0;
+    this.out.connect(ctx.destination);
+    this.synthBus = ctx.createGain();
+    this.synthBus.gain.value = 0.55;
+    this.synthBus.connect(this.out);
+    this.fileBus = ctx.createGain();
+    this.fileBus.connect(this.out);
+    this.loop = new LoopPlayer(ctx, this.fileBus);
+    this.loop.onStatus = () => this.emit();
     this.tape = ctx.createBiquadFilter();
     this.tape.type = 'lowpass';
     this.tape.frequency.value = 3400;
@@ -93,7 +86,7 @@ class BgmEngine {
     wowAmt.gain.value = 500;
     wow.connect(wowAmt).connect(this.tape.frequency);
     wow.start();
-    this.tape.connect(this.out).connect(ctx.destination);
+    this.tape.connect(this.synthBus);
     // 旋律用のディレイ
     const delay = ctx.createDelay(1);
     delay.delayTime.value = 0.36;
@@ -118,36 +111,73 @@ class BgmEngine {
 
   setVolume(v: number) {
     this.volume = v;
-    if (this.ctx && this.playing) this.out.gain.setTargetAtTime(0.55 * v * v, this.ctx.currentTime, 0.2);
+    if (this.ctx && this.playing) this.out.gain.setTargetAtTime(v * v, this.ctx.currentTime, 0.2);
   }
 
   setTrack(i: number) {
-    const n = ((i % BGM_TRACKS.length) + BGM_TRACKS.length) % BGM_TRACKS.length;
-    if (n === this.track) return;
-    this.track = n;
-    this.step = 0;
-    this.melodyIdx = 3;
-    if (this.ctx) this.nextTime = this.ctx.currentTime + 0.12;
+    if (i === this.track) return;
+    this.track = i;
+    if (this.playing) this.startCurrent();
+    this.emit();
   }
 
+  /**
+   * 再生/一時停止。音量のフェードはユーザーが押したときだけで、
+   * 曲の継ぎ目（ループ）には一切フェードも無音も入らない。
+   */
   setPlaying(on: boolean) {
     if (on === this.playing) return;
     const ctx = this.ensure();
     if (!ctx) return;
     this.playing = on;
+    if (this.stopTimer) clearTimeout(this.stopTimer);
+    this.stopTimer = null;
     this.out.gain.cancelScheduledValues(ctx.currentTime);
-    this.out.gain.setTargetAtTime(on ? 0.55 * this.volume * this.volume : 0, ctx.currentTime, on ? 0.5 : 0.18);
-    if (on) {
+    this.out.gain.setTargetAtTime(on ? this.volume * this.volume : 0, ctx.currentTime, on ? 0.35 : 0.12);
+    if (on) this.startCurrent();
+    else {
+      // 音量が下がりきってから止める（位置は覚えておき、次は続きから）
+      this.stopTimer = setTimeout(() => {
+        if (!this.playing) this.stopAll();
+      }, 450);
+    }
+    this.emit();
+  }
+
+  private startCurrent() {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const t: LibraryTrack = trackAt(this.track);
+    this.currentId = t.id;
+    if (t.kind === 'file') {
+      this.stopSynth();
+      this.fileBus.gain.setValueAtTime(0.9 * t.gain, ctx.currentTime);
+      void this.loop!.play(t.url, t);
+    } else {
+      this.loop?.reset();
+      this.stopSynth();
+      this.step = 0;
+      this.melodyIdx = 3;
       this.nextTime = ctx.currentTime + 0.1;
       this.startCrackle();
       this.timer = setInterval(() => this.schedule(), 60);
+      this.synthRunning = true;
       this.schedule();
-    } else {
-      if (this.timer) clearInterval(this.timer);
-      this.timer = null;
-      this.crackle?.stop(ctx.currentTime + 0.4);
-      this.crackle = null;
     }
+  }
+
+  private stopSynth() {
+    if (!this.synthRunning) return;
+    this.synthRunning = false;
+    if (this.timer) clearInterval(this.timer);
+    this.timer = null;
+    this.crackle?.stop((this.ctx?.currentTime ?? 0) + 0.05);
+    this.crackle = null;
+  }
+
+  private stopAll() {
+    this.stopSynth();
+    this.loop?.pause();
   }
 
   private startCrackle() {
@@ -161,15 +191,16 @@ class BgmEngine {
     f.Q.value = 0.4;
     const g = ctx.createGain();
     g.gain.value = 0.012;
-    src.connect(f).connect(g).connect(this.out);
+    src.connect(f).connect(g).connect(this.synthBus);
     src.start();
     this.crackle = src;
   }
 
   private schedule() {
     const ctx = this.ctx;
-    if (!ctx || !this.playing) return;
-    const t = BGM_TRACKS[this.track];
+    const lib = trackAt(this.track);
+    if (!ctx || !this.playing || !this.synthRunning || lib.kind !== 'synth') return;
+    const t = lib.synth;
     const eighth = 60 / t.bpm / 2;
     const ahead = document.hidden ? 1.6 : 0.4;
     if (this.nextTime < ctx.currentTime) this.nextTime = ctx.currentTime + 0.05;
@@ -181,7 +212,7 @@ class BgmEngine {
     }
   }
 
-  private playStep(t: BgmTrack, step: number, at: number, eighth: number) {
+  private playStep(t: SynthTrack, step: number, at: number, eighth: number) {
     const inBar = step % 8;
     const bar = Math.floor(step / 8);
     const chord = t.chords[bar % t.chords.length];
