@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AppProvider, useApp } from '@/store/AppStore';
 import { TimerProvider, useTimer } from '@/store/TimerStore';
-import { TrailScene, type TravelerMood } from '@/components/scene/TrailScene';
+import { TrailStage, type TravelerMood } from '@/components/scene/stage/TrailStage';
 import { TabBar, TABS, type TabKey } from '@/components/nav/TabBar';
 import { IslandPlayer } from '@/components/nav/IslandPlayer';
 import { StrayModal } from '@/components/trail/StrayModal';
@@ -138,7 +138,7 @@ function SceneLayer() {
   const mood: TravelerMood = stray ? 'alert' : timer.phase === 'break' ? 'rest' : timer.phase === 'focus' && timer.running ? 'walk' : 'stand';
   return (
     <div className="absolute inset-0">
-      <TrailScene hour={hourFor(settings.sky, new Date(now))} stage={stage} mood={mood} />
+      <TrailStage hour={hourFor(settings.sky, new Date(now))} stage={stage} mood={mood} />
     </div>
   );
 }

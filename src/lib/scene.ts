@@ -113,7 +113,3 @@ export function timeOfDayLabel(hour: number) {
   if (h < 21) return '宵';
   return '星空';
 }
-
-/** ステージ別の地表色 */
-export const GROUND_BY_STAGE: RGB[] = ['#5C8F4E', '#2F5C3E', '#5D6170', '#E3EBF4', '#6E6874'].map(hexToRgb);
-export const LAND_TINT_BY_STAGE: RGB[] = ['#3E6E47', '#24503A', '#465062', '#5A6E88', '#5B5A70'].map(hexToRgb);

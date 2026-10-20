@@ -38,7 +38,13 @@ src/
   lib/                  純粋関数：time / altitude（標高・ステージ）/ stats / scene（空の配色）/ id
   hooks/                useNow, useWakeLock など
   components/
-    scene/TrailScene.tsx  Canvas 背景（空・天体・雲・山レイヤー・旅人・テント・焚き火・粒子）
+    scene/stage/          メイン画面の 6 層シーン（下記「シーン構成」）
+      TrailStage.tsx      レイヤーの組み立て + 唯一の rAF ループ（関節・トラック・粒子を更新）
+      rigMath.ts          歩行サイクル・2 ボーン IK・座りポーズ・犬の速歩/伏せ・ポーズ補間
+      HikerRig.tsx        関節分割されたハイカー SVG（約 6 頭身）と applyHikerPose
+      DogRig.tsx          ザックを背負ったコーギー SVG と applyDogPose
+      layout.ts / palette.ts  画面サイズ→配置、時間帯の空・ステージ別の草原色
+      layers/             Sky / Mountain / Tree / Meadow / Foreground / Light
     ui/                   GlassCard, Sheet, Modal, Segmented, Toggle, Slider, Pressable …
     nav/                  TabBar（フローティング）+ IslandPlayer（ダイナミックアイランド風）
     …                     画面ごとの部品（timeline/ routes/ insights/ trail/）
@@ -58,6 +64,23 @@ public/
   警告モーダル（集中に戻る / 休憩へ）。
 - 時刻は epoch ms（number）、日付キーは `YYYY-MM-DD`（ローカル）、予定は「0時からの分」。
 - 標高換算：**1 分 = 10 m**。科目ルートは `targetMinutes` で登頂、進捗で 5 ステージ。
+
+## シーン構成（メイン画面の背景）
+
+すべて `position:absolute` の 6 層。下から：
+1. **Sky**：セルリアンのグラデーション、太陽/月、入道雲（CSS で横に流れる）、羽ばたく鳥、夜は星
+2. **Mountain**：空気遠近法の 2 段の山脈。周期タイルを `translate3d` で極めてゆっくり流す
+3. **Tree**：左右からフレームインする針葉樹と白樺（CSS で根元を支点に揺れる）
+4. **Meadow**：右上がりの草原斜面。草の質感は斜面に沿って回転したストリップを流す。ハイカー・犬・テント
+5. **Foreground**：`blur(3px)` の草花（被写界深度）。草原より速く流れ、風で大きく揺れる
+6. **Light**：ゴッドレイ、焚き火（夜でも暗くならないようティントより上）、Canvas 粒子、紙の粒状感
+   - 5 と 6 の間に時間帯ティント（夜：群青 multiply、朝夕：暖色 soft-light）
+
+**骨格アニメーションの原則**
+- リグは階層 `<g>`。関節の原点が回転の支点。React は描画のみ、毎フレームは `setAttribute('transform')` だけ。
+- 脚は 2 ボーン IK で足首を斜面上の目標へ。接地中は足が後ろへ等速移動し、その速度＝地面の流れる速度（足が滑らない）。
+- 状態（歩く/立つ/座る/警告）は重み（w, camp, alert）を lerp し、関節角をポーズ間で補間して切り替える。
+- アニメーションする要素を SVG フィルタの内側に置かない（毎フレーム再計算になる）。`#ft-rough` は静的な層だけ。
 
 ## デザインシステム
 

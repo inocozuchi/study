@@ -75,3 +75,49 @@ input[type='date']::-webkit-calendar-picker-indicator { filter: invert(1); opaci
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; }
 }
+
+/* ───────── Trail stage（6 層シーン）の環境アニメーション ───────── */
+@keyframes ft-drift {
+  from { transform: translate3d(110vw, 0, 0); }
+  to { transform: translate3d(-100%, 0, 0); }
+}
+@keyframes ft-fly {
+  from { transform: translate3d(-15vw, 0, 0); }
+  to { transform: translate3d(115vw, -8vh, 0); }
+}
+@keyframes ft-flap {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(-0.55); }
+}
+@keyframes ft-sway {
+  0%, 100% { transform: rotate(-0.9deg); }
+  50% { transform: rotate(1.1deg); }
+}
+@keyframes ft-sway-big {
+  0%, 100% { transform: rotate(-5deg); }
+  45% { transform: rotate(6deg); }
+  70% { transform: rotate(2deg); }
+}
+@keyframes ft-ray {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes ft-steam {
+  0% { transform: translateY(2px); opacity: 0; }
+  35% { opacity: 0.8; }
+  100% { transform: translateY(-6px); opacity: 0; }
+}
+@keyframes ft-twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.ft-drift { animation: ft-drift 200s linear infinite; will-change: transform; }
+.ft-fly { animation: ft-fly 50s linear infinite; }
+.ft-flap { animation: ft-flap 0.5s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+.ft-sway { animation: ft-sway 8s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+.ft-sway-big { animation: ft-sway-big 4s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+.ft-ray { animation: ft-ray 7s ease-in-out infinite; }
+.ft-steam { animation: ft-steam 2.4s ease-out infinite; transform-box: fill-box; }
+.ft-twinkle { animation: ft-twinkle 3s ease-in-out infinite; }
+.ft-reduced .ft-drift, .ft-reduced .ft-fly, .ft-reduced .ft-flap, .ft-reduced .ft-sway,
+.ft-reduced .ft-sway-big, .ft-reduced .ft-ray, .ft-reduced .ft-twinkle { animation-play-state: paused; }
