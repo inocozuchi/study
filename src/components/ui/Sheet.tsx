@@ -51,7 +51,7 @@ export function Sheet({ open, onClose, title, subtitle, children, action, maxHei
             aria-modal
             className="relative flex w-full max-w-xl flex-col overflow-hidden rounded-t-sheet bg-surface pb-safe text-fg shadow-raised sm:mb-4 sm:rounded-sheet"
             // ステータスバーの下に潜らないよう、上に余白を残す
-            style={{ maxHeight: `min(${height}, calc(100% - env(safe-area-inset-top) - 12px))` }}
+            style={{ maxHeight: `min(${height}, calc(100% - 12px))` }}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}

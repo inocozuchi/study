@@ -4,7 +4,6 @@ import { AppProvider, useApp } from '@/store/AppStore';
 import { TimerProvider, useTimer, type JourneyResult } from '@/store/TimerStore';
 import { TabBar, TABS, type TabKey } from '@/components/nav/TabBar';
 import { IslandPlayer } from '@/components/nav/IslandPlayer';
-import { StrayModal } from '@/components/trail/StrayModal';
 import { SummitModal } from '@/components/routes/SummitModal';
 import { HomeScreen } from '@/screens/HomeScreen';
 // ホーム以外の画面は起動時に読み込まない（起動を軽くする）。起動後、手が空いたときに先読みする
@@ -23,7 +22,8 @@ import { hourFor } from '@/lib/scene';
 import { getDesign } from '@/designs';
 import { hideBoot } from '@/lib/boot';
 import { applyFont } from '@/lib/fonts';
-import { applyAppearance } from '@/lib/theme';
+import { applyAppearance, setEdgeColors } from '@/lib/theme';
+import { useSceneHeld } from '@/lib/sceneHold';
 import { useNow } from '@/hooks/useNow';
 import { springSoft } from '@/lib/motion';
 
@@ -112,16 +112,14 @@ function Shell() {
 
   const journeying = timer.phase !== 'idle' || !!timer.journeyStartedAt;
   const onHome = tab === 'trail';
+  const sceneHeld = useSceneHeld();
   const immersive = onHome && (journeying || !!result);
-  // 上までスクロールしているときはステータスバーの下をぼかさない
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => setScrolled(false), [tab]);
 
   return (
     <div className="app-frame overflow-hidden bg-page">
       {/* タイマーのシーンはホームでだけ見せる。ほかの画面では止めて隠す（地の色の上にカードを並べる） */}
-      <div className="absolute inset-0" style={{ visibility: onHome ? 'visible' : 'hidden' }}>
-        <SceneLayer ended={!!result} paused={!onHome} />
+      <div className="absolute inset-0" style={{ visibility: onHome && !sceneHeld ? 'visible' : 'hidden' }}>
+        <SceneLayer ended={!!result} paused={!onHome || sceneHeld} />
       </div>
 
       <AnimatePresence mode="popLayout" initial={false} custom={direction}>
@@ -138,10 +136,6 @@ function Shell() {
           animate="center"
           exit="exit"
           transition={springSoft}
-          onScroll={(e) => {
-            const v = e.currentTarget.scrollTop > 4;
-            if (v !== scrolled) setScrolled(v);
-          }}
           className={`absolute inset-0 ${onHome ? 'overflow-hidden' : 'no-scrollbar overflow-y-auto overscroll-contain'}`}
         >
           {tab === 'trail' && <HomeScreen result={result} setResult={setResult} />}
@@ -153,32 +147,19 @@ function Shell() {
         </motion.main>
       </AnimatePresence>
 
-      {/* ステータスバーの下：スクロールして中身が下に潜ったときだけぼかす */}
+      {/* タブバー：画面の最下部に固定。集中中は画面の外へ隠し、シーンを一番下まで見せる */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] border-b border-line bg-page/80 backdrop-blur-xl transition-opacity duration-200"
-        style={{ opacity: scrolled && !onHome ? 1 : 0 }}
-      />
+        className={`fixed inset-x-0 bottom-0 z-50 transition-[transform,opacity] duration-300 ease-out ${immersive ? 'pointer-events-none translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}
+        aria-hidden={immersive}
+      >
+        <div className="pointer-events-none absolute inset-x-0 bottom-full flex justify-center pb-2">
+          <div className="pointer-events-auto">
+            <IslandPlayer visible={!onHome && !immersive} onOpen={() => setTab('trail')} />
+          </div>
+        </div>
+        <TabBar tab={tab} onChange={setTab} />
+      </div>
 
-      <AnimatePresence>
-        {!immersive && (
-          <motion.div
-            className="absolute inset-x-0 bottom-0 z-40"
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={springSoft}
-          >
-            <div className="pointer-events-none absolute inset-x-0 bottom-full flex justify-center">
-              <div className="pointer-events-auto">
-                <IslandPlayer visible={!onHome} onOpen={() => setTab('trail')} />
-              </div>
-            </div>
-            <TabBar tab={tab} onChange={setTab} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <StrayModal />
       <SummitModal />
     </div>
   );
@@ -189,13 +170,20 @@ function SceneLayer({ ended, paused }: { ended: boolean; paused: boolean }) {
   const { settings } = useApp();
   const { timer, elapsedMs } = useTimer();
   const now = useNow(60_000);
-  const { Scene } = getDesign(settings.timerDesign);
+  const design = getDesign(settings.timerDesign);
+  const { Scene } = design;
   const hour = hourFor(settings.sky, new Date(now), {
     phase: timer.phase,
     elapsedMs,
     targetMs: timer.targetMs,
     freeSpanMs: settings.pomodoroFocus * 60_000,
   });
+  // ホームでは画面の外側の帯（上下）をシーンの空と地面の色で塗る。ほかの画面では地の色に戻す
+  const sceneHour = ended ? 21.6 : hour;
+  useEffect(() => {
+    setEdgeColors(!paused && design.edgeColors ? design.edgeColors(sceneHour, settings) : null);
+  }, [paused, sceneHour, settings.season, design]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => setEdgeColors(null), []);
   return (
     <div className="absolute inset-0">
       <Scene hour={hour} ended={ended} paused={paused} />

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Bell, ChevronLeft, ChevronRight, Clock, Coffee, Database, Eye, Leaf, Mountain, Music, PlusSquare, Repeat, Smartphone, Sun, Timer, Trash2,
+  Bell, ChevronLeft, ChevronRight, Clock, Coffee, Database, Leaf, Mountain, Music, PlusSquare, Repeat, Smartphone, Sun, Timer, Trash2,
   Contrast, Moon, Type, User, Volume2, Waves, Wind,
 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
@@ -16,6 +16,7 @@ import { SEASONS, SEASON_ORDER } from '@/designs/mountain/scene/palette';
 import { getDesign } from '@/designs';
 import { wakeLockSupported } from '@/hooks/useWakeLock';
 import { springSheet } from '@/lib/motion';
+import { useHoldScene } from '@/lib/sceneHold';
 import { ambient } from '@/audio/ambient';
 import { FONTS, fontById, loadFontPreviews, unloadFontPreviews } from '@/lib/fonts';
 import type { AmbientChannel, AmbientMix, Appearance, FontId, Season, Settings, SkyOverride } from '@/types';
@@ -26,13 +27,13 @@ import type { AmbientChannel, AmbientMix, Appearance, FontId, Season, Settings, 
  *  - スイッチの項目：へこんだ面のアイコン + 題名 + 説明 + スイッチ
  */
 function Row({ icon, title, detail, value, onClick, right, danger = false }: { icon: ReactNode; title: string; detail?: string; value?: ReactNode; onClick?: () => void; right?: ReactNode; danger?: boolean }) {
-  const Comp = onClick ? motion.button : motion.div;
+  // ふつうの要素 + CSS の押し込み（項目が多いので、1 つずつアニメーションの部品にしない）
+  const Comp = onClick ? 'button' : 'div';
   const sub = value ?? detail;
   return (
     <Comp
-      whileTap={onClick ? { scale: 0.985 } : undefined}
       onClick={onClick}
-      className={`card flex min-h-[60px] w-full items-center gap-3 px-4 py-3.5 text-left ${onClick ? 'active:bg-accent-soft' : ''}`}
+      className={`card flex min-h-[60px] w-full items-center gap-3 px-4 py-3.5 text-left transition-transform duration-100 ${onClick ? 'active:scale-[0.985] active:bg-accent-soft' : ''}`}
     >
       {right ? (
         <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-chip bg-sunken text-fg-2">{icon}</span>
@@ -89,7 +90,14 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
   const [picker, setPicker] = useState<PickerKey | null>(null);
   const [nameOpen, setNameOpen] = useState(false);
   const [installOpen, setInstallOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  // 設定は画面全体を覆うので、開いて少したったら下のシーンを止める（スライドの間は見えている）
+  const [covered, setCovered] = useState(false);
+  useEffect(() => {
+    if (!open) return setCovered(false);
+    const id = setTimeout(() => setCovered(true), 420);
+    return () => clearTimeout(id);
+  }, [open]);
+  useHoldScene(covered);
   const [name, setName] = useState('');
   const [confirm, setConfirm] = useState(false);
   const set = <K extends keyof Settings>(k: K) => (v: Settings[K]) => updateSettings({ [k]: v } as Partial<Settings>);
@@ -164,13 +172,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
       <AnimatePresence>
         {open && (
           <motion.div
-            onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 4)}
             className="fixed inset-x-0 top-0 h-app z-40 overflow-y-auto bg-page text-fg" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springSheet}>
-            {/* ステータスバーの下：スクロールしたときだけぼかす */}
-            <div
-              className="pointer-events-none sticky top-0 z-10 -mb-[env(safe-area-inset-top)] h-[env(safe-area-inset-top)] border-b border-line bg-page/80 backdrop-blur-xl transition-opacity duration-200"
-              style={{ opacity: scrolled ? 1 : 0 }}
-            />
             <div className="mx-auto max-w-xl px-4 pb-16 pt-safe">
               {/* 見出しの行：「戻る」はいつも左上の同じ位置 */}
               <div className="mt-2 flex items-center gap-1.5">
@@ -229,7 +231,6 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                   detail={wakeLockSupported ? '集中中は画面がスリープしません' : 'このブラウザは未対応です'}
                   right={<Toggle checked={settings.wakeLock} onChange={set('wakeLock')} label="常時点灯" />}
                 />
-                <Row icon={<Eye size={19} />} title="よそ見検知（ディープ集中）" detail="別のアプリへ移ると旅人が立ち止まります" right={<Toggle checked={settings.deepFocus} onChange={set('deepFocus')} label="よそ見検知" />} />
                 <Row icon={<Sun size={21} />} title="空の時間" value={skyLabel} onClick={() => setPicker('sky')} />
               </Group>
 

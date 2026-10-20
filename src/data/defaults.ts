@@ -7,7 +7,6 @@ export const DEFAULT_SETTINGS: Settings = {
   longBreakEvery: 4,
   countdownMinutes: 50,
   mode: 'pomodoro',
-  deepFocus: false,
   wakeLock: true,
   chime: true,
   ambient: { rain: 0, fire: 0, wind: 0, river: 0, insects: 0 },

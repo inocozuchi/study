@@ -16,14 +16,27 @@ function resolved(): 'light' | 'dark' {
   return mode;
 }
 
+/** ホームではシーンの色（上＝空、下＝草原）で画面の外側の帯を塗る。null なら地の色 */
+let edge: { top: string; bottom: string } | null = null;
+
 function paint() {
   const theme = resolved();
   const root = document.documentElement;
   root.dataset.theme = theme;
   root.style.colorScheme = theme;
-  // 画面の上の帯（ステータスバーのまわり）の色も地の色にそろえる
-  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', COLORS[theme]));
+  // 上の帯（時刻・電波の帯）は theme-color、下の帯（ホームバーのまわり）は html の地の色で塗られる
+  const top = edge?.top ?? COLORS[theme];
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', top));
   document.querySelector('meta[name="color-scheme"]')?.setAttribute('content', theme);
+  if (edge) root.style.setProperty('--edge', edge.bottom);
+  else root.style.removeProperty('--edge');
+}
+
+/** 画面の外側の帯の色を、いま見えているものに合わせる（ホームのシーン）。null で元に戻す */
+export function setEdgeColors(next: { top: string; bottom: string } | null) {
+  if (next?.top === edge?.top && next?.bottom === edge?.bottom) return;
+  edge = next;
+  paint();
 }
 
 media?.addEventListener?.('change', () => {

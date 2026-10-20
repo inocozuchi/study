@@ -72,7 +72,6 @@ export interface Settings {
   longBreakEvery: number;
   countdownMinutes: number;
   mode: TimerMode;
-  deepFocus: boolean;
   wakeLock: boolean;
   chime: boolean;
   /** 内蔵（合成）の環境音の音量 */
@@ -127,8 +126,6 @@ export interface ActiveTimer {
   /** 旅（集中開始〜長押しで終了まで）の開始時刻と、記録済みの集中 ms */
   journeyStartedAt?: number | null;
   journeyFocusMs?: number;
-  /** ディープ集中：画面を離れた時刻（アプリが閉じられても復帰時に判定できるよう保存） */
-  hiddenAt?: number | null;
 }
 
 /** ノート（その日の振り返り） */

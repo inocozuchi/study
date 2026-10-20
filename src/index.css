@@ -63,7 +63,8 @@
   }
   html, body, #root {
     height: 100%;
-    background: rgb(var(--c-page));
+    /* 画面の外側（ホームバーのまわり）もこの色で塗られる。ホームではシーンの色に合わせて変える（lib/theme.ts） */
+    background: var(--edge, rgb(var(--c-page)));
     color: rgb(var(--c-fg));
     overscroll-behavior: none;
   }
@@ -114,19 +115,47 @@
   .btn-secondary {
     @apply flex items-center justify-center gap-2 rounded-card bg-fill px-4 py-3 text-[15px] font-bold text-fg transition active:brightness-95 disabled:opacity-40;
   }
+  /*
+   * 布の質感：細かい綾織り（斜めの糸）と横糸の重なりを、ごく薄い線のくり返しで描く。静的な CSS なので動かしても軽い。
+   *  .fabric-denim  … インディゴデニム。シーンの上に浮かぶボタン・つまみ（空の明るさに関係なく読める）
+   *  .fabric-canvas … キャンバス地。タブバーなど地の色の上（ライト／ダークの地の色に織り目を足す）
+   *  .stitch        … 内側に一周、ステッチ（破線）を入れる
+   */
+  .fabric-denim {
+    background-color: #24395a;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.18) 0 1px, transparent 1px 4px),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.12));
+    color: #f3f6fb;
+    box-shadow: 0 6px 16px -6px rgba(10, 16, 34, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  .fabric-canvas {
+    background-color: rgb(var(--c-page));
+    background-image:
+      repeating-linear-gradient(0deg, rgb(var(--c-fg) / 0.035) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgb(var(--c-fg) / 0.03) 0 1px, transparent 1px 3px);
+  }
+  .stitch { position: relative; }
+  .stitch::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 1px dashed rgba(255, 255, 255, 0.32);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  .fabric-canvas.stitch::before { border-color: rgb(var(--c-fg) / 0.14); }
   /* シーンの上（ホーム）に直接浮かぶ丸いボタン・つまみ */
   .scene-chip {
-    @apply bg-surface/90 text-fg shadow-raised;
-    backdrop-filter: blur(16px) saturate(160%);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    @apply bg-surface text-fg shadow-raised;
   }
 }
 
 @layer utilities {
-  /* アプリの枠。iOS のホーム画面アプリでは高さが画面より短く報告されることがあるので、
-     main.tsx が測った画面の高さ（--app-h）を使う。ふつうのブラウザでは 100% のまま */
-  .app-frame { position: fixed; left: 0; right: 0; top: 0; height: var(--app-h, 100%); }
-  .h-app { height: var(--app-h, 100%); }
+  /* アプリの枠。見えている高さ（100dvh）にそろえ、文書そのものはスクロールさせない */
+  .app-frame { position: fixed; left: 0; right: 0; top: 0; height: 100dvh; overflow: hidden; }
+  .h-app { height: 100dvh; }
   .pt-safe { padding-top: max(env(safe-area-inset-top), 16px); }
   .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 12px); }
   .no-scrollbar::-webkit-scrollbar { display: none; }

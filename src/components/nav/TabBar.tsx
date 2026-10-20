@@ -18,7 +18,7 @@ export const TABS: { key: TabKey; label: string; icon: LucideIcon }[] = [
  */
 export function TabBar({ tab, onChange }: { tab: TabKey; onChange: (t: TabKey) => void }) {
   return (
-    <nav className="w-full bg-page px-[max(14px,env(safe-area-inset-left))] pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2" aria-label="メインナビゲーション">
+    <nav className="fabric-canvas w-full border-t border-dashed border-line-strong/70 px-3.5 pb-[calc(env(safe-area-inset-bottom)+8px)] pt-2" aria-label="メインナビゲーション">
       <div className="mx-auto flex max-w-xl gap-1">
         {TABS.map(({ key, label, icon: Icon }) => {
           const active = key === tab;

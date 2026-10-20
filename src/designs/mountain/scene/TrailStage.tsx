@@ -105,7 +105,9 @@ export function TrailStage({ hour, stage, mood, season, paused = false }: TrailS
         return;
       }
       raf = requestAnimationFrame(frame);
-      const dt = Math.min(0.05, (now - last) / 1000);
+      // 30fps に間引く（歩く・流れる動きには十分で、iPhone の負荷と電池が半分になる）
+      if (now - last < 1000 / 31) return;
+      const dt = Math.min(0.08, (now - last) / 1000);
       last = now;
       const { mood, night, reduced, look } = live.current;
       // 視差を減らす設定では、歩く速さと地面の流れを一緒に落とす（足は滑らない）
@@ -205,9 +207,10 @@ export function TrailStage({ hour, stage, mood, season, paused = false }: TrailS
           />
           <ForegroundLayer ref={fgRef} W={L.W} H={L.H} look={look} />
           {/* 時間帯のティント：夜は群青、朝夕は暖色 */}
-          <div className="pointer-events-none absolute inset-0" style={{ background: '#16204A', mixBlendMode: 'multiply', opacity: sky.night * 0.82, transition: 'opacity 2s', transform: 'translateZ(0)' }} />
-          <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, #FF9A5A, #FF7A6A)', mixBlendMode: 'soft-light', opacity: sky.glow * 0.6, transition: 'opacity 2s', transform: 'translateZ(0)' }} />
-          <LightLayer L={L} day={1 - sky.night} refs={lightRefs} />
+          {/* 合成モード（multiply / soft-light）は iPhone で毎フレーム画面全体を重ね直すので使わず、ふつうの半透明を重ねる */}
+          <div className="pointer-events-none absolute inset-0" style={{ background: '#121A3C', opacity: sky.night * 0.55, transition: 'opacity 2s' }} />
+          <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(255,150,90,0), #FF8A5C)', opacity: sky.glow * 0.16, transition: 'opacity 2s' }} />
+          <LightLayer L={L} refs={lightRefs} />
         </>
       )}
     </div>

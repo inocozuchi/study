@@ -48,4 +48,6 @@ export interface TimerDesign {
   SetupOptions?: ComponentType<DesignSetupProps>;
   /** 支度シートでの見出し */
   setupLabel?: string;
+  /** ホームで画面の外側の帯（上＝ステータスバー、下＝ホームバー）を塗る色。シーンの空と地面に合わせる */
+  edgeColors?: (hour: number, settings: Settings) => { top: string; bottom: string };
 }

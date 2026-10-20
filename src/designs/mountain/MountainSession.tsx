@@ -50,9 +50,15 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
   const onMove = (e: RPointerEvent) => {
     if (start.current && Math.hypot(e.clientX - start.current.x, e.clientY - start.current.y) > 14) cancel();
   };
+  // 短くタップ：集中中なら休憩へ（長押しは終了）
   const onUp = () => {
-    if (hold) setHint(true);
+    const tapped = holdTimer.current != null;
     cancel();
+    if (!tapped) return;
+    if (timer.phase === 'focus') {
+      navigator.vibrate?.(10);
+      t.finishFocus();
+    } else setHint(true);
   };
 
   // 旅を終えて HUD が消えていく間は、表示を終了直前のまま固定する（中身が入れ替わると退場が止まる）
@@ -83,7 +89,7 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
         </motion.button>
         <button onClick={() => !rest && !waiting && t.toggle()} className="pointer-events-auto mt-2 text-center" aria-label={timer.running ? '一時停止' : '再開'}>
           <span className="block font-digits text-[38px] font-semibold leading-none tracking-wider text-paper [text-shadow:0_2px_0_rgba(46,34,28,0.55),0_0_18px_rgba(0,0,0,0.25)]">{fmtTimer(shown)}</span>
-          <span className="mt-1 inline-block rounded-full bg-ink/35 px-2.5 py-0.5 font-maru text-[11px] font-bold text-paper/90 backdrop-blur-sm">{label}</span>
+          <span className="mt-1 inline-block rounded-full bg-ink/35 px-2.5 py-0.5 font-maru text-[11px] font-bold  text-paper/90">{label}</span>
         </button>
         <motion.button
           whileTap={{ scale: 0.88 }}
@@ -116,11 +122,11 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
             </motion.div>
           ) : (
             showHint && (
-              <motion.div key="hint" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 30, opacity: 0 }} transition={springBouncy} className="mx-auto flex max-w-md items-center gap-3 rounded-full bg-crayon-blue/85 p-2 pr-5 text-paper shadow-float backdrop-blur-md" style={{ backgroundImage: 'var(--noise-light), var(--twill)' }}>
+              <motion.div key="hint" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 30, opacity: 0 }} transition={springBouncy} className="mx-auto flex max-w-md items-center gap-3 rounded-full bg-crayon-blue/85 p-2 pr-5 text-paper shadow-float" style={{ backgroundImage: 'var(--noise-light), var(--twill)' }}>
                 <span className="grid h-11 w-11 place-items-center rounded-full bg-paper text-crayon-blue">
                   <Pointer size={20} />
                 </span>
-                <span className="font-maru text-[15px] font-bold">画面を長押しして集中を終了</span>
+                <span className="font-maru text-[15px] font-bold">タップで休憩 · 長押しで終了</span>
               </motion.div>
             )
           )}

@@ -8,8 +8,6 @@ import { MIN, fmtTimer } from '@/lib/time';
 
 /** 休憩明けに自動で次の集中へ進めるのは、休憩が終わってからこの時間内に気づいたときだけ */
 const AUTO_CONTINUE_WINDOW_MS = 60_000;
-/** ディープ集中で「離脱」とみなすまでの猶予 */
-const STRAY_GRACE_MS = 5_000;
 
 const IDLE: ActiveTimer = {
   phase: 'idle',
@@ -23,11 +21,6 @@ const IDLE: ActiveTimer = {
   cycle: 0,
   longBreak: false,
 };
-
-export interface StrayEvent {
-  awayMs: number;
-  focusedMs: number;
-}
 
 /** 長押しで旅を終えたときのリザルト */
 export interface JourneyResult {
@@ -48,7 +41,6 @@ interface TimerContextValue {
   isFocusing: boolean;
   isResting: boolean;
   wakeLockHeld: boolean;
-  stray: StrayEvent | null;
 
   start: () => void;
   pause: () => void;
@@ -60,7 +52,6 @@ interface TimerContextValue {
   skipBreak: () => void;
   setMode: (mode: TimerMode) => void;
   setSubject: (id: string) => void;
-  resolveStray: (action: 'resume' | 'break') => void;
   /** 予定ブロックから：科目と長さを指定してカウントダウンを開始 */
   startPlanned: (subjectId: string, minutes: number) => boolean;
   /** 旅を始める（準備シートから） */
@@ -81,12 +72,10 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const { settings, updateSettings, addSession, ready, activeSubjects, subjects } = useApp();
   const [timer, setTimerState] = useState<ActiveTimer>(() => repository.loadActiveTimer() ?? IDLE);
   const [now, setNow] = useState(() => Date.now());
-  const [stray, setStray] = useState<StrayEvent | null>(null);
 
   const timerRef = useRef(timer);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
-  const hiddenAtRef = useRef<number | null>(timer.hiddenAt ?? null);
 
   const setTimer = useCallback((next: ActiveTimer) => {
     timerRef.current = next;
@@ -186,9 +175,6 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       const doneAt = t.startedAt + (t.targetMs - t.accumulatedMs);
       if (at < doneAt) return;
       if (t.phase === 'focus') {
-        // ディープ集中で離脱中なら、復帰時に判定する
-        const hiddenAt = hiddenAtRef.current;
-        if (settingsRef.current.deepFocus && hiddenAt != null && doneAt > hiddenAt + STRAY_GRACE_MS) return;
         enterBreak(doneAt, t.targetMs, { completed: true });
         // 休憩も既に終わっていれば続けて判定
         evaluate(at);
@@ -221,51 +207,24 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     };
   }, [timer.running, evaluate]);
 
-  /** 画面に戻ったとき：離れていた時間が長ければ離脱時刻まで遡って一時停止、そうでなければ経過を判定 */
+  /** 画面に戻ったとき・起動したとき：止まっていた間の経過をすぐ判定する */
   const onReturn = useCallback(
     (n: number) => {
-      const hiddenAt = hiddenAtRef.current;
-      hiddenAtRef.current = null;
-      let t = timerRef.current;
-      if (t.hiddenAt != null) {
-        t = { ...t, hiddenAt: null };
-        setTimer(t);
-      }
       setNow(n);
-      if (hiddenAt != null && t.phase === 'focus' && t.running && t.startedAt && n - hiddenAt > STRAY_GRACE_MS) {
-        const focusedAtHide = t.accumulatedMs + (hiddenAt - t.startedAt);
-        const doneAt = t.targetMs != null ? t.startedAt + (t.targetMs - t.accumulatedMs) : Infinity;
-        if (doneAt > hiddenAt + STRAY_GRACE_MS) {
-          // 離脱した時刻まで遡って一時停止
-          setTimer({ ...t, running: false, startedAt: null, accumulatedMs: focusedAtHide });
-          setStray({ awayMs: n - hiddenAt, focusedMs: focusedAtHide });
-          return;
-        }
-      }
       evaluate(n);
     },
-    [evaluate, setTimer],
+    [evaluate],
   );
 
-  // Page Visibility：ディープ集中の離脱検知 + 復帰時の即時再計算
   useEffect(() => {
     const onVis = () => {
-      const n = Date.now();
-      const t = timerRef.current;
-      if (document.visibilityState === 'hidden') {
-        if (settingsRef.current.deepFocus && t.phase === 'focus' && t.running && hiddenAtRef.current == null) {
-          hiddenAtRef.current = n;
-          setTimer({ ...t, hiddenAt: n });
-        }
-        return;
-      }
-      onReturn(n);
+      if (document.visibilityState === 'visible') onReturn(Date.now());
     };
     document.addEventListener('visibilitychange', onVis);
     return () => document.removeEventListener('visibilitychange', onVis);
-  }, [onReturn, setTimer]);
+  }, [onReturn]);
 
-  // 起動時に復元したタイマーの経過を判定（離れている間にアプリが閉じられていた場合もここで離脱を判定）
+  // 起動時に復元したタイマーの経過を判定
   const restored = useRef(false);
   useEffect(() => {
     if (restored.current) return;
@@ -394,24 +353,6 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     [setTimer, updateSettings],
   );
 
-  const resolveStray = useCallback(
-    (action: 'resume' | 'break') => {
-      const ev = stray;
-      setStray(null);
-      if (!ev) return;
-      if (action === 'resume') start();
-      else {
-        const t = timerRef.current;
-        const sessionEnd = (t.sessionStartedAt ?? Date.now()) + ev.focusedMs;
-        enterBreak(Math.min(Date.now(), sessionEnd), ev.focusedMs, { completed: false, strayed: true });
-        // 休憩は今から
-        const b = timerRef.current;
-        setTimer({ ...b, startedAt: Date.now() });
-      }
-    },
-    [stray, start, enterBreak, setTimer],
-  );
-
   const startPlanned = useCallback(
     (subjectId: string, minutes: number) => {
       const t = timerRef.current;
@@ -469,7 +410,6 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       isFocusing,
       isResting,
       wakeLockHeld,
-      stray,
       start,
       pause,
       toggle,
@@ -478,13 +418,12 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       skipBreak,
       setMode,
       setSubject,
-      resolveStray,
       startPlanned,
       startJourney,
       endJourney,
       journeyFocusMs: (timer.journeyFocusMs ?? 0) + (timer.phase === 'focus' ? elapsedMs : 0),
     }),
-    [timer, now, elapsedMs, remainingMs, idleTarget, progress, isFocusing, isResting, wakeLockHeld, stray, start, pause, toggle, finishFocus, discard, skipBreak, setMode, setSubject, resolveStray, startPlanned, startJourney, endJourney],
+    [timer, now, elapsedMs, remainingMs, idleTarget, progress, isFocusing, isResting, wakeLockHeld, start, pause, toggle, finishFocus, discard, skipBreak, setMode, setSubject, startPlanned, startJourney, endJourney],
   );
 
   return <TimerContext.Provider value={value}>{children}</TimerContext.Provider>;
