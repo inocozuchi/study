@@ -14,13 +14,10 @@ interface SheetProps {
   /** 上部右に置くアクション */
   action?: ReactNode;
   maxHeight?: string;
-  /** denim：濃色の布（白文字） / paper：生成りのキャンバス地（インク文字） */
-  tone?: 'denim' | 'paper';
 }
 
 /** iOS 風ボトムシート：下からスプリングで現れ、つまみをドラッグして閉じられる */
-export function Sheet({ open, onClose, title, subtitle, children, action, maxHeight = '88vh', tone = 'denim' }: SheetProps) {
-  const paper = tone === 'paper';
+export function Sheet({ open, onClose, title, subtitle, children, action, maxHeight = '88vh' }: SheetProps) {
   const controls = useDragControls();
 
   useEffect(() => {
@@ -49,7 +46,7 @@ export function Sheet({ open, onClose, title, subtitle, children, action, maxHei
           <motion.div
             role="dialog"
             aria-modal
-            className={`relative w-full max-w-xl rounded-t-[2rem] pb-safe sm:mb-4 sm:rounded-[2rem] ${paper ? 'tex-canvas border border-ink/10 text-ink shadow-[0_-20px_60px_-20px_rgba(20,14,10,0.6)]' : 'glass-strong'}`}
+            className="glass-strong relative w-full max-w-xl rounded-t-[2rem] pb-safe sm:mb-4 sm:rounded-[2rem]"
             style={{ maxHeight }}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -63,17 +60,17 @@ export function Sheet({ open, onClose, title, subtitle, children, action, maxHei
             onDragEnd={onDragEnd}
           >
             <div className="flex cursor-grab touch-none justify-center pb-1 pt-2.5 active:cursor-grabbing" onPointerDown={(e) => controls.start(e)}>
-              <div className={`h-1.5 w-10 rounded-full ${paper ? 'bg-ink/20' : 'bg-white/25'}`} />
+              <div className="h-1.5 w-10 rounded-full bg-white/25" />
             </div>
             {(title || action) && (
               <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-1" onPointerDown={(e) => controls.start(e)}>
                 <div className="min-w-0">
-                  {title && <h2 className={`text-[20px] font-bold tracking-tight ${paper ? 'font-maru text-[22px]' : ''}`}>{title}</h2>}
-                  {subtitle && <p className={`mt-0.5 text-[13px] ${paper ? 'text-ink-soft' : 'text-white/50'}`}>{subtitle}</p>}
+                  {title && <h2 className="text-[20px] font-bold tracking-tight">{title}</h2>}
+                  {subtitle && <p className="mt-0.5 text-[13px] text-white/50">{subtitle}</p>}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {action}
-                  <Pressable onClick={onClose} aria-label="閉じる" className={`grid h-8 w-8 place-items-center rounded-full ${paper ? 'bg-ink/10 text-ink-soft' : 'bg-white/10 text-white/70'}`}>
+                  <Pressable onClick={onClose} aria-label="閉じる" className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-white/70">
                     <X size={16} strokeWidth={2.5} />
                   </Pressable>
                 </div>

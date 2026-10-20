@@ -5,12 +5,13 @@ import { useTimer } from '@/store/TimerStore';
 import { useApp } from '@/store/AppStore';
 import { fmtDuration, fmtTimer, MIN } from '@/lib/time';
 import { springBouncy } from '@/lib/motion';
-import { CrayonOutline } from '@/components/ui/CrayonDefs';
+import { CrayonOutline } from './CrayonDefs';
+import type { DesignSessionProps } from '../types';
 
 const HOLD_MS = 1100;
 
-/** 集中中・休憩中のフルスクリーン HUD。画面のどこでも長押しで旅を終える */
-export function FocusHUD({ onMusic, onEnd, companions }: { onMusic: () => void; onEnd: () => void; companions: string[] }) {
+/** 登山デザイン：集中中・休憩中のフルスクリーン HUD。画面のどこでも長押しで旅を終える */
+export function MountainSession({ onMusic, onEnd, companions }: DesignSessionProps) {
   const t = useTimer();
   const { timer } = t;
   const { subjectById } = useApp();
@@ -66,7 +67,7 @@ export function FocusHUD({ onMusic, onEnd, companions }: { onMusic: () => void; 
     >
       {/* 上部：音楽・時間・完了 */}
       <div className="pointer-events-none flex items-start justify-between px-5 pt-safe">
-        <motion.button whileTap={{ scale: 0.88 }} transition={springBouncy} onClick={onMusic} aria-label="集中音楽" className="ink-btn pointer-events-auto relative mt-2 grid h-12 w-12 place-items-center">
+        <motion.button whileTap={{ scale: 0.88 }} transition={springBouncy} onClick={onMusic} aria-label="集中音楽" className="mt-ink-btn pointer-events-auto relative mt-2 grid h-12 w-12 place-items-center">
           <Music size={20} />
           <CrayonOutline shape="circle" color="rgba(255,248,234,0.4)" width={1.4} />
         </motion.button>
@@ -79,7 +80,7 @@ export function FocusHUD({ onMusic, onEnd, companions }: { onMusic: () => void; 
           transition={springBouncy}
           onClick={() => (rest ? t.skipBreak() : waiting ? t.start() : t.finishFocus())}
           aria-label={rest ? '休憩を終えて出発' : waiting ? '次の登りへ' : '集中を完了して休憩'}
-          className="ink-btn pointer-events-auto relative mt-2 grid h-12 w-12 place-items-center"
+          className="mt-ink-btn pointer-events-auto relative mt-2 grid h-12 w-12 place-items-center"
         >
           <Check size={22} strokeWidth={3} />
           <CrayonOutline shape="circle" color="rgba(255,248,234,0.4)" width={1.4} />
@@ -97,7 +98,7 @@ export function FocusHUD({ onMusic, onEnd, companions }: { onMusic: () => void; 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 px-5 pb-[calc(env(safe-area-inset-bottom)+24px)]">
         <AnimatePresence mode="wait">
           {rest || waiting ? (
-            <motion.div key="rest" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} transition={springBouncy} className="tex-canvas pointer-events-auto relative mx-auto flex max-w-md items-center gap-3 rounded-full p-2 pr-3 text-ink shadow-float">
+            <motion.div key="rest" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} transition={springBouncy} className="mt-paper pointer-events-auto relative mx-auto flex max-w-md items-center gap-3 rounded-full p-2 pr-3 text-ink shadow-float">
               <span className="relative grid h-14 w-14 place-items-center rounded-full bg-crayon-green text-paper">
                 <Flame size={24} className="text-crayon-yellow" fill="#F2B33D" />
                 <CrayonOutline shape="circle" color="#2E221C" width={1.6} />

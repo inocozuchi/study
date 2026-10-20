@@ -1,73 +1,58 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bug, ChevronDown, CloudRain, Flame, Pause, Play, SkipBack, SkipForward, Trees, Waves } from 'lucide-react';
+import { Bug, ChevronDown, CloudRain, Flame, Pause, Play, SkipBack, SkipForward, Trees, Volume1, Volume2, Waves } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { Toggle } from '@/components/ui/Toggle';
-import { CrayonCheck } from '@/components/ui/PaperControls';
-import { CrayonOutline } from '@/components/ui/CrayonDefs';
 import { useApp } from '@/store/AppStore';
 import { useBgmTracks, type LibraryTrack } from '@/audio/bgmLibrary';
 import { useBgmStatus } from '@/audio/useBgmStatus';
 import { ambient } from '@/audio/ambient';
-import { springBouncy, springSoft } from '@/lib/motion';
+import { alpha } from '@/lib/subjects';
+import { spring, springBouncy, springSoft } from '@/lib/motion';
 import type { AmbientChannel } from '@/types';
 
-const ENV: { key: AmbientChannel; label: string; icon: typeof Trees }[] = [
-  { key: 'wind', label: '森', icon: Trees },
-  { key: 'river', label: '川', icon: Waves },
-  { key: 'rain', label: '雨', icon: CloudRain },
-  { key: 'insects', label: '虫', icon: Bug },
-  { key: 'fire', label: '焚き火', icon: Flame },
+const ENV: { key: AmbientChannel; label: string; icon: typeof Trees; color: string }[] = [
+  { key: 'wind', label: '森', icon: Trees, color: '#7FD1A8' },
+  { key: 'river', label: '川', icon: Waves, color: '#5EE0E6' },
+  { key: 'rain', label: '雨', icon: CloudRain, color: '#8EC5FF' },
+  { key: 'insects', label: '虫', icon: Bug, color: '#C3A6FF' },
+  { key: 'fire', label: '焚き火', icon: Flame, color: '#FF8A4C' },
 ];
 
-function TrackScreen({ track }: { track: LibraryTrack }) {
+/** カセットテープ（すっきりしたベクター） */
+function Cassette({ track, spinning }: { track: LibraryTrack; spinning: boolean }) {
   const c = track.colors;
   return (
-    <svg viewBox="0 0 120 90" className="h-full w-full" aria-hidden>
-      <g filter="url(#crayon-soft)">
-        <rect width="120" height="90" fill={c.sky} />
-        <circle cx="92" cy="22" r="9" fill="#FFF3D6" opacity="0.9" />
-        <path d="M0 58 L22 40 L36 50 L58 28 L80 48 L120 36 L120 90 L0 90Z" fill="#8FA7C2" opacity="0.85" />
-        <path d="M0 74 L120 58 L120 90 L0 90Z" fill={c.ground} stroke="#2E221C" strokeWidth="1" />
-        <path d="M30 70 l-5 -10 l5 2 l3 -9 l3 9 l5 -2 l-5 10Z" fill="#2E4A38" />
-        <rect x="56" y="58" width="6" height="12" rx="2" fill="#E0562D" stroke="#2E221C" strokeWidth="0.8" />
-        <circle cx="59" cy="55" r="3.2" fill="#F2C3A0" stroke="#2E221C" strokeWidth="0.8" />
-      </g>
-    </svg>
-  );
-}
-
-function Cassette({ track, playing }: { track: LibraryTrack; playing: boolean }) {
-  const c = track.colors;
-  return (
-    <div className="relative h-full w-full overflow-hidden rounded-xl" style={{ background: c.band, backgroundImage: 'var(--noise-light), var(--twill)' }}>
-      <div className="absolute inset-x-[6%] top-[10%] h-[44%] rounded-md px-2 py-1.5" style={{ background: '#F6EFDD', backgroundImage: 'var(--noise-warm), var(--weave)' }}>
-        <div className="h-1 w-full rounded" style={{ background: c.label }} />
-        <p className="mt-1 truncate text-center font-maru text-[13px] font-bold text-ink">{track.title}</p>
-        <p className="truncate text-center text-[10px] text-ink-soft">{track.kind === 'file' ? `∞ ${track.subtitle}` : `Focus Trail · ${track.subtitle}`}</p>
+    <div className="relative aspect-[1.6] w-full overflow-hidden rounded-2xl shadow-[0_18px_40px_-18px_rgba(0,0,0,0.8)]" style={{ background: `linear-gradient(160deg, ${c.band}, ${alpha(c.band, 0.85)})` }}>
+      <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/15" />
+      {/* ラベル */}
+      <div className="absolute inset-x-[7%] top-[9%] h-[40%] rounded-lg bg-white/95 px-3 py-2">
+        <div className="h-1.5 w-full rounded-full" style={{ background: c.label }} />
+        <p className="mt-1.5 truncate text-center text-[15px] font-bold text-night-950">{track.title}</p>
+        <p className="truncate text-center text-[11px] text-night-950/55">{track.kind === 'file' ? `∞ ${track.subtitle}` : track.subtitle}</p>
       </div>
       {/* テープ窓とリール */}
-      <div className="absolute inset-x-[16%] bottom-[12%] flex h-[30%] items-center justify-between rounded-full px-[6%]" style={{ background: c.label }}>
+      <div className="absolute inset-x-[17%] bottom-[12%] flex h-[30%] items-center justify-between rounded-full bg-black/35 px-[5%] ring-1 ring-inset ring-white/10">
         {[0, 1].map((i) => (
           <motion.div
             key={i}
-            className="relative grid aspect-square h-[78%] place-items-center rounded-full bg-[#3B302A]"
-            animate={{ rotate: playing ? 360 : 0 }}
-            transition={playing ? { duration: 2.4, repeat: Infinity, ease: 'linear' } : { duration: 0.4 }}
+            className="relative grid aspect-square h-[78%] place-items-center rounded-full bg-white/90"
+            animate={{ rotate: spinning ? 360 : 0 }}
+            transition={spinning ? { duration: 2.4, repeat: Infinity, ease: 'linear' } : { duration: 0.4 }}
           >
             {[0, 60, 120].map((r) => (
-              <span key={r} className="absolute h-[70%] w-[14%] rounded-sm bg-paper/85" style={{ transform: `rotate(${r}deg)` }} />
+              <span key={r} className="absolute h-[64%] w-[12%] rounded-sm" style={{ background: c.band, transform: `rotate(${r}deg)` }} />
             ))}
-            <span className="absolute h-[34%] w-[34%] rounded-full bg-[#3B302A]" />
+            <span className="absolute h-[30%] w-[30%] rounded-full" style={{ background: c.band }} />
           </motion.div>
         ))}
-        <div className="absolute inset-x-[30%] top-1/2 h-[46%] -translate-y-1/2 rounded bg-[#2B221E]/80" />
+        <div className="absolute inset-x-[32%] top-1/2 h-[40%] -translate-y-1/2 rounded bg-[#3A2A22]/80" />
       </div>
     </div>
   );
 }
 
-/** カセットデッキ風の音楽・環境音プレイヤー */
+/** 音楽・環境音プレイヤー（カセット風の再生カード + コントロールセンター風の環境音） */
 export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { settings, updateSettings } = useApp();
   const [mixer, setMixer] = useState(false);
@@ -94,127 +79,113 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
   };
 
   return (
-    <Sheet
-      open={open}
-      onClose={onClose}
-      tone="paper"
-      title="集中音楽"
-      action={<Toggle tone="paper" checked={playing} onChange={setPlaying} color="#3E86C9" label="集中音楽" />}
-      maxHeight="92vh"
-    >
+    <Sheet open={open} onClose={onClose} title="集中音楽" action={<Toggle checked={playing} onChange={setPlaying} color="#34C759" label="集中音楽" />} maxHeight="92vh">
       <div className="pb-5">
-        {/* デッキ本体 */}
-        <div className="relative mt-3">
-          <div className="absolute -top-3 right-8 flex gap-1.5">
-            {['#B9B2A6', '#B9B2A6', '#D9573B'].map((c, i) => (
-              <motion.span key={i} className="h-4 w-8 rounded-t-md" style={{ background: c }} animate={{ y: i === 2 && spinning ? 3 : 0 }} transition={springBouncy} />
-            ))}
+        {/* 再生カード */}
+        <div className="glass-thin rounded-3xl p-4">
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.div key={track.id} initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -40, opacity: 0 }} transition={springSoft}>
+              <Cassette track={track} spinning={spinning} />
+            </motion.div>
+          </AnimatePresence>
+          <div className="mt-4 text-center">
+            <p className="text-[17px] font-semibold">{track.title}</p>
+            <p className="mt-0.5 text-[13px] text-white/50">
+              {status === 'loading' ? '読み込み中…' : status === 'error' ? '曲を読み込めませんでした' : track.detail}
+            </p>
           </div>
-          <div className="tex-kraft relative flex gap-3 rounded-[1.6rem] p-3.5 shadow-[0_14px_30px_-16px_rgba(58,46,40,0.7)]">
-            <CrayonOutline radius={24} color="rgba(58,46,40,0.4)" width={1.6} />
-            <div className="flex w-[46%] flex-col gap-2.5">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-xl border-4 border-[#CFC6B6]">
-                <TrackScreen track={track} />
-              </div>
-              <div className="flex justify-between gap-1.5">
-                {[
-                  { icon: <SkipBack size={16} fill="currentColor" />, label: '前の曲', on: () => step(-1) },
-                  { icon: playing ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />, label: playing ? '一時停止' : '再生', on: () => setPlaying(!playing) },
-                  { icon: <SkipForward size={16} fill="currentColor" />, label: '次の曲', on: () => step(1) },
-                ].map((b) => (
-                  <motion.button key={b.label} whileTap={{ y: 3, scale: 0.95 }} transition={springBouncy} onClick={b.on} aria-label={b.label} className="grid h-10 flex-1 place-items-center rounded-lg bg-[#4C6E9A] text-paper shadow-[0_3px_0_#2F4766]" style={{ backgroundImage: 'var(--noise-light), var(--twill)' }}>
-                    {b.icon}
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-            <div className="relative flex-1 rounded-xl bg-[#CFC6B6] p-1.5">
-              <AnimatePresence mode="popLayout">
-                <motion.div key={track.title} className="h-full" initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -40, opacity: 0 }} transition={springSoft}>
-                  <Cassette track={track} playing={spinning} />
-                </motion.div>
-              </AnimatePresence>
-            </div>
+          <div className="mt-4 flex items-center justify-center gap-8">
+            <motion.button whileTap={{ scale: 0.85 }} transition={springBouncy} onClick={() => step(-1)} aria-label="前の曲" className="text-white/85">
+              <SkipBack size={28} fill="currentColor" />
+            </motion.button>
+            <motion.button whileTap={{ scale: 0.88 }} transition={springBouncy} onClick={() => setPlaying(!playing)} aria-label={playing ? '一時停止' : '再生'} className="grid h-16 w-16 place-items-center rounded-full bg-white text-night-950">
+              {playing ? <Pause size={28} fill="currentColor" strokeWidth={0} /> : <Play size={28} fill="currentColor" strokeWidth={0} className="translate-x-0.5" />}
+            </motion.button>
+            <motion.button whileTap={{ scale: 0.85 }} transition={springBouncy} onClick={() => step(1)} aria-label="次の曲" className="text-white/85">
+              <SkipForward size={28} fill="currentColor" />
+            </motion.button>
           </div>
+          <label className="mt-4 flex items-center gap-3 text-white/50">
+            <Volume1 size={16} />
+            <input type="range" min={0} max={1} step={0.01} value={settings.bgmVolume} onChange={(e) => updateSettings({ bgmVolume: Number(e.target.value) })} className="flex-1 accent-white" aria-label="BGM の音量" />
+            <Volume2 size={16} />
+          </label>
         </div>
 
         {/* 曲リスト */}
-        <div className="paper-card mt-4 divide-y divide-ink/10 overflow-hidden">
+        <p className="section-label mb-2 mt-6">曲</p>
+        <div className="glass-thin divide-y divide-white/[0.06] overflow-hidden rounded-2xl">
           {tracks.map((tr, i) => {
-            const active = i === settings.bgmTrack;
+            const active = i === settings.bgmTrack % tracks.length;
             return (
-              <button key={tr.title} onClick={() => { ambient.unlock(); updateSettings({ bgmTrack: i, bgmPlaying: true }); }} className="flex w-full items-center gap-3 px-4 py-3 text-left">
-                <span className="h-7 w-2 rounded-full" style={{ background: tr.colors.label }} />
+              <button key={tr.id} onClick={() => { ambient.unlock(); updateSettings({ bgmTrack: i, bgmPlaying: true }); }} className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-white/5">
+                <span className="h-7 w-1.5 rounded-full" style={{ background: tr.colors.label }} />
                 <span className="min-w-0 flex-1">
-                  <span className="block font-maru text-[15px] font-bold">{tr.title}</span>
-                  <span className="block text-[11px] text-ink-soft">
-                    {tr.subtitle} · {active && status === 'loading' ? '読み込み中…' : active && status === 'error' ? '読み込めませんでした' : tr.detail}
-                  </span>
+                  <span className={`block text-[15px] ${active ? 'font-semibold' : 'font-medium'}`}>{tr.title}</span>
+                  <span className="block text-[11px] text-white/45">{tr.subtitle} · {tr.detail}</span>
                 </span>
                 {active && spinning && (
                   <span className="flex h-4 items-end gap-0.5">
                     {[0, 1, 2].map((b) => (
-                      <motion.span key={b} className="w-1 rounded-full bg-crayon-blue" animate={{ height: ['30%', '100%', '45%', '80%', '30%'] }} transition={{ duration: 1.1, repeat: Infinity, delay: b * 0.15 }} />
+                      <motion.span key={b} className="w-1 rounded-full bg-moss" animate={{ height: ['30%', '100%', '45%', '80%', '30%'] }} transition={{ duration: 1.1, repeat: Infinity, delay: b * 0.15 }} />
                     ))}
                   </span>
                 )}
-                {active && !playing && <span className="text-[11px] font-bold text-ink-soft">選択中</span>}
               </button>
             );
           })}
         </div>
-        <label className="mt-3 flex items-center gap-3 px-1 text-[12px] font-bold text-ink-soft">
-          音量
-          <input type="range" min={0} max={1} step={0.01} value={settings.bgmVolume} onChange={(e) => updateSettings({ bgmVolume: Number(e.target.value) })} className="flex-1 accent-[#4A3A34]" aria-label="BGM の音量" />
-        </label>
 
-        {/* 環境音：ボトムコントロール */}
-        <p className="mb-3 mt-6 font-maru text-[13px] font-bold text-ink-soft">環境音</p>
-        <div className="grid grid-cols-5 gap-1">
-          {ENV.map(({ key, label, icon: Icon }) => {
+        {/* 環境音：コントロールセンター風のタイル */}
+        <p className="section-label mb-2 mt-6">環境音</p>
+        <div className="grid grid-cols-5 gap-2">
+          {ENV.map(({ key, label, icon: Icon, color }) => {
             const on = settings.ambient[key] > 0.01;
             return (
-              <div key={key} className="flex flex-col items-center gap-2">
-                <motion.button whileTap={{ scale: 0.9 }} onClick={() => toggleEnv(key)} aria-label={label} className={`grid h-14 w-14 place-items-center rounded-2xl ${on ? 'text-ink' : 'text-ink-faint'}`}>
-                  <Icon size={30} strokeWidth={1.6} />
-                </motion.button>
-                <CrayonCheck checked={on} onChange={() => toggleEnv(key)} color="#4A3A34" label={`${label}の音`} />
-                <span className="font-maru text-[11px] font-bold text-ink-soft">{label}</span>
-              </div>
+              <motion.button
+                key={key}
+                whileTap={{ scale: 0.9 }}
+                transition={spring}
+                onClick={() => toggleEnv(key)}
+                role="checkbox"
+                aria-checked={on}
+                aria-label={`${label}の音`}
+                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl transition-colors"
+                style={{ background: on ? color : 'rgba(255,255,255,0.08)', color: on ? '#0C1224' : 'rgba(255,255,255,0.75)' }}
+              >
+                <Icon size={22} strokeWidth={2} />
+                <span className="text-[11px] font-semibold">{label}</span>
+              </motion.button>
             );
           })}
         </div>
 
-        <button onClick={() => setMixer((m) => !m)} className="mt-4 flex w-full items-center justify-center gap-1 text-[12px] font-bold text-ink-soft">
+        <button onClick={() => setMixer((m) => !m)} className="mt-4 flex w-full items-center justify-center gap-1 text-[12px] font-semibold text-white/50">
           細かく調整 <motion.span animate={{ rotate: mixer ? 180 : 0 }}><ChevronDown size={14} /></motion.span>
         </button>
-        <AnimatePresence initial={false}>
-          {mixer && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={springSoft} className="overflow-hidden">
-              <div className="paper-card mt-2 space-y-3 p-4">
-                {ENV.map(({ key, label }) => (
-                  <label key={key} className="flex items-center gap-3 text-[13px] font-bold">
-                    <span className="w-12">{label}</span>
-                    <input
-                      type="range"
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      value={settings.ambient[key]}
-                      onChange={(e) => {
-                        ambient.unlock();
-                        const mix = { ...settings.ambient, [key]: Number(e.target.value) };
-                        updateSettings({ ambient: mix, ambientPlaying: Object.values(mix).some((v) => v > 0.01) });
-                      }}
-                      className="flex-1 accent-[#4A3A34]"
-                      aria-label={`${label}の音量`}
-                    />
-                  </label>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {mixer && (
+          <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={springSoft} className="glass-thin mt-2 space-y-3 rounded-2xl p-4">
+            {ENV.map(({ key, label }) => (
+              <label key={key} className="flex items-center gap-3 text-[13px] font-medium">
+                <span className="w-12 text-white/70">{label}</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={settings.ambient[key]}
+                  onChange={(e) => {
+                    ambient.unlock();
+                    const mix = { ...settings.ambient, [key]: Number(e.target.value) };
+                    updateSettings({ ambient: mix, ambientPlaying: Object.values(mix).some((v) => v > 0.01) });
+                  }}
+                  className="flex-1 accent-white"
+                  aria-label={`${label}の音量`}
+                />
+              </label>
+            ))}
+          </motion.div>
+        )}
       </div>
     </Sheet>
   );

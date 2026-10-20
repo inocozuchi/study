@@ -10,7 +10,7 @@ export interface PickerOption<T> {
   icon?: ReactNode;
 }
 
-/** iOS のアクションシート風の選択モーダル（紙のトーン） */
+/** iOS のアクションシート風の選択モーダル */
 export function PickerModal<T extends string | number>({
   open,
   onClose,
@@ -29,14 +29,14 @@ export function PickerModal<T extends string | number>({
   onSelect: (v: T) => void;
 }) {
   return (
-    <Sheet open={open} onClose={onClose} title={title} subtitle={subtitle} tone="paper">
-      <div className="paper-card mb-4 divide-y divide-ink/10 overflow-hidden">
+    <Sheet open={open} onClose={onClose} title={title} subtitle={subtitle}>
+      <div className="glass-thin mb-4 divide-y divide-white/[0.06] overflow-hidden rounded-2xl">
         {options.map((o) => {
           const active = o.value === value;
           return (
             <motion.button
               key={String(o.value)}
-              whileTap={{ backgroundColor: 'rgba(58,46,40,0.06)' }}
+              whileTap={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
               onClick={() => {
                 onSelect(o.value);
                 onClose();
@@ -45,12 +45,12 @@ export function PickerModal<T extends string | number>({
             >
               {o.icon && <span className="grid h-8 w-8 shrink-0 place-items-center text-[18px]">{o.icon}</span>}
               <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-semibold">{o.label}</span>
-                {o.detail && <span className="mt-0.5 block text-[12px] text-ink-soft">{o.detail}</span>}
+                <span className="block text-[15px] font-medium">{o.label}</span>
+                {o.detail && <span className="mt-0.5 block text-[12px] text-white/45">{o.detail}</span>}
               </span>
               {active && (
-                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="grid h-6 w-6 place-items-center rounded-full bg-crayon-brown text-paper">
-                  <Check size={14} strokeWidth={3} />
+                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-summit">
+                  <Check size={18} strokeWidth={2.8} />
                 </motion.span>
               )}
             </motion.button>

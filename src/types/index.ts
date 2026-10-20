@@ -89,6 +89,8 @@ export interface Settings {
   bgmVolume: number;
   /** 集中開始時の深呼吸 */
   breathing: boolean;
+  /** タイマーのデザイン（現在は登山のみ） */
+  timerDesign: 'mountain';
 }
 
 export type TimerPhase = 'idle' | 'focus' | 'break';

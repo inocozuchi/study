@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { Share } from 'lucide-react';
-import type { JourneyResult } from '@/store/TimerStore';
+import type { DesignResultProps } from '../types';
 import { useApp } from '@/store/AppStore';
 import { METERS_PER_MINUTE, fmtMeters } from '@/lib/altitude';
 import { MIN, pad } from '@/lib/time';
@@ -15,8 +15,8 @@ function fmtSpent(ms: number) {
   return h ? `${h}時間${m % 60 ? `${m % 60}分` : ''}` : `${m}分`;
 }
 
-/** 旅の終わり：キャンプの夜景に、今日の記録を日記のように書く */
-export function ResultView({ result, onContinue }: { result: JourneyResult; onContinue: () => void }) {
+/** 登山デザイン：旅の終わり。キャンプの夜景に、今日の記録を日記のように書く */
+export function MountainResult({ result, onContinue }: DesignResultProps) {
   const { subjectById } = useApp();
   const subject = subjectById(result.subjectId);
   const d = new Date(result.endedAt);
@@ -74,10 +74,10 @@ export function ResultView({ result, onContinue }: { result: JourneyResult; onCo
         </motion.p>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...springBouncy, delay: 2.1 }} className="mt-5 flex justify-end gap-3">
-          <motion.button whileTap={{ scale: 0.9 }} onClick={share} aria-label="共有" className="tex-canvas grid h-12 w-16 place-items-center rounded-full text-crayon-blue shadow-float">
+          <motion.button whileTap={{ scale: 0.9 }} onClick={share} aria-label="共有" className="mt-paper grid h-12 w-16 place-items-center rounded-full text-crayon-blue shadow-float">
             <Share size={20} />
           </motion.button>
-          <motion.button whileTap={{ scale: 0.94 }} onClick={onContinue} className="tex-canvas rounded-full px-8 font-maru text-[17px] font-bold text-crayon-blue shadow-float">
+          <motion.button whileTap={{ scale: 0.94 }} onClick={onContinue} className="mt-paper rounded-full px-8 font-maru text-[17px] font-bold text-crayon-blue shadow-float">
             続ける
           </motion.button>
         </motion.div>

@@ -1,0 +1,87 @@
+/*
+ * 登山デザイン専用のスタイル（クレヨン × 布）。
+ * アプリ本体は iOS 風。ここのクラスは src/designs/mountain の中だけで使う。
+ */
+
+/* ───────── 布の質感（キャンバス地・デニム） ─────────
+   単色ベタ塗りをやめ、細かなノイズ + 織り目のグラデーションを重ねる */
+:root {
+  --noise-light: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  --noise-warm: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.25  0 0 0 0 0.15  0 0 0 0.13 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  --fleck: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.045' numOctaves='2' seed='4'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.4  0 0 0 0 0.3  0 0 0 0.55 -0.2'/></filter><rect width='100%' height='100%' filter='url(%23f)'/></svg>");
+  /* 平織り（キャンバス）：縦横の細い糸 */
+  --weave: repeating-linear-gradient(0deg, rgba(110, 80, 40, 0.05) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(110, 80, 40, 0.045) 0 1px, transparent 1px 3px);
+  /* 綾織り（デニム）：斜めの畝 */
+  --twill: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.1) 0 1px, transparent 1px 4px);
+}
+
+
+/* 生成りのキャンバス地（休憩カード・リザルトのボタン） */
+.mt-paper {
+  background-color: #f5eedc;
+  background-image: var(--noise-warm), var(--weave), var(--fleck),
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.5), transparent 70%);
+}
+
+/* 焦げ茶のフェルトのボタン（集中中の音楽・完了） */
+.mt-ink-btn {
+  @apply rounded-full font-maru font-bold text-paper;
+  background-color: #4a3a34;
+  background-image: var(--noise-light), var(--twill);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 6px 14px -6px rgba(40, 28, 22, 0.6);
+}
+
+/* ───────── Trail stage（6 層シーン）の環境アニメーション ───────── */
+@keyframes ft-drift {
+  from { transform: translate3d(110vw, 0, 0); }
+  to { transform: translate3d(-100%, 0, 0); }
+}
+@keyframes ft-fly {
+  from { transform: translate3d(-15vw, 0, 0); }
+  to { transform: translate3d(115vw, -8vh, 0); }
+}
+@keyframes ft-flap {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(-0.55); }
+}
+@keyframes ft-sway {
+  0%, 100% { transform: rotate(-0.9deg); }
+  50% { transform: rotate(1.1deg); }
+}
+@keyframes ft-sway-big {
+  0%, 100% { transform: rotate(-5deg); }
+  45% { transform: rotate(6deg); }
+  70% { transform: rotate(2deg); }
+}
+@keyframes ft-ray {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes ft-steam {
+  0% { transform: translateY(2px); opacity: 0; }
+  35% { opacity: 0.8; }
+  100% { transform: translateY(-6px); opacity: 0; }
+}
+@keyframes ft-twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.ft-drift { animation: ft-drift 200s linear infinite; will-change: transform; }
+.ft-fly { animation: ft-fly 50s linear infinite; }
+.ft-flap { animation: ft-flap 0.5s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+.ft-sway { animation: ft-sway 8s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+.ft-sway-big { animation: ft-sway-big 4s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+.ft-ray { animation: ft-ray 7s ease-in-out infinite; }
+.ft-steam { animation: ft-steam 2.4s ease-out infinite; transform-box: fill-box; }
+.ft-twinkle { animation: ft-twinkle 3s ease-in-out infinite; }
+.ft-reduced .ft-drift, .ft-reduced .ft-fly, .ft-reduced .ft-flap, .ft-reduced .ft-sway,
+.ft-reduced .ft-sway-big, .ft-reduced .ft-ray, .ft-reduced .ft-twinkle { animation-play-state: paused; }
+/* div 単位で揺らす（中の SVG フィルタを再計算させない） */
+@keyframes ft-sway-div {
+  0%, 100% { transform: rotate(-0.8deg) translateZ(0); }
+  50% { transform: rotate(1deg) translateZ(0); }
+}
+.ft-sway-div { animation: ft-sway-div 8s ease-in-out infinite; transform-origin: 50% 100%; will-change: transform; }
+.ft-reduced .ft-sway-div { animation-play-state: paused; }

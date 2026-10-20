@@ -4,16 +4,14 @@ import { Copy, Music, RefreshCw, Settings2, Users } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { useTimer, type JourneyResult } from '@/store/TimerStore';
 import { Segmented } from '@/components/ui/Segmented';
+import { Pressable } from '@/components/ui/Pressable';
 import { Sheet } from '@/components/ui/Sheet';
-import { CrayonOutline } from '@/components/ui/CrayonDefs';
 import { SetupSheet } from '@/components/home/SetupSheet';
 import { BreathOverlay } from '@/components/focus/BreathOverlay';
-import { FocusHUD } from '@/components/focus/FocusHUD';
-import { ResultView } from '@/components/focus/ResultView';
 import { CassettePlayer } from '@/components/audio/CassettePlayer';
 import { TOOL_TABS, ToolsPanel, type ToolTab } from '@/components/tools/ToolsPanel';
 import { SettingsScreen } from './SettingsScreen';
-import { SEASONS } from '@/components/scene/stage/palette';
+import { getDesign } from '@/designs';
 import { multiSupported, randomRoomCode, type Peer } from '@/hooks/useMultiRoom';
 import { streaks, summary } from '@/lib/stats';
 import { fmtDuration } from '@/lib/time';
@@ -38,6 +36,7 @@ export function HomeScreen({ result, setResult, peers }: Props) {
   const [room, setRoom] = useState(false);
 
   const journeying = timer.phase !== 'idle' || !!timer.journeyStartedAt;
+  const design = getDesign(settings.timerDesign);
 
   const onStarted = useCallback(() => {
     if (settings.breathing) setBreath(true);
@@ -62,11 +61,11 @@ export function HomeScreen({ result, setResult, peers }: Props) {
       <AnimatePresence mode="wait">
         {result ? (
           <motion.div key="result" className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }}>
-            <ResultView result={result} onContinue={() => setResult(null)} />
+            <design.Result result={result} onContinue={() => setResult(null)} />
           </motion.div>
         ) : journeying ? (
           <motion.div key="hud" className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
-            <FocusHUD onMusic={() => setMusic(true)} onEnd={end} companions={peers.map((p) => p.name)} />
+            <design.Session onMusic={() => setMusic(true)} onEnd={end} companions={peers.map((p) => p.name)} />
           </motion.div>
         ) : (
           <motion.div key="home" className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.3 } }}>
@@ -96,7 +95,6 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onRoom, peers }: { onF
   const { settings, updateSettings, sessions } = useApp();
   const sum = useMemo(() => summary(sessions), [sessions]);
   const st = useMemo(() => streaks(sessions), [sessions]);
-  const look = SEASONS[settings.season];
 
   const setStyle = (s: StudyStyle) => {
     updateSettings(s === 'multi' && !settings.roomCode ? { style: s, roomCode: randomRoomCode() } : { style: s });
@@ -106,26 +104,24 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onRoom, peers }: { onF
     <div className="relative mx-auto h-full max-w-xl">
       {/* 上部 */}
       <div className="flex items-center justify-between px-5 pt-safe">
-        <motion.button whileTap={{ scale: 0.88 }} transition={springBouncy} onClick={onMusic} aria-label="集中音楽" className={`ink-btn relative mt-1 grid h-11 w-11 place-items-center ${settings.bgmPlaying ? 'text-crayon-yellow' : ''}`}>
-          <Music size={19} />
-          <CrayonOutline shape="circle" color="rgba(255,248,234,0.4)" width={1.4} />
-        </motion.button>
-        <motion.button whileTap={{ scale: 0.88 }} transition={springBouncy} onClick={onSettings} aria-label="設定" className="ink-btn relative mt-1 grid h-11 w-11 place-items-center">
-          <Settings2 size={19} />
-          <CrayonOutline shape="circle" color="rgba(255,248,234,0.4)" width={1.4} />
-        </motion.button>
+        <Pressable onClick={onMusic} aria-label="集中音楽" className={`glass mt-1 grid h-10 w-10 place-items-center rounded-full ${settings.bgmPlaying ? 'text-ember' : 'text-white/85'}`}>
+          <Music size={18} />
+        </Pressable>
+        <Pressable onClick={onSettings} aria-label="設定" className="glass mt-1 grid h-10 w-10 place-items-center rounded-full text-white/85">
+          <Settings2 size={18} />
+        </Pressable>
       </div>
 
       {/* 挨拶 */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={springSoft} className="px-6 pt-5">
-        <h1 className="font-maru text-[30px] font-black leading-tight text-paper [text-shadow:0_2px_0_rgba(46,34,28,0.45),0_0_24px_rgba(0,0,0,0.2)]">
+        <h1 className="text-[30px] font-bold leading-tight tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
           やあ！{settings.userName}、
           <br />
-          <span className="text-[22px] font-bold">前へ進む準備はいい？</span>
+          <span className="text-[21px] font-semibold text-white/90">前へ進む準備はいい？</span>
         </h1>
         <div className="mt-3 flex flex-wrap gap-1.5">
-          {[`今日 ${fmtDuration(sum.today, true)}`, `🔥 ${st.current}日連続`, `${look.emoji} ${look.label}の山`].map((c) => (
-            <span key={c} className="rounded-full bg-ink/35 px-2.5 py-1 font-maru text-[12px] font-bold text-paper backdrop-blur-sm">
+          {[`今日 ${fmtDuration(sum.today, true)}`, `🔥 ${st.current}日連続`].map((c) => (
+            <span key={c} className="glass-thin tabular rounded-full px-2.5 py-1 text-[12px] font-semibold text-white/85">
               {c}
             </span>
           ))}
@@ -133,12 +129,11 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onRoom, peers }: { onF
       </motion.div>
 
       {/* サイドのツールタブ */}
-      <motion.nav initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ ...springBouncy, delay: 0.15 }} className="tex-denim absolute right-3 top-[30%] flex flex-col gap-1 rounded-full p-1.5 shadow-float" aria-label="ツール">
+      <motion.nav initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ ...springBouncy, delay: 0.15 }} className="glass absolute right-3 top-[30%] flex flex-col gap-1 rounded-full p-1.5" aria-label="ツール">
         {TOOL_TABS.map(({ key, label, icon: Icon, color }) => (
-          <motion.button key={key} whileTap={{ scale: 0.85 }} transition={springBouncy} onClick={() => onTool(key)} aria-label={label} className="group relative grid h-11 w-11 place-items-center rounded-full bg-paper/90 text-ink">
-            <Icon size={19} color={color} strokeWidth={2.3} />
-            <span className="pointer-events-none absolute right-full mr-2 whitespace-nowrap rounded-full bg-ink/70 px-2 py-0.5 text-[11px] font-bold text-paper opacity-0 transition group-hover:opacity-100">{label}</span>
-          </motion.button>
+          <Pressable key={key} scale={0.85} onClick={() => onTool(key)} aria-label={label} className="grid h-11 w-11 place-items-center rounded-full bg-white/[0.08]">
+            <Icon size={19} color={color} strokeWidth={2.2} />
+          </Pressable>
         ))}
       </motion.nav>
 
@@ -148,7 +143,7 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onRoom, peers }: { onF
           <Segmented<StudyStyle>
             value={settings.style}
             onChange={setStyle}
-            className="w-full !bg-[rgba(46,34,28,0.42)] shadow-float"
+            className="w-full !bg-black/35 shadow-glass"
             size="sm"
             options={[
               { value: 'solo', label: 'ソロ' },
@@ -157,7 +152,7 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onRoom, peers }: { onF
           />
           <AnimatePresence>
             {settings.style === 'multi' && (
-              <motion.button initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} onClick={onRoom} className="flex items-center gap-1.5 rounded-full bg-ink/40 px-3 py-1 font-maru text-[12px] font-bold text-paper backdrop-blur-sm">
+              <motion.button initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} onClick={onRoom} className="glass-thin flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold text-white/85">
                 <Users size={13} /> 部屋 {settings.roomCode} · {peers.length + 1}人
               </motion.button>
             )}
@@ -169,22 +164,27 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onRoom, peers }: { onF
   );
 }
 
-/** 大きな「集中」ボタン。ゆっくり呼吸する光の輪 */
+/** 大きな「集中」ボタン：白いグラデーションの円と、ゆっくり広がる光の輪 */
 function FocusButton({ onClick }: { onClick: () => void }) {
   return (
-    <div className="relative grid h-[136px] w-[136px] place-items-center">
+    <div className="relative grid h-[124px] w-[124px] place-items-center">
       {[0, 1].map((i) => (
         <motion.span
           key={i}
-          className="absolute inset-0 rounded-full border-2 border-paper/50"
-          style={{ filter: 'url(#crayon-soft)' }}
-          animate={{ scale: [1, 1.28], opacity: [0.7, 0] }}
+          className="absolute inset-0 rounded-full border border-white/40"
+          animate={{ scale: [1, 1.3], opacity: [0.6, 0] }}
           transition={{ duration: 3.2, repeat: Infinity, delay: i * 1.6, ease: 'easeOut' }}
         />
       ))}
-      <motion.button whileTap={{ scale: 0.9 }} whileHover={{ scale: 1.03 }} transition={springBouncy} onClick={onClick} className="ink-btn relative grid h-full w-full place-items-center" aria-label="集中する">
-        <span className="font-maru text-[30px] font-black tracking-widest">集中</span>
-        <CrayonOutline shape="circle" color="rgba(255,248,234,0.6)" width={2.4} />
+      <motion.button
+        whileTap={{ scale: 0.92 }}
+        transition={springBouncy}
+        onClick={onClick}
+        aria-label="集中する"
+        className="relative grid h-full w-full place-items-center rounded-full text-night-950"
+        style={{ background: 'linear-gradient(160deg, #ffffff, #dfe9f7)', boxShadow: '0 18px 44px -12px rgba(142,197,255,0.65), inset 0 1px 0 rgba(255,255,255,0.9)' }}
+      >
+        <span className="text-[26px] font-bold tracking-[0.12em]">集中</span>
       </motion.button>
     </div>
   );
@@ -197,26 +197,26 @@ function RoomSheet({ open, onClose, peers }: { open: boolean; onClose: () => voi
   useEffect(() => {
     if (open) setCode(settings.roomCode);
   }, [open, settings.roomCode]);
-  const statusLabel = { idle: '準備中', focus: '登山中', break: '休憩中' } as const;
+  const statusLabel = { idle: '準備中', focus: '集中中', break: '休憩中' } as const;
 
   return (
-    <Sheet open={open} onClose={onClose} title="旅の仲間" subtitle="同じ部屋コードで一緒に登ろう" tone="paper">
+    <Sheet open={open} onClose={onClose} title="マルチ" subtitle="同じ部屋コードで一緒に集中しよう">
       <div className="space-y-4 pb-5">
-        <div className="paper-card p-4">
-          <p className="text-[12px] font-bold text-ink-soft">部屋コード</p>
+        <div className="glass-thin rounded-2xl p-4">
+          <p className="section-label">部屋コード</p>
           <div className="mt-2 flex gap-2">
             <input
-              className="field-paper text-center font-digits text-[22px] font-semibold uppercase tracking-[0.3em]"
+              className="field tabular text-center text-[22px] font-semibold uppercase tracking-[0.3em]"
               value={code}
               maxLength={8}
               onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
               onBlur={() => code && updateSettings({ roomCode: code })}
               aria-label="部屋コード"
             />
-            <button aria-label="新しいコード" onClick={() => { const c = randomRoomCode(); setCode(c); updateSettings({ roomCode: c }); }} className="ink-btn grid h-12 w-12 shrink-0 place-items-center">
+            <Pressable aria-label="新しいコード" onClick={() => { const c = randomRoomCode(); setCode(c); updateSettings({ roomCode: c }); }} className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/10">
               <RefreshCw size={18} />
-            </button>
-            <button
+            </Pressable>
+            <Pressable
               aria-label="コピー"
               onClick={async () => {
                 try {
@@ -227,34 +227,32 @@ function RoomSheet({ open, onClose, peers }: { open: boolean; onClose: () => voi
                   /* noop */
                 }
               }}
-              className="ink-btn grid h-12 w-12 shrink-0 place-items-center"
+              className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/10"
             >
               <Copy size={18} />
-            </button>
+            </Pressable>
           </div>
-          <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">
+          <p className="mt-2 text-[12px] leading-relaxed text-white/45">
             {copied ? 'コピーしました ✓ ' : ''}
-            {multiSupported
-              ? 'この端末の別のタブやウィンドウで同じコードを開くと、仲間として一緒に山を登ります。'
-              : 'このブラウザはマルチに対応していません。'}
+            {multiSupported ? 'この端末の別のタブやウィンドウで同じコードを開くと、一緒に集中できます。' : 'このブラウザはマルチに対応していません。'}
           </p>
         </div>
-        <div className="paper-card divide-y divide-ink/[0.08] overflow-hidden">
+        <div className="glass-thin divide-y divide-white/[0.06] overflow-hidden rounded-2xl">
           <div className="flex items-center gap-3 px-4 py-3">
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-crayon-red text-[15px] text-paper">🧭</span>
-            <span className="flex-1 font-maru text-[15px] font-bold">{settings.userName}（あなた）</span>
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-ember/20 text-[15px]">🧭</span>
+            <span className="flex-1 text-[15px] font-semibold">{settings.userName}（あなた）</span>
           </div>
           {peers.map((p) => (
             <div key={p.id} className="flex items-center gap-3 px-4 py-3">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-crayon-blue text-[15px] text-paper">🎒</span>
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-summit/20 text-[15px]">🎒</span>
               <span className="min-w-0 flex-1">
-                <span className="block font-maru text-[15px] font-bold">{p.name}</span>
-                <span className="block text-[12px] text-ink-soft">{statusLabel[p.status]}{p.subject ? ` · ${p.subject}` : ''}</span>
+                <span className="block text-[15px] font-semibold">{p.name}</span>
+                <span className="block text-[12px] text-white/45">{statusLabel[p.status]}{p.subject ? ` · ${p.subject}` : ''}</span>
               </span>
-              <span className={`h-2.5 w-2.5 rounded-full ${p.status === 'focus' ? 'bg-crayon-green' : p.status === 'break' ? 'bg-crayon-yellow' : 'bg-ink-faint'}`} />
+              <span className={`h-2.5 w-2.5 rounded-full ${p.status === 'focus' ? 'bg-moss' : p.status === 'break' ? 'bg-sun' : 'bg-white/30'}`} />
             </div>
           ))}
-          {peers.length === 0 && <p className="px-4 py-4 text-center text-[13px] text-ink-faint">まだ仲間はいません</p>}
+          {peers.length === 0 && <p className="px-4 py-4 text-center text-[13px] text-white/40">まだ誰もいません</p>}
         </div>
       </div>
     </Sheet>

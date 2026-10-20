@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Bell, ChevronLeft, ChevronRight, Clock, Coffee, Database, Eye, Leaf, Music, Repeat, RotateCcw, Smartphone, Sun, Timer, Trash2,
+  Bell, ChevronLeft, ChevronRight, Clock, Coffee, Database, Eye, Leaf, Mountain, Music, Repeat, RotateCcw, Smartphone, Sun, Timer, Trash2,
   User, Volume2, Waves, Wind,
 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
@@ -11,7 +11,8 @@ import { PickerModal, type PickerOption } from '@/components/ui/PickerModal';
 import { Sheet } from '@/components/ui/Sheet';
 import { Modal } from '@/components/ui/Modal';
 import { useBgmTracks } from '@/audio/bgmLibrary';
-import { SEASONS, SEASON_ORDER } from '@/components/scene/stage/palette';
+import { SEASONS, SEASON_ORDER } from '@/designs/mountain/scene/palette';
+import { getDesign } from '@/designs';
 import { wakeLockSupported } from '@/hooks/useWakeLock';
 import { springSheet } from '@/lib/motion';
 import type { AmbientChannel, AmbientMix, Season, Settings, SkyOverride } from '@/types';
@@ -19,17 +20,17 @@ import type { AmbientChannel, AmbientMix, Season, Settings, SkyOverride } from '
 function Row({ icon, color, title, detail, value, onClick, right }: { icon: ReactNode; color: string; title: string; detail?: string; value?: ReactNode; onClick?: () => void; right?: ReactNode }) {
   const Comp = onClick ? motion.button : motion.div;
   return (
-    <Comp whileTap={onClick ? { backgroundColor: 'rgba(58,46,40,0.06)' } : undefined} onClick={onClick} className="flex w-full items-center gap-3 px-4 py-3 text-left">
-      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] text-white" style={{ background: color, backgroundImage: 'var(--noise-light)' }}>
+    <Comp whileTap={onClick ? { backgroundColor: 'rgba(255,255,255,0.06)' } : undefined} onClick={onClick} className="flex w-full items-center gap-3 px-4 py-3 text-left">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] text-white" style={{ background: color }}>
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-semibold">{title}</span>
-        {detail && <span className="mt-0.5 block text-[12px] leading-snug text-ink-soft">{detail}</span>}
+        <span className="block text-[15px] font-medium">{title}</span>
+        {detail && <span className="mt-0.5 block text-[12px] leading-snug text-white/45">{detail}</span>}
       </span>
-      {value != null && <span className="shrink-0 text-[14px] text-ink-soft">{value}</span>}
+      {value != null && <span className="shrink-0 text-[14px] text-white/45">{value}</span>}
       {right}
-      {onClick && !right && <ChevronRight size={17} className="shrink-0 text-ink-faint" />}
+      {onClick && !right && <ChevronRight size={17} className="shrink-0 text-white/25" />}
     </Comp>
   );
 }
@@ -37,9 +38,9 @@ function Row({ icon, color, title, detail, value, onClick, right }: { icon: Reac
 function Group({ title, children, footer }: { title: string; children: ReactNode; footer?: string }) {
   return (
     <section className="mt-6">
-      <p className="mb-1.5 px-4 font-maru text-[13px] font-bold text-ink-soft">{title}</p>
-      <div className="paper-card divide-y divide-ink/[0.08] overflow-hidden">{children}</div>
-      {footer && <p className="mt-1.5 px-4 text-[12px] leading-relaxed text-ink-faint">{footer}</p>}
+      <p className="section-label mb-1.5 px-4">{title}</p>
+      <div className="glass-thin divide-y divide-white/[0.06] overflow-hidden rounded-2xl">{children}</div>
+      {footer && <p className="mt-1.5 px-4 text-[12px] leading-relaxed text-white/35">{footer}</p>}
     </section>
   );
 }
@@ -60,7 +61,7 @@ function ambientKey(mix: AmbientMix) {
   return mix[top] > 0.01 ? top : 'none';
 }
 
-/** iOS 設定アプリ風（紙のトーン）。ホームの歯車から右へスライドして開く */
+/** iOS 設定アプリ風。ホームの歯車から右へスライドして開く */
 export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { settings, updateSettings, resetToSample, clearAll } = useApp();
   const tracks = useBgmTracks();
@@ -107,12 +108,12 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
     <>
       <AnimatePresence>
         {open && (
-          <motion.div className="tex-canvas fixed inset-0 z-40 overflow-y-auto text-ink" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springSheet}>
+          <motion.div className="fixed inset-0 z-40 overflow-y-auto bg-night-950 text-white" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springSheet}>
             <div className="mx-auto max-w-xl px-4 pb-16 pt-safe">
-              <button onClick={onClose} className="-ml-1 mt-1 flex items-center gap-0.5 py-2 text-[16px] font-semibold text-crayon-blue">
+              <button onClick={onClose} className="-ml-1 mt-1 flex items-center gap-0.5 py-2 text-[16px] font-medium text-summit">
                 <ChevronLeft size={22} /> ホーム
               </button>
-              <h1 className="px-1 font-maru text-[32px] font-black tracking-tight">設定</h1>
+              <h1 className="px-1 text-[32px] font-bold tracking-tight">設定</h1>
 
               <Group title="プロフィール">
                 <Row
@@ -132,21 +133,21 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                 <Row icon={<Coffee size={16} />} color="#C98500" title="休憩時間" value={`${settings.pomodoroShortBreak}分`} onClick={() => setPicker('short')} />
                 <Row icon={<Clock size={16} />} color="#9085e9" title="長い休憩" value={`${settings.pomodoroLongBreak}分`} onClick={() => setPicker('long')} />
                 <Row icon={<Repeat size={16} />} color="#3987e5" title="長い休憩の間隔" value={`${settings.longBreakEvery}回ごと`} onClick={() => setPicker('every')} />
-                <Row icon={<Waves size={16} />} color="#199e70" title="休憩のあと自動で出発" right={<Toggle tone="paper" checked={settings.autoContinue} onChange={set('autoContinue')} color="#3E8C68" label="自動で出発" />} />
-                <Row icon={<Wind size={16} />} color="#5EA8B8" title="集中前の深呼吸" right={<Toggle tone="paper" checked={settings.breathing} onChange={set('breathing')} color="#3E8C68" label="深呼吸" />} />
+                <Row icon={<Waves size={16} />} color="#199e70" title="休憩のあと自動で出発" right={<Toggle checked={settings.autoContinue} onChange={set('autoContinue')} color="#34C759" label="自動で出発" />} />
+                <Row icon={<Wind size={16} />} color="#5EA8B8" title="集中前の深呼吸" right={<Toggle checked={settings.breathing} onChange={set('breathing')} color="#34C759" label="深呼吸" />} />
               </Group>
 
               <Group title="音楽設定" footer="音楽・環境音はすべてブラウザ内でリアルタイムに合成しています。">
-                <Row icon={<Music size={16} />} color="#3E86C9" title="集中を始めたら音楽を流す" right={<Toggle tone="paper" checked={settings.bgmOnFocus} onChange={set('bgmOnFocus')} color="#3E86C9" label="音楽を流す" />} />
+                <Row icon={<Music size={16} />} color="#3E86C9" title="集中を始めたら音楽を流す" right={<Toggle checked={settings.bgmOnFocus} onChange={set('bgmOnFocus')} color="#34C759" label="音楽を流す" />} />
                 <Row icon={<span className="text-[15px]">📼</span>} color="#4A3A34" title="BGM" value={tracks[settings.bgmTrack % tracks.length]?.title} onClick={() => setPicker('bgm')} />
                 <Row
                   icon={<Volume2 size={16} />}
                   color="#6E5D52"
                   title="音量"
-                  right={<input type="range" min={0} max={1} step={0.01} value={settings.bgmVolume} onChange={(e) => updateSettings({ bgmVolume: Number(e.target.value) })} className="w-32 accent-[#4A3A34]" aria-label="音量" />}
+                  right={<input type="range" min={0} max={1} step={0.01} value={settings.bgmVolume} onChange={(e) => updateSettings({ bgmVolume: Number(e.target.value) })} className="w-32 accent-white" aria-label="音量" />}
                 />
-                <Row icon={<Leaf size={16} />} color="#3E8C68" title="環境音" value={AMBIENT_PRESETS.find((x) => x.key === ambientKey(settings.ambient))?.label} onClick={() => setPicker('ambient')} />
-                <Row icon={<Bell size={16} />} color="#F2B33D" title="完了チャイム" right={<Toggle tone="paper" checked={settings.chime} onChange={set('chime')} color="#3E8C68" label="完了チャイム" />} />
+                <Row icon={<Leaf size={16} />} color="#34C759" title="環境音" value={AMBIENT_PRESETS.find((x) => x.key === ambientKey(settings.ambient))?.label} onClick={() => setPicker('ambient')} />
+                <Row icon={<Bell size={16} />} color="#F2B33D" title="完了チャイム" right={<Toggle checked={settings.chime} onChange={set('chime')} color="#34C759" label="完了チャイム" />} />
               </Group>
 
               <Group title="システム設定">
@@ -155,11 +156,15 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                   color="#3987e5"
                   title="画面を常時点灯"
                   detail={wakeLockSupported ? '集中中は画面がスリープしません' : 'このブラウザは未対応です'}
-                  right={<Toggle tone="paper" checked={settings.wakeLock} onChange={set('wakeLock')} color="#3E8C68" label="常時点灯" />}
+                  right={<Toggle checked={settings.wakeLock} onChange={set('wakeLock')} color="#34C759" label="常時点灯" />}
                 />
-                <Row icon={<Eye size={16} />} color="#9085e9" title="よそ見検知（ディープ集中）" detail="別のアプリへ移ると旅人が立ち止まります" right={<Toggle tone="paper" checked={settings.deepFocus} onChange={set('deepFocus')} color="#3E8C68" label="よそ見検知" />} />
+                <Row icon={<Eye size={16} />} color="#9085e9" title="よそ見検知（ディープ集中）" detail="別のアプリへ移ると旅人が立ち止まります" right={<Toggle checked={settings.deepFocus} onChange={set('deepFocus')} color="#34C759" label="よそ見検知" />} />
                 <Row icon={<Sun size={16} />} color="#E8743A" title="空の時間" value={skyLabel} onClick={() => setPicker('sky')} />
-                <Row icon={<span className="text-[15px]">{SEASONS[settings.season].emoji}</span>} color="#7FB04A" title="シーズン" value={SEASONS[settings.season].label} onClick={() => setPicker('season')} />
+              </Group>
+
+              <Group title="タイマーのデザイン" footer="デザインは今後追加予定です。">
+                <Row icon={<Mountain size={16} />} color="#5A9FEA" title="デザイン" value={getDesign(settings.timerDesign).name} />
+                <Row icon={<span className="text-[15px]">{SEASONS[settings.season].emoji}</span>} color="#7FB04A" title="登山：シーズン" value={SEASONS[settings.season].label} onClick={() => setPicker('season')} />
               </Group>
 
               <Group title="データ" footer="記録はこの端末のブラウザ内に保存されます。ホーム画面に追加するとアプリとして全画面で使えます。">
@@ -174,7 +179,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
 
       {p && <PickerModal open={!!picker} onClose={() => setPicker(null)} title={p.title} value={p.value} options={p.options} onSelect={p.onSelect} />}
 
-      <Sheet open={nameOpen} onClose={() => setNameOpen(false)} title="名前" subtitle="ホームの挨拶で呼ぶ名前です" tone="paper">
+      <Sheet open={nameOpen} onClose={() => setNameOpen(false)} title="名前" subtitle="ホームの挨拶で呼ぶ名前です">
         <form
           className="space-y-3 pb-5"
           onSubmit={(e) => {
@@ -183,24 +188,24 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
             setNameOpen(false);
           }}
         >
-          <input className="field-paper font-maru text-[18px] font-bold" value={name} onChange={(e) => setName(e.target.value)} maxLength={16} autoFocus placeholder="旅人" />
-          <button type="submit" className="ink-btn w-full py-3.5 text-[16px]">保存</button>
+          <input className="field text-[18px] font-semibold" value={name} onChange={(e) => setName(e.target.value)} maxLength={16} autoFocus placeholder="旅人" />
+          <button type="submit" className="w-full rounded-2xl bg-white py-3.5 text-[16px] font-bold text-night-950">保存</button>
         </form>
       </Sheet>
 
-      <Modal open={!!confirm} onClose={() => setConfirm(null)} tone="paper">
+      <Modal open={!!confirm} onClose={() => setConfirm(null)}>
         <div className="p-6 text-center">
-          <p className="font-maru text-[19px] font-bold">{confirm === 'sample' ? 'サンプルデータに戻しますか？' : 'すべての記録を消去しますか？'}</p>
-          <p className="mt-2 text-[13px] text-ink-soft">{confirm === 'sample' ? '今の記録はサンプルで上書きされます。' : 'この操作は取り消せません。'}</p>
+          <p className="text-[19px] font-bold">{confirm === 'sample' ? 'サンプルデータに戻しますか？' : 'すべての記録を消去しますか？'}</p>
+          <p className="mt-2 text-[13px] text-white/55">{confirm === 'sample' ? '今の記録はサンプルで上書きされます。' : 'この操作は取り消せません。'}</p>
           <div className="mt-5 grid grid-cols-2 gap-2">
-            <button onClick={() => setConfirm(null)} className="rounded-2xl bg-ink/[0.08] py-3 font-bold">やめる</button>
+            <button onClick={() => setConfirm(null)} className="rounded-2xl bg-white/10 py-3 font-semibold">やめる</button>
             <button
               onClick={async () => {
                 await (confirm === 'sample' ? resetToSample() : clearAll());
                 setConfirm(null);
                 onClose();
               }}
-              className="rounded-2xl bg-crayon-red py-3 font-bold text-paper"
+              className="rounded-2xl bg-[#FF5A5F] py-3 font-bold text-white"
             >
               {confirm === 'sample' ? '戻す' : '消去'}
             </button>

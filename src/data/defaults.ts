@@ -24,4 +24,5 @@ export const DEFAULT_SETTINGS: Settings = {
   bgmTrack: 0,
   bgmVolume: 0.7,
   breathing: true,
+  timerDesign: 'mountain',
 };

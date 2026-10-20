@@ -15,7 +15,7 @@ export function TabBar({ tab, onChange }: { tab: TabKey; onChange: (t: TabKey) =
   return (
     <nav className="glass-strong relative mx-auto flex w-full max-w-md items-stretch rounded-[1.75rem] p-1.5" aria-label="メインナビゲーション">
       <motion.span
-        className="absolute bottom-1.5 left-1.5 top-1.5 rounded-[1.35rem] bg-paper/[0.16] shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
+        className="absolute bottom-1.5 left-1.5 top-1.5 rounded-[1.35rem] bg-white/[0.13] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
         style={{ width: `calc((100% - 12px) / ${TABS.length})` }}
         initial={false}
         animate={{ x: `${Math.max(0, TABS.findIndex((t) => t.key === tab)) * 100}%` }}

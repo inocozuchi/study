@@ -1,4 +1,4 @@
-import { SEASONS } from '@/components/scene/stage/palette';
+import { SEASONS } from './scene/palette';
 import type { Season } from '@/types';
 
 /** 季節の小さな風景（クレヨン調） */
