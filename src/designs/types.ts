@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import type { ComponentType, MouseEvent } from 'react';
 import type { JourneyResult } from '@/store/TimerStore';
 import type { JourneyBooking, Settings, Subject, SubjectIconKey, TimerDesignId, TimeStep, TravelMode } from '@/types';
 
@@ -145,5 +145,25 @@ export interface TimerDesign {
   edgeColors?: (hour: number, settings: Settings) => { top: string; bottom: string };
   /** シーンの画像を読み込んでいる間の地の色（落ち着いた暗い色。シーンはそのあとフェードインする） */
   skeleton?: string;
+  /** ホームの部品の着せ替え（上のボタン・ツールの縦タブ・バッジ・タブバー・「集中」ボタン）。モードの世界観に合わせる */
+  home: HomeSkin;
+}
+
+/**
+ * ホームの着せ替え。寸法（42px のボタン・タブバーの形）はアプリ共通で、色と質感だけをモードが決める。
+ * クラスは各デザインの CSS（mt- / tr- / fl-）に置く。
+ */
+export interface HomeSkin {
+  /** 丸いボタン・モードのピル・ツールの縦タブ・記録のバッジの面 */
+  chip: string;
+  /** 上のセーフゾーン（ヘッダーと挨拶の後ろ）の CSS background。シーンの絵と文字を分ける */
+  scrim: string;
+  /** 挨拶の文字 */
+  greeting: string;
+  /** ホームにいる間のタブバー：バー・選択のピル・選択中 / ほかのアイコンの色 */
+  tabbar: { bar: string; pill: string; on: string; off: string };
+  /** 「集中」ボタン（直径 80px。呼吸する光や輪もここで描く）。押すと光が広がる色が bloom */
+  Focus: ComponentType<{ onClick: (e: MouseEvent<HTMLButtonElement>) => void }>;
+  bloom: string;
 }
 

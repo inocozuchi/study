@@ -67,20 +67,22 @@ export const MountainLayer = memo(
       <svg width={P} height={H} viewBox={`0 0 ${P} ${H}`} className="block shrink-0">
         <defs>
           <linearGradient id="ft-haze" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0.45" stopColor="#CFE0EE" stopOpacity="0" />
-            <stop offset="0.7" stopColor="#CFE0EE" stopOpacity="0.55" />
+            <stop offset="0.38" stopColor="#DCE7F0" stopOpacity="0" />
+            <stop offset="0.72" stopColor="#E3ECF3" stopOpacity="0.75" />
           </linearGradient>
         </defs>
         <g filter="url(#crayon)">
         {/* 遠い稜線：大気の青灰色 */}
-        <path d={far.ridge} fill="#9DB3CB" />
-        {far.facets.map((d, i) => <path key={i} d={d} fill={i % 2 ? '#8AA1BC' : '#BFD0E1'} />)}
+        <path d={far.ridge} fill="#B4C5D8" />
+        {far.facets.map((d, i) => <path key={i} d={d} fill={i % 2 ? '#A6B8CD' : '#CCD9E6'} opacity="0.85" />)}
         {far.snow.map((d, i) => <path key={i} d={d} fill="#EEF3F8" opacity={snowAmt} />)}
         {far.snowSh.map((d, i) => <path key={i} d={d} fill="#C6D4E4" opacity={snowAmt} />)}
+        {/* 空気遠近法：遠い山ほど淡く霞む（遠い稜線の全体にうすい霞をもう 1 枚） */}
         <rect x="0" y="0" width={P} height={H} fill="url(#ft-haze)" />
+        <rect x="0" y="0" width={P} height={H} fill="#E6EEF5" opacity="0.28" />
         {/* 手前の稜線 */}
         <path d={near.ridge} fill="#6F8DAF" />
-        {near.facets.map((d, i) => <path key={i} d={d} fill={i % 2 ? '#5E7B9E' : '#93AECB'} />)}
+        {near.facets.map((d, i) => <path key={i} d={d} fill={i % 2 ? '#5E7B9E' : '#93AECB'} opacity="0.9" />)}
         {near.snow.map((d, i) => <path key={i} d={d} fill="#F3F6FA" opacity={snowAmt} />)}
         {near.snowSh.map((d, i) => <path key={i} d={d} fill="#B9C9DB" opacity={snowAmt} />)}
         <rect x="0" y={H * 0.5} width={P} height={H * 0.5} fill="url(#ft-haze)" opacity="0.7" />

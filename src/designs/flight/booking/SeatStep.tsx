@@ -59,24 +59,24 @@ export function SeatStep({ draft, route, patch, onBack, onNext }: { draft: Fligh
   return (
     <div className="absolute inset-0 bg-[radial-gradient(120%_60%_at_50%_0%,#151820,#050608_70%)]">
       {/* 見出し：文字の後ろは塗りの面（ぼかし・暗いグラデーションを文字に重ねない）。下の縁だけ座席へ溶かす */}
-      <div className="absolute inset-x-0 top-0 z-20 bg-[#050608] px-4 pb-3 pt-safe after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-5 after:bg-gradient-to-b after:from-[#050608] after:to-transparent after:content-['']">
-        <div className="mt-1 flex items-center justify-between">
-          <button onClick={onBack} aria-label="戻る" className="fl-btn fl-glass h-11 w-11">
-            <ChevronLeft size={21} />
+      <div className="absolute inset-x-0 top-0 z-20 bg-[#050608] pb-3 after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-5 after:bg-gradient-to-b after:from-[#050608] after:to-transparent after:content-['']">
+        <div className="screen-header">
+          <button onClick={onBack} aria-label="戻る" className="btn-icon fl-btn fl-glass">
+            <ChevronLeft />
           </button>
-          <div className="text-center">
+          <div>
             <p className="text-[15px] font-semibold">座席を指定</p>
-            <p className="fl-num text-[12px] text-white/55">
-              {draft.origin} → {route.airport.code} · {hm(draft.minutes)}
-            </p>
             <Steps at={2} />
           </div>
-          <span className="w-11" />
+          <span />
         </div>
+        <p className="fl-num mt-1 text-center text-[12px] text-white/55">
+          {draft.origin} → {route.airport.code} · {hm(draft.minutes)}
+        </p>
       </div>
 
       <div className="no-scrollbar absolute inset-0 overflow-y-auto overscroll-contain" onClick={() => setOpen(null)}>
-        <div ref={content} className="relative mx-auto w-full max-w-[393px] pb-[calc(env(safe-area-inset-bottom)+120px)] pt-[calc(var(--safe-top)+64px)]">
+        <div ref={content} className="relative mx-auto w-full max-w-[393px] pb-[calc(env(safe-area-inset-bottom)+150px)] pt-[calc(var(--safe-top)+84px)]">
           <Fuselage>
             {Array.from({ length: ROWS }, (_, i) => i + 1).map((row) => (
               <div key={row} className="flex items-center justify-center gap-[6px]" style={{ height: ROW_H }}>
@@ -114,9 +114,9 @@ export function SeatStep({ draft, route, patch, onBack, onNext }: { draft: Fligh
       </div>
 
       {/* 下：選んだ席と確認 */}
-      <div className="absolute inset-x-0 bottom-0 z-20 px-3 pb-[calc(env(safe-area-inset-bottom)+10px)]">
-        <div className="fl-glass flex items-center gap-3 rounded-[26px] py-2 pl-4 pr-2">
-          <span className="min-w-0 flex-1">
+      <div className="cta-dock absolute inset-x-0 bottom-0 z-20 bg-[#050608]/90 pt-2.5">
+        <div>
+          <span className="block min-w-0 px-1 pb-2">
             <span className="block text-[11.5px] text-white/50">{draft.seat ? '席とタスク' : '空いている席を選んでください'}</span>
             <span className="fl-num flex items-center gap-1.5 truncate text-[16px] font-bold">
               {draft.seat ? (
@@ -131,7 +131,7 @@ export function SeatStep({ draft, route, patch, onBack, onNext }: { draft: Fligh
               )}
             </span>
           </span>
-          <button disabled={!draft.seat || !draft.task} onClick={onNext} className="fl-cta h-12 w-[112px] text-[16px]">
+          <button disabled={!draft.seat || !draft.task} onClick={onNext} className="btn-cta fl-cta">
             確認
           </button>
         </div>

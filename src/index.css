@@ -83,10 +83,10 @@
   :root {
     /* タブバー（浮いたカプセル）の下の余白と、タブバーが占める高さ。ホームのボタン位置・各画面の下の余白はこれから決める */
     /*
-     * 上の文字・ボタンを置き始める線。時刻の帯（安全域）からさらに 18px 下げる。
-     * iOS（ホーム画面アプリ）は時刻の帯のすぐ下をぼかして見せるので、そこに部品を置かない
+     * 上の文字・ボタンを置き始める線（ヘッダーの行の上端）。時刻の帯（安全域）から 12px 下げる。
+     * ヘッダーの行は高さ 44（.screen-header）。すべての画面でここが同じなので、画面を切り替えてもタイトルと戻るボタンがずれない
      */
-    --safe-top: calc(max(env(safe-area-inset-top), 16px) + 24px);
+    --safe-top: calc(max(env(safe-area-inset-top), 16px) + 12px);
     --tabbar-pb: max(calc(env(safe-area-inset-bottom) - 6px), 14px);
     --nav-space: calc(60px + var(--tabbar-pb));
   }
@@ -136,36 +136,42 @@
     @apply flex items-center justify-center gap-2 rounded-card bg-fill px-4 py-3 text-[15px] font-bold text-fg transition active:brightness-95 disabled:opacity-40;
   }
   /*
-   * 布の質感：細かい綾織り（斜めの糸）と横糸の重なりを、ごく薄い線のくり返しで描く。静的な CSS なので動かしても軽い。
-   *  .fabric-denim  … インディゴデニム。シーンの上に浮かぶボタン・つまみ（空の明るさに関係なく読める）
-   *  .fabric-canvas … キャンバス地。タブバーなど地の色の上（ライト／ダークの地の色に織り目を足す）
-   *  .stitch        … 内側に一周、ステッチ（破線）を入れる
+   * ボタンとヘッダーの寸法（すべての画面・すべてのモードで同じ。色と質感は持たない＝各モードのクラスを重ねる）
+   *  .btn-icon      … 丸いアイコンボタン 42 × 42（閉じる・戻る・音楽・設定…）。アイコンは 20px
+   *  .btn-cta       … 画面の下のメインボタン。高さ 54・横いっぱい（左右の余白 20px は .cta-dock）・16px 太字・字間 0.04em
+   *  .btn-pill      … 切り替えのピル・セグメント。高さ 40・角丸 12・左右 16・13px
+   *  .screen-header … ヘッダーの行：安全域 + 12px の位置に高さ 44。左右に 42 のボタン、真ん中にタイトル（左右 20px）
    */
-  .fabric-denim {
-    background-color: #24395a;
-    background-image:
-      repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 3px),
-      repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.18) 0 1px, transparent 1px 4px),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.12));
-    color: #f3f6fb;
-    box-shadow: 0 6px 16px -6px rgba(10, 16, 34, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  .btn-icon {
+    @apply grid shrink-0 place-items-center rounded-full;
+    width: 42px;
+    height: 42px;
   }
-  .fabric-canvas {
-    background-color: rgb(var(--c-page));
-    background-image:
-      repeating-linear-gradient(0deg, rgb(var(--c-fg) / 0.035) 0 1px, transparent 1px 3px),
-      repeating-linear-gradient(90deg, rgb(var(--c-fg) / 0.03) 0 1px, transparent 1px 3px);
+  .btn-icon > svg { width: 20px; height: 20px; }
+  .btn-cta {
+    @apply flex w-full items-center justify-center gap-2 rounded-full font-bold disabled:opacity-40;
+    height: 54px;
+    font-size: 16px;
+    letter-spacing: 0.04em;
   }
-  .stitch { position: relative; }
-  .stitch::before {
-    content: '';
-    position: absolute;
-    inset: 3px;
-    border: 1px dashed rgba(255, 255, 255, 0.32);
-    border-radius: inherit;
-    pointer-events: none;
+  .btn-pill {
+    @apply inline-flex items-center justify-center gap-1.5 font-bold;
+    height: 40px;
+    border-radius: 12px;
+    padding: 0 16px;
+    font-size: 13px;
   }
-  .fabric-canvas.stitch::before { border-color: rgb(var(--c-fg) / 0.14); }
+  .screen-header {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) 42px;
+    align-items: center;
+    column-gap: 8px;
+    height: 44px;
+    margin-top: var(--safe-top);
+    padding: 0 20px;
+  }
+  .screen-header > :nth-child(2) { text-align: center; min-width: 0; }
+  .cta-dock { padding: 0 20px calc(env(safe-area-inset-bottom) + 14px); }
   /* シーンの上（ホーム）に直接浮かぶ丸いボタン・つまみ */
   .scene-chip {
     @apply bg-surface text-fg shadow-raised;
@@ -230,19 +236,3 @@ html.layout-probe [data-probe='status'] { outline-color: rgba(255, 200, 0, 0.95)
   will-change: opacity;
 }
 
-/* ホームの「集中」ボタン：静かな呼吸（ふくらみ・光・広がる輪）。transform と opacity だけ */
-.focus-breath { animation: focus-breath 4.8s cubic-bezier(0.45, 0, 0.55, 1) infinite; will-change: transform; }
-.focus-glow {
-  background: radial-gradient(circle, rgba(170, 210, 255, 0.55) 0%, rgba(142, 197, 255, 0.18) 45%, rgba(142, 197, 255, 0) 70%);
-  animation: focus-glow 4.8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
-  will-change: opacity, transform;
-}
-.focus-ring { animation: focus-ring 4.8s cubic-bezier(0.22, 1, 0.36, 1) infinite; will-change: transform, opacity; }
-.focus-ring-2 { animation-delay: 2.4s; }
-@keyframes focus-breath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
-@keyframes focus-glow { 0%, 100% { opacity: 0.45; transform: scale(0.92); } 50% { opacity: 1; transform: scale(1.06); } }
-@keyframes focus-ring { 0% { opacity: 0.6; transform: scale(1); } 100% { opacity: 0; transform: scale(1.38); } }
-@media (prefers-reduced-motion: reduce) {
-  .focus-breath, .focus-glow, .focus-ring { animation: none; }
-  .focus-ring { opacity: 0; }
-}

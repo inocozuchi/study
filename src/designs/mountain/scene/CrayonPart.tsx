@@ -11,15 +11,13 @@ import { trackBake } from './bakeTracker';
  */
 const CHAR_FILTER = `
 <filter id="cc" x="-12%" y="-12%" width="124%" height="124%" color-interpolation-filters="sRGB">
-  <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="3" seed="4" result="warp"/>
-  <feDisplacementMap in="SourceGraphic" in2="warp" scale="3" xChannelSelector="R" yChannelSelector="G" result="rough"/>
-  <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="9" result="grain"/>
-  <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -6 0 0 0 4.7" result="tooth"/>
-  <feComposite in="rough" in2="tooth" operator="in" result="wax"/>
-  <feTurbulence type="fractalNoise" baseFrequency="0.09 1.3" numOctaves="1" seed="2" result="weft"/>
-  <feColorMatrix in="weft" type="matrix" values="0 0 0 0 1  0 0 0 0 0.97  0 0 0 0 0.9  1.8 0 0 0 -1.0" result="threads"/>
-  <feComposite in="threads" in2="wax" operator="in" result="lit"/>
-  <feMerge><feMergeNode in="wax"/><feMergeNode in="lit"/></feMerge>
+  <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="4" result="warp"/>
+  <feDisplacementMap in="SourceGraphic" in2="warp" scale="2" xChannelSelector="R" yChannelSelector="G" result="wet"/>
+  <feGaussianBlur in="wet" stdDeviation="1.2" result="soft"/>
+  <feComposite in="wet" in2="soft" operator="arithmetic" k1="0" k2="1.25" k3="-0.25" k4="0" result="edge"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="9" result="blot"/>
+  <feColorMatrix in="blot" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  -0.45 0 0 0 1.15" result="pigment"/>
+  <feComposite in="edge" in2="pigment" operator="in"/>
 </filter>`;
 
 /** 目・鼻・口などの小さな印（焦げ茶をミルクで割った色） */

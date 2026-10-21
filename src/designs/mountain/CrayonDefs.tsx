@@ -1,26 +1,28 @@
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * クレヨン調の SVG フィルタ。
- *  - #crayon       ：静的な絵（山・草原・木・テント・雲）。輪郭を揺らし、紙目にワックスが乗らない粒を抜く
- *  - #crayon-soft  ：UI の線（ボタンの縁取り・下線）用の弱いもの
+ * 透明水彩の SVG フィルタ（id は以前のクレヨンのものを引き継ぐ）。
+ *  - #crayon       ：静的な絵（山・草原・木・テント・雲）。
+ *      にじみ（輪郭をごく少しゆらす）→ 縁の溜まり（顔料が輪郭に寄って少し濃くなる）→ 顔料のむら（大きくやわらかい濃淡）。
+ *      クレヨンの「ワックスが乗らない白い粒」は使わない（砂嵐のような点に見えるため）
+ *  - #crayon-soft  ：UI の線（ボタンの縁取り・下線）用の弱いにじみ
+ * 紙の凹凸はシーン全体に 1 枚重ねる（mountain.css の --paper-tooth）。
  * iOS Safari は SVG フィルタを CPU で計算するため、画面に出したまま使うと再描画のたびに重くなる。
  * シーンの絵は scene/Baked.tsx で一度だけキャンバスに焼き込み、ここの文字列を焼き込み用 SVG にも埋め込む。
  */
 export const CRAYON_FILTERS = `
 <filter id="crayon" x="-6%" y="-6%" width="112%" height="112%" color-interpolation-filters="sRGB">
-  <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="7" result="warp"/>
-  <feDisplacementMap in="SourceGraphic" in2="warp" scale="5" xChannelSelector="R" yChannelSelector="G" result="rough"/>
-  <feTurbulence type="fractalNoise" baseFrequency="0.62" numOctaves="2" seed="3" result="grain"/>
-  <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -7 0 0 0 5.35" result="mask"/>
-  <feComposite in="rough" in2="mask" operator="in"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="7" result="warp"/>
+  <feDisplacementMap in="SourceGraphic" in2="warp" scale="4" xChannelSelector="R" yChannelSelector="G" result="wet"/>
+  <feGaussianBlur in="wet" stdDeviation="2.4" result="soft"/>
+  <feComposite in="wet" in2="soft" operator="arithmetic" k1="0" k2="1.3" k3="-0.3" k4="0" result="edge"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.009 0.014" numOctaves="3" seed="5" result="blot"/>
+  <feColorMatrix in="blot" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  -0.55 0 0 0 1.18" result="pigment"/>
+  <feComposite in="edge" in2="pigment" operator="in"/>
 </filter>
 <filter id="crayon-soft" x="-6%" y="-20%" width="112%" height="140%">
-  <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="11" result="warp"/>
-  <feDisplacementMap in="SourceGraphic" in2="warp" scale="2.6" xChannelSelector="R" yChannelSelector="G" result="rough"/>
-  <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="2" result="grain"/>
-  <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -5 0 0 0 3.9" result="mask"/>
-  <feComposite in="rough" in2="mask" operator="in"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="11" result="warp"/>
+  <feDisplacementMap in="SourceGraphic" in2="warp" scale="1.8" xChannelSelector="R" yChannelSelector="G"/>
 </filter>`;
 
 /** UI の小さな部品（縁取り・見本）用に、フィルタを文書に 1 回だけ置く */

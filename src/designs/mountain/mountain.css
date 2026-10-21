@@ -9,6 +9,8 @@
   --noise-light: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   --noise-warm: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.25  0 0 0 0 0.15  0 0 0 0.13 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   --fleck: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.045' numOctaves='2' seed='4'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.4  0 0 0 0 0.3  0 0 0 0.55 -0.2'/></filter><rect width='100%' height='100%' filter='url(%23f)'/></svg>");
+  /* 水彩紙の目（コールドプレスのやわらかな凹凸）：大きめの低いノイズをごく薄く */
+  --paper-tooth: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.035 0.05' numOctaves='3' seed='7'/><feDiffuseLighting lighting-color='white' surfaceScale='1.6'><feDistantLight azimuth='225' elevation='58'/></feDiffuseLighting><feColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.22  -0.33 -0.33 -0.33 0 0.95'/></filter><rect width='100%' height='100%' filter='url(%23p)'/></svg>");
   /* 平織り（キャンバス）：縦横の細い糸 */
   --weave: repeating-linear-gradient(0deg, rgba(110, 80, 40, 0.05) 0 1px, transparent 1px 3px),
     repeating-linear-gradient(90deg, rgba(110, 80, 40, 0.045) 0 1px, transparent 1px 3px);
@@ -25,12 +27,13 @@
     radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.5), transparent 70%);
 }
 
-/* 焦げ茶のフェルトのボタン（集中中の音楽・完了） */
+/* フォレストグリーンの水彩のボタン（集中中の「旅を終える」など） */
 .mt-ink-btn {
-  @apply rounded-full font-maru font-bold text-paper;
-  background-color: #4a3a34;
-  background-image: var(--noise-light), var(--twill);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 6px 14px -6px rgba(40, 28, 22, 0.6);
+  @apply rounded-full font-maru font-bold;
+  color: #fbf8f1;
+  background-color: #2c4a3e;
+  background-image: var(--paper-tooth), radial-gradient(80% 120% at 30% 20%, rgba(143, 175, 140, 0.35), transparent 70%);
+  box-shadow: 0 6px 14px -6px rgba(30, 50, 40, 0.6);
 }
 
 /* 木の札（旅のパスの台）：木目の筋 + 木口の濃淡 + 角の面取りの影 */
@@ -121,3 +124,56 @@
 }
 .ft-fg-sway { animation: ft-fg-sway 4.6s ease-in-out infinite; transform-origin: 50% 100%; will-change: transform; }
 .ft-reduced .ft-fg-sway { animation-play-state: paused; }
+
+/* ───────── ホームの着せ替え（水彩 × ナチュラル：水彩紙のすりガラスとフォレストグリーン） ───────── */
+.mt-chip {
+  background-color: rgba(245, 242, 235, 0.75);
+  background-image: var(--paper-tooth);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
+  border: 1px solid rgba(44, 74, 62, 0.22);
+  color: #2c4a3e;
+  box-shadow: 0 6px 16px -8px rgba(40, 60, 50, 0.45);
+}
+.mt-tabbar {
+  background-color: rgba(250, 248, 243, 0.9);
+  background-image: var(--paper-tooth);
+  border: 1px solid rgba(44, 74, 62, 0.16);
+  box-shadow: 0 12px 28px -14px rgba(40, 60, 50, 0.45);
+}
+.mt-tabbar-pill { background: rgba(143, 175, 140, 0.38); }
+
+/* 「集中」ボタン：方位磁針（生成りの文字盤・フォレストグリーンの縁・テラコッタの針） */
+.mt-compass {
+  background: radial-gradient(circle at 50% 38%, #fbf8f1 0%, #efe8d8 72%, #e4dbc6 100%);
+  box-shadow: inset 0 0 0 2px #2c4a3e, inset 0 0 0 5px #fbf8f1, inset 0 0 0 6px rgba(44, 74, 62, 0.35), 0 10px 22px -10px rgba(40, 60, 50, 0.55);
+  color: #2c4a3e;
+}
+.mt-compass-glow {
+  background: radial-gradient(circle, rgba(143, 175, 140, 0.55) 0%, rgba(143, 175, 140, 0) 68%);
+  animation: mt-compass-breath 4.8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  will-change: opacity, transform;
+}
+@keyframes mt-compass-breath { 0%, 100% { opacity: 0.35; transform: scale(0.94); } 50% { opacity: 0.95; transform: scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { .mt-compass-glow { animation: none; } }
+
+/* シーン全体に重ねる水彩紙の凹凸（コールドプレスの目）。動かない 1 枚 */
+.mt-paper-tooth {
+  background-image: var(--paper-tooth);
+  background-size: 220px 220px;
+  opacity: 0.55;
+}
+
+/* ───────── 登山届（予約の画面）：生成りの水彩紙とアースカラーの札 ───────── */
+.mt-plan {
+  background-color: #f6f1e6;
+  background-image: var(--paper-tooth),
+    radial-gradient(70% 40% at 20% 10%, rgba(196, 220, 205, 0.45), transparent 70%),
+    radial-gradient(60% 35% at 85% 85%, rgba(232, 206, 150, 0.35), transparent 70%);
+}
+.mt-wash-card { box-shadow: inset 0 0 0 1px rgba(44, 74, 62, 0.14), 0 8px 18px -12px rgba(40, 60, 50, 0.45); }
+/* 選んだ札：モスグリーン / テラコッタ / 山吹。地の水彩紙の目を重ねる */
+.mt-moss { background-color: #6f8f6a; background-image: var(--paper-tooth); color: #fbf8f1; }
+.mt-terracotta { background-color: #c9704f; background-image: var(--paper-tooth); color: #fbf8f1; }
+.mt-yamabuki { background-color: #d9a23c; background-image: var(--paper-tooth); color: #2c2414; }
+.mt-forest { background-color: #2c4a3e; background-image: var(--paper-tooth); color: #fbf8f1; box-shadow: 0 10px 22px -10px rgba(30, 50, 40, 0.6); }

@@ -42,16 +42,16 @@ export function LineStep({ draft, stops, stop, patch, onClose, onNext }: { draft
   return (
     <div className="tr-mincho absolute inset-0 flex flex-col">
       {/* 見出し */}
-      <div className="flex items-center justify-between px-4 pt-safe">
-        <button onClick={onClose} aria-label="閉じる" className="tr-brass mt-1 grid h-11 w-11 place-items-center rounded-full">
-          <X size={19} />
+      <div className="screen-header">
+        <button onClick={onClose} aria-label="閉じる" className="btn-icon tr-brass">
+          <X />
         </button>
-        <div className="mt-1 text-center">
+        <div>
           <p className="text-[17px] font-bold tracking-[0.2em] text-[#F4EEDD]">乗車券を買ふ</p>
           <Steps at={1} />
         </div>
-        <button onClick={() => setOptions(true)} aria-label="旅の支度（天気・時間帯・走行音）" className="tr-brass mt-1 grid h-11 w-11 place-items-center rounded-full">
-          <Briefcase size={18} />
+        <button onClick={() => setOptions(true)} aria-label="旅の支度（天気・時間帯・走行音）" className="btn-icon tr-brass">
+          <Briefcase />
         </button>
       </div>
 
@@ -87,7 +87,7 @@ export function LineStep({ draft, stops, stop, patch, onClose, onNext }: { draft
         )}
       </div>
 
-      <div className="mt-3 shrink-0 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)]">
+      <div className="cta-dock mt-3 shrink-0">
         <ClassPlates cls={draft.cls} onChange={(cls) => patch({ cls, dest: null })} />
         <StepPlates step={draft.step} onChange={(s) => patch({ step: s, minutes: snapTo(draft.minutes, s), dest: null })} />
         <p className="mt-2.5 flex items-baseline justify-between px-1 text-[#F4EEDD]">
@@ -96,7 +96,7 @@ export function LineStep({ draft, stops, stop, patch, onClose, onNext }: { draft
           <span className="text-[13px] tabular-nums text-[#F4EEDD]/75">營業キロ {stop?.km ?? 0} 粁</span>
         </p>
         <BrassRuler step={draft.step} value={draft.minutes} onChange={(v) => patch({ minutes: v, dest: null })} />
-        <button onClick={onNext} disabled={!stop} className="tr-enji mt-3 h-14 w-full rounded-[12px] text-[18px] font-bold tracking-[0.3em]">
+        <button onClick={onNext} disabled={!stop} className="btn-cta tr-cta tr-enji mt-3">
           座席を指定する
         </button>
       </div>
@@ -250,7 +250,7 @@ function ClassPlates({ cls, onChange }: { cls: TrainClass; onChange: (c: TrainCl
       {CLASS_ORDER.map((c) => {
         const on = c === cls;
         return (
-          <button key={c} role="radio" aria-checked={on} onClick={() => onChange(c)} className={`h-9 rounded-[6px] text-[14px] font-bold tracking-[0.2em] ${on ? 'tr-enji' : 'border border-[#B8955A]/45 bg-black/25 text-[#F4EEDD]/80'}`}>
+          <button key={c} role="radio" aria-checked={on} onClick={() => onChange(c)} className={`btn-pill w-full px-0 tracking-[0.2em] ${on ? 'tr-enji' : 'border border-[#B8955A]/45 bg-black/25 text-[#F4EEDD]/80'}`}>
             {CLASSES[c].label}
           </button>
         );
@@ -290,13 +290,13 @@ function LinePicker({ line, origin, onPick, onClose }: { line: TrainLine; origin
         <p className="mt-4 text-[12px] font-bold tracking-[0.2em] text-[#6B4A2B]">出發驛 · {current.name}</p>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {current.major.map((name) => (
-            <button key={name} onClick={() => onPick(current.id, name)} aria-pressed={name === origin} className={`h-9 rounded-[6px] px-3 text-[14px] font-bold ${name === origin ? 'tr-enji' : 'border border-[#6B4A2B]/40 text-[#4A2E1C]'}`}>
+            <button key={name} onClick={() => onPick(current.id, name)} aria-pressed={name === origin} className={`btn-pill ${name === origin ? 'tr-enji' : 'border border-[#6B4A2B]/40 text-[#4A2E1C]'}`}>
               {name}
             </button>
           ))}
         </div>
         {current.id === 'trail' && <p className="mt-3 text-[11.5px] leading-relaxed text-[#6B4A2B]">長い旅は何回かに分けて乗り継げます。着いた駅が次の出發驛になります。</p>}
-        <button onClick={onClose} className="tr-enji mt-4 h-11 w-full rounded-[8px] text-[15px] font-bold tracking-[0.3em]">
+        <button onClick={onClose} className="btn-cta tr-cta tr-enji mt-4">
           これでよし
         </button>
       </motion.div>
@@ -314,10 +314,10 @@ function StepPlates({ step, onChange }: { step: TimeStep; onChange: (s: TimeStep
       {items.map(({ value, label, note, Icon }) => {
         const on = value === step;
         return (
-          <button key={value} onClick={() => onChange(value)} aria-pressed={on} className={`flex h-11 items-center justify-center gap-1.5 rounded-[8px] text-[14px] font-bold transition-colors ${on ? 'tr-brass' : 'border border-[#B8955A]/45 bg-black/25 text-[#F4EEDD]/80'}`}>
+          <button key={value} onClick={() => onChange(value)} aria-pressed={on} className={`btn-pill w-full whitespace-nowrap px-2 transition-colors ${on ? 'tr-brass' : 'border border-[#B8955A]/45 bg-black/25 text-[#F4EEDD]/80'}`}>
             <Icon size={15} />
             {label}
-            <span className={`text-[11px] ${on ? 'text-[#2B1D0E]/65' : 'text-[#F4EEDD]/50'}`}>{note}</span>
+            <span className={`text-[10px] ${on ? 'text-[#2B1D0E]/65' : 'text-[#F4EEDD]/50'}`}>{note}</span>
           </button>
         );
       })}
@@ -412,7 +412,7 @@ function TripOptions({ draft, patch, onClose }: { draft: TrainDraft; patch: (p: 
             { v: 'clear' as const, label: '晴れ', Icon: Sun },
             { v: 'rain' as const, label: '雨', Icon: CloudRain },
           ].map(({ v, label, Icon }) => (
-            <button key={v} onClick={() => set({ trainWeather: v })} className={`flex h-10 items-center justify-center gap-1.5 rounded-[6px] text-[15px] font-bold ${o.trainWeather === v ? 'tr-enji' : 'border border-[#6B4A2B]/40 text-[#4A2E1C]'}`}>
+            <button key={v} onClick={() => set({ trainWeather: v })} className={`btn-pill w-full ${o.trainWeather === v ? 'tr-enji' : 'border border-[#6B4A2B]/40 text-[#4A2E1C]'}`}>
               <Icon size={16} /> {label}
             </button>
           ))}
@@ -420,7 +420,7 @@ function TripOptions({ draft, patch, onClose }: { draft: TrainDraft; patch: (p: 
         <p className="mt-4 text-[12px] font-bold tracking-[0.2em] text-[#6B4A2B]">時間帯</p>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {SKIES.map((s) => (
-            <button key={s.value} onClick={() => set({ sky: s.value })} className={`h-9 rounded-[6px] px-3 text-[14px] font-bold ${o.sky === s.value ? 'tr-enji' : 'border border-[#6B4A2B]/40 text-[#4A2E1C]'}`}>
+            <button key={s.value} onClick={() => set({ sky: s.value })} className={`btn-pill ${o.sky === s.value ? 'tr-enji' : 'border border-[#6B4A2B]/40 text-[#4A2E1C]'}`}>
               {s.label}
             </button>
           ))}
@@ -434,7 +434,7 @@ function TripOptions({ draft, patch, onClose }: { draft: TrainDraft; patch: (p: 
             <span className={`absolute top-1 h-6 w-6 rounded-full bg-[#F4EEDD] shadow transition-transform ${o.trainSound ? 'translate-x-7' : 'translate-x-1'}`} />
           </button>
         </div>
-        <button onClick={onClose} className="tr-enji mt-5 h-11 w-full rounded-[8px] text-[15px] font-bold tracking-[0.3em]">
+        <button onClick={onClose} className="btn-cta tr-cta tr-enji mt-5">
           これでよし
         </button>
       </motion.div>
