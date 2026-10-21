@@ -1,6 +1,6 @@
 import {
-  BookOpen, Brain, Calculator, Code, Coins, FlaskConical, Globe, Landmark, Languages, Music,
-  PenLine, Scale, type LucideIcon,
+  BookOpen, Brain, Briefcase, Calculator, Code, Coins, Dumbbell, FlaskConical, Flower2, Globe, Landmark, Languages, Music,
+  PenLine, Scale, Target, type LucideIcon,
 } from 'lucide-react';
 import type { SubjectIconKey } from '@/types';
 
@@ -29,6 +29,10 @@ export const SUBJECT_ICONS: Record<SubjectIconKey, { icon: LucideIcon; label: st
   brain: { icon: Brain, label: '思考' },
   globe: { icon: Globe, label: '社会' },
   scale: { icon: Scale, label: '法律' },
+  target: { icon: Target, label: '集中' },
+  briefcase: { icon: Briefcase, label: '作業' },
+  dumbbell: { icon: Dumbbell, label: '運動' },
+  flower: { icon: Flower2, label: '瞑想' },
 };
 
 export const MOUNTAIN_SUGGESTIONS = [

@@ -3,7 +3,8 @@ export type ID = string;
 /** 科目アイコンのキー（lib/subjects.ts の SUBJECT_ICONS に対応） */
 export type SubjectIconKey =
   | 'book' | 'calculator' | 'coins' | 'languages' | 'code' | 'landmark'
-  | 'flask' | 'pen' | 'music' | 'brain' | 'globe' | 'scale';
+  | 'flask' | 'pen' | 'music' | 'brain' | 'globe' | 'scale'
+  | 'target' | 'briefcase' | 'dumbbell' | 'flower';
 
 /** 科目 = 1 本の山岳ルート */
 export interface Subject {
@@ -65,10 +66,53 @@ export type Appearance = 'system' | 'light' | 'dark';
 /** 文字のフォント（lib/fonts.ts の FONTS） */
 export type FontId = 'ud' | 'system' | 'noto' | 'rounded' | 'maru' | 'hand' | 'mincho';
 
-/** 旅のモード。'flight'（航空）は準備中（カードだけ） */
+/** 旅のモード（登山 / 列車 / 航空） */
 export type TravelMode = 'mountain' | 'train' | 'flight';
-/** タイマーのデザインとして選べるモード */
-export type TimerDesignId = Exclude<TravelMode, 'flight'>;
+/** タイマーのデザインとして選べるモード（いまはすべてのモード） */
+export type TimerDesignId = TravelMode;
+/** 予約の時間の刻み：ポモドーロ（25 分ごと、間に休憩）/ フリー（5 分刻みで 1 本の集中） */
+export type TimeStep = 'pomodoro' | 'free';
+
+/** 旅の予約（列車・航空の予約画面で決める）。集中中のタイマーに持たせ、リロードしても残る */
+export interface JourneyBooking {
+  mode: TravelMode;
+  /** 出発地・到着地（空港コード / 駅名）と表示名 */
+  from: string;
+  fromName: string;
+  to: string;
+  toName: string;
+  /** 予定の集中時間（分。休憩は含まない） */
+  minutes: number;
+  /** 距離（km） */
+  km: number;
+  /** 座席（'12A' / '7番A席'） */
+  seat: string;
+  /** 集中すること（＝科目の名前） */
+  task: string;
+  step: TimeStep;
+  bookedAt: number;
+}
+
+/** 旅の記録（ログブック）。到着、または途中で旅を終えたときに 1 件残す */
+export interface TravelLog {
+  id: ID;
+  mode: TravelMode;
+  from: string;
+  fromName: string;
+  to: string;
+  toName: string;
+  seat: string;
+  task: string;
+  /** 実際に進んだ距離（km）と、予定の距離 */
+  km: number;
+  plannedKm: number;
+  /** 実際に集中した分と、予定の分 */
+  minutes: number;
+  plannedMinutes: number;
+  startedAt: number;
+  endedAt: number;
+  arrived: boolean;
+}
 export type TrainClass = 'local' | 'express';
 export type TrainWeather = 'clear' | 'rain';
 
@@ -116,6 +160,15 @@ export interface Settings {
   trainSound: boolean;
   /** 列車：天気（雨なら雨の景色） */
   trainWeather: TrainWeather;
+  /** 列車の予約：出発駅（東海道線の駅名） */
+  trainFrom: string;
+  /** 航空の予約：出発空港（空港コード） */
+  flightFrom: string;
+  /** 航空：機内の環境音（ジェットの低い音） */
+  flightCabin: boolean;
+  /** 予約のダイヤル：刻みと、前に選んだ時間（分） */
+  bookingStep: TimeStep;
+  bookingMinutes: number;
   /** 登山：ハイカーの服（0..2） */
   hikerLook: number;
   /** 登山：テント（0..2） */
@@ -150,6 +203,12 @@ export interface ActiveTimer {
   /** 旅（集中開始〜長押しで終了まで）の開始時刻と、記録済みの集中 ms */
   journeyStartedAt?: number | null;
   journeyFocusMs?: number;
+  /** 旅の予定の集中時間（ms）。集中の合計がここに届くと到着（自動で旅を終える）。null は終わりなし */
+  journeyTargetMs?: number | null;
+  /** 予約した旅（列車・航空） */
+  booking?: JourneyBooking | null;
+  /** 予約した旅の 1 回の集中の長さ（ms）。ふだんの設定の代わりに使う */
+  blockMs?: number | null;
 }
 
 /** ノート（その日の振り返り） */
@@ -187,4 +246,5 @@ export interface AppData {
   diary: DiaryEntry[];
   todos: Todo[];
   habits: Habit[];
+  logs: TravelLog[];
 }

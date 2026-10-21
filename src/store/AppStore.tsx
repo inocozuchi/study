@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { AppData, DiaryEntry, FocusSession, Habit, PlanBlock, Settings, Subject, Todo } from '@/types';
+import type { AppData, DiaryEntry, FocusSession, Habit, PlanBlock, Settings, Subject, SubjectIconKey, Todo, TravelLog } from '@/types';
 import { repository } from '@/data';
 import { routeProgress, subjectMinutes } from '@/lib/altitude';
 import { uid } from '@/lib/id';
@@ -30,8 +30,10 @@ interface AppContextValue extends AppData {
 
   updateSettings: (patch: Partial<Settings>) => void;
 
-  /** 名前で科目を探し、なければ新しいルートとして作る */
-  ensureSubject: (name: string) => Subject;
+  /** 名前で科目を探し、なければ新しいルートとして作る（icon は新しく作るときのアイコン） */
+  ensureSubject: (name: string, icon?: SubjectIconKey) => Subject;
+  /** 旅の記録（ログブック）に 1 件足す */
+  addLog: (log: Omit<TravelLog, 'id'>) => void;
 
   saveDiary: (date: string, patch: Partial<Omit<DiaryEntry, 'date'>>) => void;
   addTodo: (text: string) => void;
@@ -62,6 +64,7 @@ const EMPTY: AppData = {
   diary: [],
   todos: [],
   habits: [],
+  logs: [],
 };
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -171,7 +174,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const ensureSubject = useCallback(
-    (name: string) => {
+    (name: string, icon: SubjectIconKey = 'book') => {
       const trimmed = name.trim();
       const existing = dataRef.current.subjects.find((s) => s.name === trimmed && !s.archived);
       if (existing) return existing;
@@ -179,7 +182,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return saveSubject({
         name: trimmed,
         color: SUBJECT_COLORS[n % SUBJECT_COLORS.length],
-        icon: 'book',
+        icon,
         mountainName: MOUNTAIN_SUGGESTIONS[n % MOUNTAIN_SUGGESTIONS.length],
         targetMinutes: 600,
       });
@@ -232,6 +235,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     repository.deleteHabit(id);
   }, []);
 
+  const addLog = useCallback((input: Omit<TravelLog, 'id'>) => {
+    const log: TravelLog = { ...input, id: uid('log-') };
+    setData((d) => ({ ...d, logs: [...d.logs, log] }));
+    repository.addLog(log);
+  }, []);
+
   // データを消したら epoch を進め、実行中のタイマー（メモリ上の状態）も作り直す
   const clearAll = useCallback(async () => {
     setData(await repository.clearAll());
@@ -263,6 +272,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addHabit,
     toggleHabit,
     deleteHabit,
+    addLog,
     clearAll,
     summit,
     dismissSummit: () => setSummit(null),

@@ -30,7 +30,7 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
   if (open) lastView.current = view;
   const entry = TRAVEL_MODES.find((m) => m.id === lastView.current) ?? TRAVEL_MODES[0];
   const Card = entry.mode.ProfileCard;
-  const Options = 'ProfileOptions' in entry.mode ? entry.mode.ProfileOptions : undefined;
+  const Options = entry.mode.ProfileOptions;
   const current = settings.timerDesign === entry.id;
 
   return (

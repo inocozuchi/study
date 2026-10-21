@@ -3,12 +3,12 @@
 学習・集中記録 PWA。**メイン機能はポモドーロタイマー**。タイムライン・ルート・インサイトはサブ機能。
 タイマーには複数の「デザイン」＝**旅のモード**がある：
 - **登山**（集中＝山を登る旅、休憩＝焚き火、終わり＝キャンプの夜）
-- **列車**（集中＝客車の車窓の旅。アニメ美術の画像を重ねた車窓。休憩＝途中の駅、一時停止＝信号場、終わり＝目標の駅）
-- **航空**は準備中（Coming Soon。搭乗券のカードだけ）
-各デザインは別物として作る（登山の複製にしない）。
+- **列車**（大正・昭和レトロ × アニメ美術の車窓。予約は古地図の東海道・木の客車の座席・硬券と改札鋏。休憩＝途中の駅、一時停止＝信号場、終わり＝行き先の駅）
+- **航空**（Liquid Glass × ナイトフライトレーダー。予約は航路図とダイヤル・機内の座席・搭乗券とゲート。集中＝夜の地図の上を機体が進む）
+各デザインは別物として作る（登山の複製にしない）。列車・航空は「旅の予約から出発までの儀式」（下記「予約」）から始まる。
 
 - **アプリ本体は泰山木POS（inocozuchi/pan-pos）と同じデザイン言語**：浮いた白いカード・青のアクセント・ライト／ダーク。色は分類に必要なところ（科目の色）以外は最小限。
-- **クレヨン × 布の見た目は登山デザインの中だけ**（`src/designs/mountain/`）。列車の見た目は `src/designs/train/` の中だけ。アプリ本体に持ち出さない。
+- **クレヨン × 布の見た目は登山デザインの中だけ**（`src/designs/mountain/`）。列車の見た目は `src/designs/train/`、航空は `src/designs/flight/` の中だけ。アプリ本体に持ち出さない。
 
 すべてブラウザ内で完結（外部 API なし）。
 
@@ -49,20 +49,30 @@ src/
   audio/loopPlayer.ts   音声ファイルのシームレス無限ループ（AudioBuffer ループ、無音の自動トリム、継ぎ目のクロスフェードを焼き込む）
   audio/bgmLibrary.ts   曲リスト：public/bgm/tracks.json（実行時に読む）。曲がなければ BGM は鳴らない
   audio/trainSound.ts   列車の走行音（public/sounds/train.*）。クロスフェードなしのループ、速さに合わせて playbackRate（普通 1.0 / 特急 1.4）
+  audio/sfx.ts          予約・出発の儀式の効果音（すべて合成）：ダイヤルの刻み・改札鋏・発車ベル・汽笛・半券を切る音・スキャン・機内チャイム・電子音
+  audio/cabinSound.ts   航空の機内の音（茶色のノイズを低域で。合成・継ぎ目なしのループ）
   lib/                  純粋関数：time / altitude（標高・ステージ）/ stats / scene（空の配色・旅の時間）/ id
   lib/fonts.ts          フォント設定（FONTS。選んだ書体を Google Fonts から読み込み、CSS 変数で全体に反映）
   hooks/                useNow, useWakeLock など
   lib/theme.ts          外観（ライト / ダーク / 端末）を <html data-theme> に。画面の外の帯の色（theme-color・--edge）
   lib/sceneHold.ts      全画面の画面（設定など）がシーンを覆っている間、シーンの描画を止める
   lib/chrome.ts         画面ごとの枠（全画面のシーン・時刻の帯の下・タブバー）の表
+  lib/tasks.ts          予約の座席で選ぶ「集中すること」の定番（フォーカス・作業・簿記・読む…）。選んだ名前が科目になる
   lib/googleCalendar.ts Google カレンダー（読み取りのみ・OAuth のブラウザ向けの流れ）
   designs/              ポモドーロタイマーのデザイン＝旅のモード（下記「タイマーのデザイン」）
     types.ts            TimerDesign の契約（Scene / Session / Result / SetupOptions / ProfileCard …）
     index.ts            登録（TIMER_DESIGNS）と、モードの並び（TRAVEL_MODES：登山 / 列車 / 航空）
-    flight/             航空（準備中）：搭乗券のカードだけ（BoardingPass）
+    flight/             航空デザイン（下記「航空の構成」。クラス名は fl-）
+      airports.ts       空港・航路（羽田からの所要の表 / ほかは距離から）・投影・航路の弧
+      FlightMap.tsx     夜の地図のカメラ（中心・倍率を MotionValue で。絵は public/flight/map-*.svg）+ MapAnchor
+      view.ts           シーン（地図）と HUD が共有する表示（カメラ・レイヤー・大きな時計・窓）
+      FlightScene / FlightSession / FlightResult / WindowView（窓の外）/ PassCard（搭乗券）/ BoardingPass（旅のパス）
+      booking/          FlightBooking → RouteStep（航路図とダイヤル）/ SeatStep（機内の座席）/ PassStep（チェックイン・搭乗）
     train/              列車デザイン（下記「列車シーンの構成」。クラス名は tr-）
-      TrainScene / TrainSession / TrainResult / ClassPicker（普通・特急）/ Ticket（指定席券のカード）
-      stations.ts       止まる場所（出発駅・途中の駅・信号場・終着駅）と駅名
+      TrainScene / TrainSession / TrainResult / Ticket（マルス券のカード）
+      stations.ts       止まる場所（出発駅・途中の駅・信号場・終着駅）。予約した旅は東海道本線の実際の駅
+      booking/          TrainBooking → LineStep（古地図とダイヤル・駅名標・旅の支度）/ CarStep（三等客車・展望車）/ TicketStep（改札）
+                        HardTicket（硬券）/ line.ts（東海道本線の駅・営業キロ・所要の目安）
       scene/            TrainStage（rAF・速さ・画像の層）/ views（景色の組・窓の位置）/ assets.json（素材の寸法）
     mountain/           登山デザイン（クレヨン × 布はこのフォルダの中だけ）
       index.ts          mountainDesign（mountain.css を読み込む）
@@ -86,7 +96,8 @@ src/
     ui/                 GlassCard（＝.card）, Sheet, Modal, Segmented, PickerModal, Toggle, CheckCircle, Pressable …
     nav/                TabBar（下に浮いたカプセル・アイコンだけ）+ IslandPlayer（ダイナミックアイランド風）
     icons/              Pictograms（旅のモードのピクトグラム。絵文字の代わり）
-    home/               SetupSheet（科目・時間 + デザイン固有の設定）
+    home/               SetupSheet（科目・時間 + デザイン固有の設定。登山だけ。列車・航空は予約の画面）
+    booking/            useRulerDial（予約の横目盛りダイヤルの手ざわり。見た目は持たない）
     profile/            ModeSheet（旅のモードの切り替え）/ ProfileSheet（旅のパス：カード・ニックネーム・目標）
     timeline/           EntrySheet（予定・記録の入力）/ DayHoursSheet（起床・就寝）/ MonthCalendar（月のカレンダー）
     focus/              BreathOverlay（深呼吸。Apple Watch の「呼吸」風）
@@ -98,10 +109,12 @@ public/
   manifest.webmanifest, sw.js, icons/（icon.svg が元絵）, splash/（iOS 起動画像）
   bgm/      BGM のフォルダ（tracks.json は任意。README.md に書き方）
   ambient/  環境音のフォルダ（sounds.json は任意。README.md に書き方）
-  train/    列車の車窓の素材（WebP。仕上げは scripts/process-train-assets.py、元の画像は assets-src/train/）
+  train/    列車の車窓の素材（WebP。仕上げは scripts/process-train-assets.py、元の画像は assets-src/train/）。map/tokaido.svg は古地図
+  flight/   航空の地図（map-dark.svg / map-lines.svg）と搭乗券のドットの世界地図（dots.svg）
   sounds/   モードの音：train.*＝列車の走行音、それ以外（river / rain / festival …）は環境音のミキサーに並ぶ
 vite.config.ts             audioManifests：ビルド時に bgm/・ambient/・sounds/ の音声ファイルを一覧（json）へ自動で足す
 scripts/generate-assets.mjs  icon.svg → アイコン PNG と iOS 起動画像（playwright-core を --no-save で入れて実行）
+scripts/build-maps.py        地図を作る（devDependency の world-atlas＝Natural Earth の海岸線から。メルカトル。投影の値は各デザインの map.json）
 .github/workflows/deploy.yml main への push で GitHub Pages に公開
 ```
 
@@ -131,7 +144,8 @@ interface TimerDesign {
   Scene           // いつも背景にあるシーン（ホームでも集中中でも）
   Session         // 集中・休憩中の全画面 UI（HUD）
   Result          // 旅の終わりの画面
-  SetupOptions?   // 支度シートに差し込む固有の設定（登山：シーズン、列車：普通・特急・天気・時間帯・走行音）
+  SetupOptions?   // 支度シートに差し込む固有の設定（登山：シーズン）
+  Booking?        // 予約の画面（列車・航空）。あれば「集中」で支度シートの代わりに開く
   ProfileCard     // 旅のパスのカード（登山者 ID カード / 指定席券）
   ProfileOptions? // 旅のパスに差し込むカスタマイズ（登山：ハイカーの服・テント）
   edgeColors?     // ホームで画面の外の帯（ステータスバー・ホームバー）を塗る色
@@ -139,7 +153,6 @@ interface TimerDesign {
 ```
 
 - 新しいデザインは `src/designs/<id>/` に作り、`designs/index.ts` の `TIMER_DESIGNS` と `TRAVEL_MODES` に登録し、`types` の `TimerDesignId`（`TravelMode`）に id を足す。
-  航空はいま `ComingSoonMode`（カードだけ）。実装するときは TimerDesign にして登録し直す。
 - デザイン同士でコード・CSS を共有しない（登山のリグやクレヨンを鉄道で使い回さない）。
 - デザイン専用の CSS はそのフォルダの CSS ファイルに置き、`index.ts` から読み込む。クラス名には接頭辞（登山は `mt-`）。
 
@@ -147,19 +160,50 @@ interface TimerDesign {
 
 `HomeScreen` が 1 つの画面の中で状態を切り替える（ホームタブのみ。没入中はタブバーを隠す）。
 1. **ホーム**：上に「サウンド」「旅のモード（登山 ▾）」「旅のパス」「設定」、「やあ！{名前}、前へ進む準備はいい？」、大きな「集中」、右端にツールの縦タブ
-2. **支度シート**（iOS）：科目名（新しい名前なら科目を自動作成）・時間（ポモドーロ/タイマー/フリー）・デザイン固有の設定
-3. **深呼吸**（iOS）：花びらの輪が 4 秒でふくらみ 4 秒でしぼむ。タップでスキップ
+2. **支度シート**（登山）：科目名（新しい名前なら科目を自動作成）・時間（ポモドーロ/タイマー/フリー）・デザイン固有の設定
+   **予約**（列車・航空）：`design.Booking`。下記「予約」。出発の儀式が深呼吸の代わり（深呼吸は挟まない）
+3. **深呼吸**（登山）：花びらの輪が 4 秒でふくらみ 4 秒でしぼむ。タップでスキップ
 4. **集中・休憩**：`design.Session`（音楽・時間・完了。タップで休憩、どこでも 1.1 秒の長押しで終了。登山の休憩はテントと焚き火、列車は駅に停車）
 5. **リザルト**：`design.Result`（登山：夜のキャンプに日付・時間・科目を日記のように。共有ボタンはない）
 
 タイマーは「旅（journey）」単位：`startJourney` → 集中/休憩を繰り返す → `endJourney`（長押し）。
+予約した旅は予定の集中時間（`journeyTargetMs`）に届くと自動で到着し、リザルトを出す（`arrival` → App が `setResult`）。
+
+## 予約（列車・航空）
+- 3 ステップ：① 時間と行き先（上に地図、下に横目盛りダイヤル。刻みは「ポモドーロ 25 分刻み」/「フリー 5 分刻み」）→
+  ② 座席を押して「何に集中しますか？」（`lib/tasks.ts` の定番 + 科目。選んだ名前が科目になる）→ ③ きっぷ / 搭乗券と出発の儀式。
+- 終わると `onStart(BookingPlan)`。HomeScreen が `ensureSubject(名前, アイコン)`、設定を保存、`startJourney({ journeyMinutes, booking })`。
+  ポモドーロは 25 分 × n（間に休憩）、フリーは 1 本の集中。1 回の長さはタイマーの `blockMs`（ふだんのポモドーロの設定は変えない）。
+- 予約は `ActiveTimer.booking` に持つ（リロードしても残る）。到着・途中で終えたときに `TravelLog`（ログブック）を 1 件（repository の `addLog`）。
+- ダイヤルは `components/booking/useRulerDial`（帯を transform で動かす。勢いの先の刻みに止まる。外から値を変えたときは途中の刻みを返さない）。
+- 到着の瞬間はタイマーが idle になってからリザルトが入るまで 1 回の描画があく。HomeScreen は `arrival` がある間も旅の画面のままにする
+  （hud → home → result と速く切り替わると AnimatePresence mode="wait" が home で止まる）。
+
+## 航空の構成（src/designs/flight）
+- 漆黒（#050608〜#12141A）に Liquid Glass（`.fl-glass`：`backdrop-filter: blur(24px) saturate(180%)`、半透明の白、上の縁の光沢）、
+  アンバー #FF9F0A・レーダーイエロー #FFD60A、SF（システムの書体）+ 等幅数字。**ぼかしはこのデザインの中だけ**（ユーザーの指定。アプリ本体では使わない）。
+  ぼかしは大きな面とボタンだけ。地図の上にたくさん並ぶピルは `.fl-tint`（ぼかしなし）。
+- 地図：`FlightMap` が <img>（map-*.svg）+ 地図の単位の svg（航路・レーダーの円）を 1 枚の層にして transform で動かす。地図の絵は別の合成レイヤー（線が動いても描き直さない）。
+  ピル・都市名・機体は画面の単位で `MapAnchor` / `MovingAnchor`（拡大しない）。地図のルートは `isolate`（z-index を外へ出さない）。
+- 予約のカメラはダイヤルが止まってから動かし、拡大率は収まらないとき・ずっと寄れるときだけ変える（大きな地図を何度も描き直さない）。
+- 空港は羽田からの所要の表（ユーザー指定）、ほかの出発地は `28 分 + 距離 / 16.5`。大島は実在のコード OIM。
+- フライト中：タップで休憩・長押しで着陸・ドラッグで移動・2 本指で拡大。左上：一時停止・機内の音・大きな時計・音楽。右上：ルート全体・機体を追う・レイヤー・窓の外。
+  下：残り時間・残り距離（予約の距離 × 残りの割合）。機内の音は飛んでいる間だけ（`settings.flightCabin`）。
+
+## 列車の予約（src/designs/train/booking）
+- 臙脂・木目・真鍮・生成りの紙・明朝（`.tr-mincho`。iPhone はヒラギノ明朝）。駅名は旧字（横濱・濱松・靜岡・豐橋）。
+- 路線は東海道本線（東京〜大阪の実際の駅の位置・営業キロ）。所要の目安は東京から 25 分＝小田原、50 分＝熱海、90 分＝靜岡…（大阪発は逆向き）。
+  ダイヤルの時間だけ線路が伸び（臙脂）、いちばん近い駅が行き先（琺瑯の駅名標）。地図の駅を押しても選べる。
+- 座席：三等客車（普通・木のボックス席）/ 展望車（特急・ソファと展望デッキ）。客車がそのまま種別（`trainClass`）になる。
+- 改札：硬券（B 型の比・地紋・日付印・乗車記念）を改札口へ → 改札鋏で切り欠き（入鋏痕）→ 発車ベル → 汽笛 → 車窓へズームイン。
+- 休憩で止まる駅は「ここまでに集中した分」で通り過ぎた実際の駅。終着は行き先（途中で終えたら途中下車の駅）。
 
 ## 旅のモードと旅のパス
 - モードはホームの上の「登山 ▾」か、設定 → 旅のモードで切り替える（`Settings.timerDesign`）。記録・科目はモード共通。
 - **旅のパス**（ホームの ID カードのボタン）：モードごとのカード + 共通の **ニックネーム**（`userName`）と **目標**（`goal`）。
   - 登山：登山者 ID カード（累計の登山時間・現在の標高＝累計分 × 10 m）。ハイカーの服（`hikerLook`）とテント（`tentStyle`）を選べる
   - 列車：JR のマルス券（乗車券・特急券）ふう：うすい緑の地紋・全角の印字・水色の帯・発券の行。〇〇様・**出発駅**（`departure`）→ **行き先**（＝目標）
-  - 航空：搭乗券（PASSENGER NAME・DESTINATION＝目標・バーコード・GATE）。Coming Soon
+  - 航空：搭乗券（PASSENGER NAME・出発空港・DESTINATION＝目標・バーコード・GATE・MILEAGE＝ログブックの合計）
 
 ## 列車シーンの構成（src/designs/train/scene）
 - 車窓は**アニメ美術の画像**（`public/train/`。WebP）を重ねた視差スクロール。SVG で描いた景色は使わない。

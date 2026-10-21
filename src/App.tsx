@@ -69,7 +69,7 @@ const TAB_KEY = 'focus-trail:tab';
 
 function Shell() {
   const { settings } = useApp();
-  const { timer } = useTimer();
+  const { timer, arrival, clearArrival } = useTimer();
   const [tab, setTabState] = useState<TabKey>(() => {
     try {
       return (sessionStorage.getItem(TAB_KEY) as TabKey) || 'trail';
@@ -112,9 +112,16 @@ function Shell() {
   useEffect(() => bgm.setTrack(settings.bgmTrackId), [settings.bgmTrackId]);
   useEffect(() => bgm.setPlaying(settings.bgmPlaying), [settings.bgmPlaying]);
 
-  const journeying = timer.phase !== 'idle' || !!timer.journeyStartedAt;
+  const journeying = timer.phase !== 'idle' || !!timer.journeyStartedAt || !!arrival;
   const onHome = tab === 'trail';
   const sceneHeld = useSceneHeld();
+
+  // 予約した時間に届いて自動で旅が終わったら、リザルトを出す（ほかのタブにいてもホームに戻ったときに見える）
+  useEffect(() => {
+    if (!arrival) return;
+    setResult(arrival);
+    clearArrival();
+  }, [arrival, clearArrival]);
   const immersive = onHome && (journeying || !!result);
   // 画面ごとの枠（全画面のシーン・時刻の帯の下・タブバー）は lib/chrome.ts の表で決める
   const chrome = chromeFor({ home: onHome, immersive });

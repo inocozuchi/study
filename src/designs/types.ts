@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import type { JourneyResult } from '@/store/TimerStore';
-import type { Settings, TimerDesignId, TravelMode } from '@/types';
+import type { JourneyBooking, Settings, SubjectIconKey, TimerDesignId, TimeStep } from '@/types';
 
 /**
  * ポモドーロタイマーの「デザイン」（登山・鉄道・飛行機…）の契約。
@@ -35,6 +35,26 @@ export interface DesignSetupProps {
   onChange: (patch: Partial<Settings>) => void;
 }
 
+/** 予約が終わって出発するときに渡すもの（HomeScreen が科目を作り、設定を保存し、旅を始める） */
+export interface BookingPlan {
+  /** 集中すること（科目の名前）と、新しく作るときのアイコン */
+  task: string;
+  icon: SubjectIconKey;
+  step: TimeStep;
+  /** 予定の集中時間（分） */
+  minutes: number;
+  booking: Omit<JourneyBooking, 'bookedAt'>;
+  /** あわせて保存する設定（出発地・列車の種別など） */
+  settings?: Partial<Settings>;
+}
+
+export interface DesignBookingProps {
+  open: boolean;
+  onClose: () => void;
+  /** 出発の儀式（改札・搭乗）が終わったら呼ぶ。呼ぶと旅が始まり、予約画面は閉じる */
+  onStart: (plan: BookingPlan) => void;
+}
+
 /** プロフィールのカード（登山者 ID カード・きっぷ・搭乗券）に出す値。ニックネームと目標はモード共通 */
 export interface ProfileInfo {
   name: string;
@@ -64,6 +84,11 @@ export interface TimerDesign {
   Result: ComponentType<DesignResultProps>;
   /** 支度シートに差し込む、このデザイン固有の設定（任意） */
   SetupOptions?: ComponentType<DesignSetupProps>;
+  /**
+   * 予約の画面（任意）。あれば「集中」で支度シートの代わりに開く（列車・航空）。
+   * 時間と行き先 → 座席（集中すること）→ きっぷ・搭乗券と出発の儀式、の 3 ステップ。
+   */
+  Booking?: ComponentType<DesignBookingProps>;
   /** 支度シートでの見出し */
   setupLabel?: string;
   /** モードの説明（切り替えの一覧に出す） */
@@ -76,10 +101,3 @@ export interface TimerDesign {
   edgeColors?: (hour: number, settings: Settings) => { top: string; bottom: string };
 }
 
-/** まだタイマーとしては選べないモード（カードだけ）。航空 */
-export interface ComingSoonMode {
-  id: Exclude<TravelMode, TimerDesignId>;
-  name: string;
-  tagline: string;
-  ProfileCard: ComponentType<ProfileCardProps>;
-}

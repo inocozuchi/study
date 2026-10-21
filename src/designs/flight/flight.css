@@ -1,0 +1,85 @@
+/* 航空デザイン専用（クラス名は fl-）。漆黒の地に Liquid Glass（すりガラス）、計器のアンバーとレーダーイエロー */
+
+.fl-root {
+  /* iPhone では SF Pro（システムの書体）。数字は等幅 */
+  font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', system-ui, var(--font-text), sans-serif;
+  color: #f5f6f8;
+  -webkit-font-smoothing: antialiased;
+}
+.fl-num { font-variant-numeric: tabular-nums; }
+
+/* すりガラス：半透明の白 + 強いぼかし + 上の縁の光沢。重いので、数を絞って大きな面だけに使う */
+.fl-glass {
+  background: rgba(255, 255, 255, 0.07);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-top-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 32px -14px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+/* ぼかしなしのガラス（地図の上のピルなど、数が多いもの） */
+.fl-tint {
+  background: rgba(18, 20, 26, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top-color: rgba(255, 255, 255, 0.22);
+}
+.fl-btn {
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  color: #f5f6f8;
+  transition: transform 0.12s ease;
+}
+.fl-btn:active { transform: scale(0.92); }
+.fl-cta {
+  border-radius: 9999px;
+  background: #ffffff;
+  color: #050608;
+  font-weight: 700;
+  box-shadow: 0 10px 30px -10px rgba(255, 255, 255, 0.35);
+  transition: transform 0.12s ease, opacity 0.2s;
+}
+.fl-cta:active { transform: scale(0.97); }
+.fl-cta:disabled { opacity: 0.35; }
+
+/* レーダーの掃引（合成レイヤーで回すだけ） */
+@keyframes fl-spin { to { transform: rotate(360deg); } }
+.fl-sweep {
+  background: conic-gradient(from 0deg, rgba(255, 214, 10, 0.2), rgba(255, 214, 10, 0) 70deg, transparent 360deg);
+  border-radius: 9999px;
+  animation: fl-spin 7s linear infinite;
+  will-change: transform;
+}
+@keyframes fl-ping {
+  from { transform: scale(0.4); opacity: 0.7; }
+  to { transform: scale(2.6); opacity: 0; }
+}
+.fl-ping { animation: fl-ping 2.6s ease-out infinite; }
+.fl-still .fl-sweep, .fl-still .fl-ping { animation-play-state: paused; }
+
+/* 搭乗券の背景のドットの世界地図（画像は相対パスで要素の style から渡す。Pages のサブパスでも読めるように） */
+.fl-dots {
+  background-repeat: no-repeat;
+  background-size: 150% auto;
+  background-position: 62% 30%;
+}
+
+/* 半券の切り口（ギザギザ） */
+.fl-torn-top {
+  -webkit-mask: linear-gradient(#000 0 0) 0 6px / 100% calc(100% - 6px) no-repeat,
+    conic-gradient(from 135deg at top, #000 90deg, transparent 0) 0 0 / 12px 6px repeat-x;
+  mask: linear-gradient(#000 0 0) 0 6px / 100% calc(100% - 6px) no-repeat,
+    conic-gradient(from 135deg at top, #000 90deg, transparent 0) 0 0 / 12px 6px repeat-x;
+}
+
+/* 窓の外：雲が流れる */
+@keyframes fl-clouds {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+.fl-clouds { animation: fl-clouds 38s linear infinite; will-change: transform; }
+@keyframes fl-blink {
+  0%, 86%, 100% { opacity: 0; }
+  88%, 92% { opacity: 1; }
+}
+.fl-blink { animation: fl-blink 1.6s linear infinite; }
