@@ -36,10 +36,10 @@ export function TrainResult({ result, onContinue }: DesignResultProps) {
   return (
     <div className="tr-mincho absolute inset-0 overflow-y-auto overscroll-contain bg-black/35">
       <div className="mx-auto flex w-[min(92vw,360px)] flex-col items-center pb-[calc(env(safe-area-inset-bottom)+28px)] pt-[calc(var(--safe-top)+18px)]">
-        <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...springSoft, delay: 0.2 }} className="text-[13px] font-bold tracking-[0.3em] text-[#F6ECD2]/80">
+        <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...springSoft, delay: 0.2 }} className="text-[13px] font-bold tracking-[0.3em] text-[#F4EEDD]/80">
           {b ? (result.arrived ? `終着 · ${b.to}` : `途中下車 · ${reached}`) : `終着 · ${goalName(settings)}`}
         </motion.p>
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="mt-1 text-[22px] font-bold tracking-[0.15em] text-[#F6ECD2] [text-shadow:0_2px_10px_rgba(0,0,0,0.6)]">
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="mt-1 text-[22px] font-bold tracking-[0.15em] text-[#F4EEDD] [text-shadow:0_2px_10px_rgba(0,0,0,0.6)]">
           {b ? (result.arrived ? `${b.to}に着きました` : `${reached}で降りました`) : 'おつかれさまでした'}
         </motion.p>
 
@@ -75,9 +75,9 @@ export function TrainResult({ result, onContinue }: DesignResultProps) {
           </motion.div>
         )}
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }} className="tr-paper mt-7 w-full rounded-[6px] px-4 py-3 text-center shadow-[0_0_0_2px_#6B4A2B,0_0_0_4px_#F1E3C4,0_0_0_5px_#6B4A2B]">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }} className="tr-paper mt-7 w-full rounded-[6px] px-4 py-3 text-center shadow-[0_0_0_2px_#6B4A2B,0_0_0_4px_#F4EEDD,0_0_0_5px_#6B4A2B]">
           <p className="text-[15px] font-bold leading-relaxed">
-            <span className="text-[#6E1F2B]">{subject?.name ?? b?.task ?? '集中'}</span> に <span className="text-[#6E1F2B]">{spent}</span> 乗車
+            <span className="text-[#7A2830]">{subject?.name ?? b?.task ?? '集中'}</span> に <span className="text-[#7A2830]">{spent}</span> 乗車
           </p>
           <p className="text-[12px] text-[#6B4A2B]">
             {settings.trainClass === 'express' ? '特急' : '普通'}
@@ -109,7 +109,7 @@ export function TrainResult({ result, onContinue }: DesignResultProps) {
         <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...springBouncy, delay: 1.1 }} whileTap={{ scale: 0.95 }} onClick={onContinue} className="tr-enji mt-6 h-12 rounded-[10px] px-10 text-[17px] font-bold tracking-[0.3em]">
           改札を出る
         </motion.button>
-        {b && <p className="mt-2 text-[11px] text-[#F6ECD2]/50">{stationByName(b.from).name}から {b.km} 粁の旅</p>}
+        {b && <p className="mt-2 text-[11px] text-[#F4EEDD]/50">{stationByName(b.from).name}から {b.km} 粁の旅</p>}
       </div>
     </div>
   );

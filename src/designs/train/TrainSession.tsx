@@ -14,7 +14,7 @@ const HOLD_MS = 1100;
 export function RollSign({ express, goal, className = '' }: { express: boolean; goal: string; className?: string }) {
   return (
     <span className={`tr-roll inline-flex items-stretch overflow-hidden rounded-[6px] text-[#1F2328] ${className}`}>
-      <span className="grid place-items-center px-2.5 text-[15px] font-extrabold tracking-[0.2em] text-white" style={{ background: express ? '#C8352B' : '#1F3A68' }}>
+      <span className="grid place-items-center px-2.5 text-[15px] font-extrabold tracking-[0.2em] text-[#F4EEDD]" style={{ background: express ? '#8E3A30' : '#2E3A52' }}>
         {express ? '特急' : '普通'}
       </span>
       <span className="max-w-[56vw] truncate px-3 py-1 text-[17px] font-extrabold tracking-[0.12em]">{goal}<span className="ml-0.5 text-[13px]">行</span></span>
@@ -102,8 +102,8 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
         <div className="mt-2 flex flex-col items-center">
           <RollSign express={express} goal={destinationOf(timer, settings)} />
           <button onClick={() => !rest && !waiting && t.toggle()} className="pointer-events-auto mt-3 text-center" aria-label={timer.running ? '一時停止' : '再開'}>
-            <span className="tabular block font-digits text-[40px] font-semibold leading-none tracking-wider text-[#F6ECD2] [text-shadow:0_2px_0_rgba(0,0,0,0.45),0_0_18px_rgba(0,0,0,0.3)]">{fmtTimer(shown)}</span>
-            <span className="mt-1.5 inline-block rounded-full bg-black/35 px-2.5 py-0.5 text-[11px] font-bold text-[#F6ECD2]/90">{label}</span>
+            <span className="tabular block font-digits text-[40px] font-semibold leading-none tracking-wider text-[#F4EEDD] [text-shadow:0_2px_0_rgba(0,0,0,0.45),0_0_18px_rgba(0,0,0,0.3)]">{fmtTimer(shown)}</span>
+            <span className="mt-1.5 inline-block rounded-full bg-black/35 px-2.5 py-0.5 text-[11px] font-bold text-[#F4EEDD]/90">{label}</span>
           </button>
         </div>
         <motion.button
@@ -121,19 +121,19 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
       <div className="pointer-events-none absolute inset-x-0 bottom-0 px-5 pb-[calc(env(safe-area-inset-bottom)+16px)]">
         <AnimatePresence mode="wait">
           {rest || waiting ? (
-            <motion.div key="rest" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} transition={springBouncy} className="pointer-events-auto mx-auto flex max-w-md items-center overflow-hidden rounded-[10px] bg-[#FCFBF7] text-[#1F2328] shadow-[0_14px_30px_-12px_rgba(0,0,0,0.6)]">
+            <motion.div key="rest" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} transition={springBouncy} className="pointer-events-auto mx-auto flex max-w-md items-center overflow-hidden rounded-[10px] tr-card">
               <span className="min-w-0 flex-1 px-4 py-2.5 leading-tight">
                 <span className="block text-[19px] font-extrabold tracking-[0.12em]">{stop.name}</span>
                 <span className="mt-0.5 block text-[12px] font-semibold text-[#6B7076]">停車中 · ここまで {fmtDuration(t.journeyFocusMs / MIN)}</span>
               </span>
-              <motion.button whileTap={{ scale: 0.94 }} onClick={() => (rest ? t.skipBreak() : t.start())} className="self-stretch bg-[#2F7D5B] px-5 text-[16px] font-extrabold tracking-[0.1em] text-white">
+              <motion.button whileTap={{ scale: 0.94 }} onClick={() => (rest ? t.skipBreak() : t.start())} className="self-stretch bg-[#7A2830] px-5 text-[16px] font-extrabold tracking-[0.1em] text-[#F4EEDD]">
                 発車
               </motion.button>
             </motion.div>
           ) : (
             showHint && (
-              <motion.div key="hint" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 30, opacity: 0 }} transition={springBouncy} className="mx-auto flex max-w-md items-center gap-3 rounded-full bg-[#FCFBF7] p-1.5 pr-5 text-[#1F2328] shadow-[0_14px_30px_-12px_rgba(0,0,0,0.6)]">
-                <span className="grid h-10 w-10 place-items-center rounded-full bg-[#2F7D5B] text-white">
+              <motion.div key="hint" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 30, opacity: 0 }} transition={springBouncy} className="mx-auto flex max-w-md items-center gap-3 rounded-full bg-[#F4EEDD] p-1.5 pr-5 text-[#1F2328] shadow-[0_14px_30px_-12px_rgba(0,0,0,0.6)]">
+                <span className="grid h-10 w-10 place-items-center rounded-full bg-[#7A2830] text-[#F4EEDD]">
                   <Pointer size={19} />
                 </span>
                 <span className="text-[14px] font-bold">タップで停車（休憩）· 長押しで終着</span>
@@ -153,7 +153,7 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
               cy="48"
               r="38"
               fill="none"
-              stroke="#C9A86A"
+              stroke="#B8955A"
               strokeWidth="6"
               strokeLinecap="round"
               transform="rotate(-90 48 48)"

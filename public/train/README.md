@@ -10,7 +10,7 @@
 | `{day,sunset,night,rain}/mid.webp` | 中景（田園・集落） | 黒い帯を切り、左右反転をつないでループに。上端を空へ溶かす |
 | `{day,sunset,night,rain}/fence.webp` | 近景（線路沿いのフェンス・ガードレール） | 白を透過に。左右反転でループに。時間帯・天気の色に合わせる |
 | `{day,sunset,night,rain}/pole.webp` | 近景（電柱） | 白を透過に。電線の端を薄く。夕方は昼の電柱を夕日の色に |
-| `{day,sunset,night,rain}/station.png` | 駅のホーム（停車中の景色。受け入れ待ち） | 置いたあと、仕上げて停車中の表示に組み込む |
+| `{day,sunset,night,rain}/station.webp` | 駅のホーム（出発前・休憩・終着で停車する景色） | 窓枠と下の暗い帯を切り落とす。駅名標の位置と文字の色を `layout.json` に書く（`process-train-assets.py station`） |
 | `layout.json` | 窓の位置・画像の大きさ | アプリ用に `src/designs/train/scene/assets.json` にも同じものを書く |
 
 ## 素材を差し替えるとき
