@@ -19,8 +19,24 @@ export interface HardTicketData {
 }
 
 const spaced = (s: string) => Array.from(s).join(' ');
-/** 駅名の大きさ（長い駅名は小さく） */
-const nameSize = (s: string) => `${Math.min(10.5, 31 / Math.max(1, Array.from(s).length))}cqw`;
+/**
+ * 駅名（目標）の刷り方：省略（…）せずに全文を収める。5 文字までは字間をあけ、長い名前は詰めて小さく、10 文字を超えたら 2 行に。
+ * 1 つの名前の幅は券の 36% まで（左右の名前と矢印が 1 行に並ぶ）。
+ */
+function nameStyle(s: string) {
+  const n = Math.max(1, Array.from(s).length);
+  if (n <= 5) return { text: spaced(s), size: `${Math.min(10.5, 36 / (1.3 * n - 0.3))}cqw`, wrap: false };
+  if (n <= 10) return { text: s, size: `${36 / n}cqw`, wrap: false };
+  return { text: s, size: `${Math.max(3.2, 72 / n)}cqw`, wrap: true };
+}
+function StationName({ name, className = '' }: { name: string; className?: string }) {
+  const st = nameStyle(name);
+  return (
+    <p className={`font-bold leading-[1.1] ${st.wrap ? 'max-w-[36cqw] break-all' : 'whitespace-nowrap'} ${className}`} style={{ fontSize: st.size }}>
+      {st.text}
+    </p>
+  );
+}
 /** 券の種類：特急券 / 急行券 / 乗車券 */
 const kindOf = (cls: TrainClass) => (cls === 'express' ? '特急券' : cls === 'kyuko' ? '急行券' : '乗車券');
 /** 日付印の日付（令和の年.月.日） */
@@ -42,7 +58,8 @@ function Loco({ color }: { color: string }) {
  * 昭和の硬券（B 型・57.5 × 30.5 mm の比）。厚紙の生成りにうすい地紋、明朝の印字、
  * 日付印（紫）と丸い乗車記念スタンプ（朱）。punched なら上の縁に改札鋏の切り欠き（入鋏痕）、stamp があれば到着印（「到着 熱海」など）。
  */
-export function HardTicket({ data, punched = false, stamp }: { data: HardTicketData; punched?: boolean; stamp?: string }) {
+/** dated：日付印が押されているか（発券の最後に「ポン」と押す） */
+export function HardTicket({ data, punched = false, stamp, dated = true }: { data: HardTicketData; punched?: boolean; stamp?: { kind: string; at: string }; dated?: boolean }) {
   const Icon = SUBJECT_ICONS[data.icon]?.icon ?? SUBJECT_ICONS.book.icon;
   // 入鋏痕：上の縁の台形の切り欠き
   const notch = 'polygon(0 0, 70% 0, 71.6% 9%, 75.4% 9%, 77% 0, 100% 0, 100% 100%, 0 100%)';
@@ -67,9 +84,7 @@ export function HardTicket({ data, punched = false, stamp }: { data: HardTicketD
 
           <div className="flex flex-1 items-center justify-center" style={{ gap: '4cqw' }}>
             <div className="text-center">
-              <p className="whitespace-nowrap font-bold leading-none" style={{ fontSize: nameSize(data.from) }}>
-                {spaced(data.from)}
-              </p>
+              <StationName name={data.from} />
               <p className="mt-[0.6cqw] font-bold" style={{ fontSize: '3.4cqw' }}>
                 から
               </p>
@@ -78,9 +93,7 @@ export function HardTicket({ data, punched = false, stamp }: { data: HardTicketD
               <path d="M1 8h22M17 2l8 6-8 6" fill="none" stroke="#2D241C" strokeWidth="2.6" />
             </svg>
             <div className="text-center">
-              <p className="whitespace-nowrap font-bold leading-none text-[#7A2830]" style={{ fontSize: nameSize(data.to) }}>
-                {spaced(data.to)}
-              </p>
+              <StationName name={data.to} className="text-[#7A2830]" />
               <p className="mt-[0.6cqw] font-bold" style={{ fontSize: '3.4cqw' }}>
                 ゆき
               </p>
@@ -88,7 +101,7 @@ export function HardTicket({ data, punched = false, stamp }: { data: HardTicketD
           </div>
 
           {/* 下の段は左に寄せ、右はスタンプの場所に空けておく */}
-          <div className="w-[60%] space-y-[0.4cqw]" style={{ fontSize: '3.3cqw' }}>
+          <div className="w-[56%] space-y-[0.4cqw]" style={{ fontSize: '3.3cqw' }}>
             <p className="font-bold" style={{ fontSize: '3.5cqw' }}>
               {isObservation(data.cls) ? `${data.cls === 'express' ? '一等' : '二等'} · ${CLASSES[data.cls].label}展望車` : `三等 · ${CLASSES[data.cls].label}列車`}
             </p>
@@ -108,7 +121,16 @@ export function HardTicket({ data, punched = false, stamp }: { data: HardTicketD
         </div>
 
         {/* 日付印（紫） */}
-        <div className="tr-ink absolute grid place-items-center rounded-full text-center font-bold text-[#5B3A82]" style={{ width: '18cqw', height: '18cqw', right: '4cqw', bottom: '4.5cqw', border: '0.55cqw solid #5B3A82', transform: 'rotate(-14deg)', opacity: 0.8 }}>
+        <div className="tr-ink absolute grid place-items-center rounded-full text-center font-bold text-[#5B3A82]" style={{
+            width: '18cqw',
+            height: '18cqw',
+            right: '4cqw',
+            bottom: '4.5cqw',
+            border: '0.55cqw solid #5B3A82',
+            transform: `rotate(-14deg) scale(${dated ? 1 : 1.7})`,
+            opacity: dated ? 0.8 : 0,
+            transition: 'transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.12s',
+          }}>
           <span style={{ fontSize: '2.6cqw', lineHeight: 1.1 }}>
             {data.from}驛
             <span className="my-[0.4cqw] block border-y border-[#5B3A82] px-[1cqw] font-sans tabular-nums" style={{ fontSize: '3.2cqw' }}>
@@ -130,9 +152,16 @@ export function HardTicket({ data, punched = false, stamp }: { data: HardTicketD
           </div>
         )}
 
+        {/* 到着印・途中下車印：下の段の文字（営業キロ・運賃）と日付印のあいだの空きに、2 行の角印で収める */}
         {stamp && (
-          <div className="tr-ink absolute grid place-items-center rounded-[1cqw] text-center font-bold text-[#C0392B]" style={{ right: '22cqw', bottom: '6cqw', padding: '0.8cqw 1.6cqw', border: '0.55cqw solid #C0392B', transform: 'rotate(-10deg)', opacity: 0.85, fontSize: '3.2cqw', letterSpacing: '0.2em' }}>
-            {stamp}
+          <div
+            className="tr-ink absolute flex flex-col items-center justify-center rounded-[1.2cqw] text-center font-bold leading-tight text-[#C0392B]"
+            style={{ width: '16cqw', height: '13cqw', right: '23cqw', bottom: '3.5cqw', border: '0.55cqw solid #C0392B', transform: 'rotate(-8deg)', opacity: 0.85 }}
+          >
+            <span style={{ fontSize: '2.7cqw', letterSpacing: '0.15em' }}>{stamp.kind}</span>
+            <span className="mt-[0.5cqw] whitespace-nowrap border-t border-[#C0392B] pt-[0.5cqw]" style={{ fontSize: `${Math.min(3, 12 / Math.max(1, Array.from(stamp.at).length))}cqw` }}>
+              {stamp.at}
+            </span>
           </div>
         )}
       </div>

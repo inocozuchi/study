@@ -56,7 +56,8 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
 
   return (
     <div className="tr-wood tr-mincho absolute inset-0">
-      <div className="absolute inset-x-0 top-0 z-20 bg-gradient-to-b from-[#2a180e] via-[#2a180e]/90 to-transparent px-4 pb-5 pt-safe">
+      {/* 見出し：文字の後ろは塗りの面（ぼかし・暗いグラデーションを文字に重ねない）。下の縁だけ座席へ溶かす */}
+      <div className="absolute inset-x-0 top-0 z-20 bg-[#2a180e] px-4 pb-3 pt-safe after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-5 after:bg-gradient-to-b after:from-[#2a180e] after:to-transparent after:content-['']">
         <div className="mt-1 flex items-center justify-between">
           <button onClick={onBack} aria-label="戻る" className="tr-brass grid h-11 w-11 place-items-center rounded-full">
             <ChevronLeft size={21} />

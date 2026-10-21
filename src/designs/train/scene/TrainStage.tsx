@@ -44,16 +44,18 @@ const POLE_GAP: [number, number] = [2, 5];
 /** 電柱の柱の位置（電柱の絵の幅に対する割合）と、架線が電柱に留まる高さ（窓の高さに対する割合）・電柱の間のたるみ */
 const POLE_AXIS = 0.5;
 const WIRES = [
-  { y: 0.1, sag: 0.08, w: 1.6 },
-  { y: 0.135, sag: 0.085, w: 1.2 },
-  { y: 0.17, sag: 0.09, w: 1.1 },
+  { y: 0.09, sag: 0.13, w: 2, phase: 0 },
+  { y: 0.12, sag: 0.13, w: 1.5, phase: 1.3 },
+  { y: 0.15, sag: 0.14, w: 1.3, phase: 2.6 },
 ];
+/** 電柱からどれだけ離れると垂れきるか（窓の幅に対する割合）。電柱の近くでキュッと持ち上がり、間は U 字に垂れる */
+const WIRE_RISE = 0.32;
 /** 架線の色（外の明るさに合わせる） */
 const WIRE_INK: Record<TrainView, string> = {
-  day: 'rgba(38,40,46,0.72)',
-  sunset: 'rgba(48,26,22,0.78)',
-  night: 'rgba(150,162,200,0.26)',
-  rain: 'rgba(44,50,58,0.6)',
+  day: 'rgba(30,32,38,0.85)',
+  sunset: 'rgba(40,20,16,0.88)',
+  night: 'rgba(170,182,220,0.4)',
+  rain: 'rgba(36,42,50,0.78)',
 };
 /** 駅のホームの絵の拡大（窓の縁に絵の黒い縁が出ないように）と、両端を溶かすマスク */
 const STATION_SCALE = 1.15;
@@ -147,10 +149,6 @@ export function TrainStage({ hour, moving, cls, rain, paused = false, sound, sta
     live.current.deadline = approachMs == null ? null : performance.now() + approachMs;
   }, [approachMs]);
   // 駅名標に出す駅（発車して流れ去る間も、さっきまでの駅名を出しておく）
-  const lastSign = useRef<StationSign | null>(station ?? approach?.sign ?? null);
-  if (station) lastSign.current = station;
-  else if (approach) lastSign.current = approach.sign;
-  const sign = lastSign.current;
   const state = useRef({
     v: moving ? CLASSES[cls].cruise : 0,
     off: { sky: 0, mid: 0, fence: 0 },
@@ -164,6 +162,12 @@ export function TrainStage({ hour, moving, cls, rain, paused = false, sound, sta
     lastSound: 0,
     st: { phase: 'none' as 'none' | 'arriving' | 'stopped' | 'leaving', x: 0, dec: 0 },
   });
+  // 発車して流れ去るホームは、止まっていた駅の名前のまま（次の駅の名前は、ブレーキをかけて入ってくるホームにだけ出す）
+  const [, rerender] = useState(0);
+  const lastSign = useRef<StationSign | null>(station ?? null);
+  if (station) lastSign.current = station;
+  else if (approach && state.current.st.phase === 'arriving') lastSign.current = approach.sign;
+  const sign = lastSign.current;
 
   useLayoutEffect(() => {
     const el = rootRef.current;
@@ -236,6 +240,8 @@ export function TrainStage({ hour, moving, cls, rain, paused = false, sound, sta
         } else {
           st.phase = 'arriving';
           st.x = D;
+          // 入ってくるホームの駅名標を、次の駅の名前に替える
+          rerender((n) => n + 1);
           st.dec = (stSpeed * s.v * s.v) / (2 * D);
         }
       } else if (!want && (st.phase === 'arriving' || st.phase === 'stopped')) st.phase = 'leaving';
@@ -252,8 +258,11 @@ export function TrainStage({ hour, moving, cls, rain, paused = false, sound, sta
         s.v = 0;
       } else {
         if (s.v < target) s.v = Math.min(target, s.v + c.accel * dt * (1 - 0.55 * (s.v / target) ** 2));
-        else s.v = Math.max(target, s.v - BRAKE * dt * (0.4 + s.v));
-        if (s.v < 0.002) s.v = 0;
+        else {
+          s.v = Math.max(target, s.v - BRAKE * dt * (0.4 + s.v));
+          // ブレーキで止まりきるときだけ 0 に揃える（発車の 1 フレーム目の小さな加速を 0 に戻さない。120Hz では特に小さい）
+          if (target === 0 && s.v < 0.002) s.v = 0;
+        }
       }
       if (st.phase === 'leaving') {
         st.x -= stSpeed * s.v * dt;
@@ -272,14 +281,17 @@ export function TrainStage({ hour, moving, cls, rain, paused = false, sound, sta
       const seen = s.poles.find((p) => p - s.d > -poleW && p - s.d < ww + poleW);
       const poleX = seen == null ? null : seen - s.d - poleW * POLE_AXIS;
 
-      // 架線：電柱で高く留まり、間で垂れる。電柱が来ると跳ね上がり、過ぎるとまた垂れていく
-      if (ctx && s.d !== s.wireAt) {
+      // 架線：電柱で高く留まり、間で U 字に垂れる。電柱が来るとキュッと跳ね上がり、過ぎるとまた垂れていく。
+      // 走っている間は風と揺れで少しうねる（速さに比例）。止まっていて何も変わらないときは描き直さない
+      const wind = Math.min(1, s.v);
+      if (ctx && (s.d !== s.wireAt || wind > 0.01)) {
         s.wireAt = s.d;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, ww, ch);
         ctx.strokeStyle = WIRE_INK[cfg.view];
         ctx.lineCap = 'round';
-        const N = 28;
+        const N = 36;
+        const rise = ww * WIRE_RISE;
         for (const w of WIRES) {
           ctx.lineWidth = w.w;
           ctx.beginPath();
@@ -288,10 +300,11 @@ export function TrainStage({ hour, moving, cls, rain, paused = false, sound, sta
             const x = (ww * i) / N;
             const p = s.d + x;
             while (j < s.poles.length - 2 && s.poles[j + 1] <= p) j++;
-            const a = s.poles[j];
-            const b = s.poles[j + 1];
-            const u = Math.min(1, Math.max(0, (p - a) / (b - a)));
-            const y = (w.y + w.sag * 4 * u * (1 - u)) * wh;
+            // いちばん近い電柱までの距離 → 垂れ具合（電柱で 0、離れると 1）
+            const near = Math.min(Math.abs(p - s.poles[j]), Math.abs(s.poles[j + 1] - p));
+            const drop = 1 - Math.exp(-((near / rise) ** 1.6));
+            const wave = Math.sin(s.t * 1.9 + w.phase + x / 140) * 2.2 * wind * drop;
+            const y = (w.y + w.sag * drop) * wh + wave;
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
           }
@@ -356,8 +369,9 @@ export function TrainStage({ hour, moving, cls, rain, paused = false, sound, sta
             {/* 架線（電柱の間にたるむ電線。窓の上のほう） */}
             <canvas ref={wireRef} className="pointer-events-none absolute left-0 top-0" style={{ width: L.win.w, height: L.win.h * 0.34 }} aria-hidden />
             {/* 駅のホーム（止まるときだけ右から流れ込む。いちばん手前の景色） */}
-            {views.map(({ v, fade }) => (
-              <ViewLayers key={v} view={v} L={L} fade={fade} part="station" sign={sign} bind={(t) => bindTracks(v, t)} />
+            {/* 駅名の文字は一番上の組にだけ刷る（景色の切り替えで 2 組が重なる間も、文字が二重に透けない） */}
+            {views.map(({ v, fade }, i) => (
+              <ViewLayers key={v} view={v} L={L} fade={fade} part="station" sign={i === views.length - 1 ? sign : null} bind={(t) => bindTracks(v, t)} />
             ))}
             {/* 雨のすじ（雨のときだけ。合成レイヤーで流すだけ） */}
             <div className="tr-rain pointer-events-none absolute -left-[30px] -right-[30px] -top-[140px] bottom-0" style={{ opacity: view === 'rain' ? 0.5 : 0, transition: `opacity ${FADE_MS}ms` }} />

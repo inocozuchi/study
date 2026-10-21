@@ -12,7 +12,8 @@
   - pole / fence：白い背景を透過にする（白からの距離で不透明度を決め、縁の白いにじみを取る）
   - pole：電線が画像の端で切れないよう、左右の端に向かって薄くする。夕方は昼の電柱を夕日の色に染める
   - fence：左右の端がつながるよう、左右反転したものを横につなぐ。時間帯・天気ごとに色を合わせた版を各フォルダへ
-  - mid：上下左右の黒い帯を切り、左右反転をつないでループにする（重ねると家が二重に見える）。上端を空へ溶かす
+  - mid：上下左右の黒い帯を切り、左右の端を「差がいちばん小さい切れ目」でつないでループにする（鏡合わせ・二重写しにしない）。上端を空へ溶かす
+    （中景だけ作り直すとき：python3 scripts/process-train-assets.py mid）
   - sky：黒い帯を切り、左右の端を重ねてつなぎ目のないループにする
   - station：窓枠と下の暗い帯を切り落とし、駅名標の位置と、その上に重ねる文字の色を書く
     （駅のホームだけ作り直すとき：python3 scripts/process-train-assets.py station）
@@ -84,6 +85,40 @@ def seamless(img: Image.Image, frac=0.22) -> Image.Image:
     t = t[None, :, None]
     out[:, :b] = a[:, w - b :] * (1 - t) + a[:, :b] * t
     return Image.fromarray(out.astype(np.uint8), img.mode)
+
+
+def seam_loop(img: Image.Image, frac=0.2, feather=8) -> Image.Image:
+    """左右の端をつないでループにする（鏡合わせ・二重写しにしない）。
+    終わりの frac と頭の frac を重ね、その中で 2 枚の差がいちばん小さい縦の道（動的計画法の最小コストの切れ目）を探し、
+    切れ目の左は終わりの絵・右は頭の絵にする。切れ目のまわり ±feather px だけなじませる。"""
+    a = np.asarray(img.convert('RGB')).astype(np.float32)
+    h, w, _ = a.shape
+    b = int(w * frac)
+    A = a[:, w - b :]  # 終わり（ループで前に来る絵）
+    B = a[:, :b]  # 頭（ループで後ろに来る絵）
+    err = ((A - B) ** 2).sum(axis=2)
+    # 端の近くでは切らない（重ねた帯の真ん中あたりを通す）
+    margin = feather * 2
+    err[:, :margin] += 1e9
+    err[:, b - margin :] += 1e9
+    cost = err.copy()
+    for y in range(1, h):
+        prev = cost[y - 1]
+        left = np.concatenate(([np.inf], prev[:-1]))
+        right = np.concatenate((prev[1:], [np.inf]))
+        cost[y] += np.minimum(np.minimum(left, prev), right)
+    seam = np.zeros(h, dtype=np.int32)
+    seam[-1] = int(np.argmin(cost[-1]))
+    for y in range(h - 2, -1, -1):
+        x = seam[y + 1]
+        lo, hi = max(0, x - 1), min(b, x + 2)
+        seam[y] = lo + int(np.argmin(cost[y, lo:hi]))
+    cols = np.arange(b)[None, :]
+    t = np.clip((cols - seam[:, None] + feather) / (2 * feather), 0, 1)[..., None]
+    t = t * t * (3 - 2 * t)
+    out = a[:, : w - b].copy()
+    out[:, :b] = A * (1 - t) + B * t
+    return Image.fromarray(out.astype(np.uint8), 'RGB')
 
 
 def mirror_tile(img: Image.Image) -> Image.Image:
@@ -196,8 +231,8 @@ def pole(name: str, src: Path, sunset=False):
 
 def mid(name: str):
     img = crop_black_bars(Image.open(SRC / name / 'mid.jpeg').convert('RGB'))
-    # 田園は重ねると家や木が二重に見えるので、左右反転したものをつないでループにする
-    img = mirror_tile(img)
+    # 田園は左右の端を「差がいちばん小さい切れ目」でつないでループにする（鏡合わせ・家の二重写しにしない）
+    img = seam_loop(img, 0.2)
     img = fade_top(img, 0.14)
     img = resize_h(img, 760)
     save(img, OUT / name / 'mid.webp', quality=80)
@@ -250,6 +285,13 @@ def write_layout(layout):
 def main():
     import sys
 
+    if sys.argv[1:] == ['mid']:
+        # 中景（田園）だけを作り直す
+        layout = json.loads((OUT / 'layout.json').read_text())
+        for s in SETS:
+            layout['sets'][s]['mid'] = mid(s)
+        write_layout(layout)
+        return
     if sys.argv[1:] == ['station']:
         # 駅のホームだけを作り直す（ほかの素材はそのまま）
         layout = json.loads((OUT / 'layout.json').read_text())

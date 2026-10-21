@@ -10,9 +10,12 @@ import { ambient } from './ambient';
  *   beep    搭乗ゲートのスキャン（ピッ）
  *   chime   機内のチャイム（ポーン）
  *   blip    近未来的な電子音（上がっていく 3 つの音）
+ *   print   券売機の印字（ガシャン → ジジジ…。歯車と印字ヘッド）
+ *   stamp   日付印を押す（ポン）
+ *   thermal 発券キオスクのサーマル印字（細かく速いジーッ）
  * 音量は控えめ。AudioContext は環境音と共有する（ユーザー操作の中で鳴らすこと）。
  */
-export type SfxName = 'tick' | 'punch' | 'bell' | 'whistle' | 'tear' | 'beep' | 'chime' | 'blip';
+export type SfxName = 'tick' | 'punch' | 'bell' | 'whistle' | 'tear' | 'beep' | 'chime' | 'blip' | 'print' | 'stamp' | 'thermal';
 
 let noise: AudioBuffer | null = null;
 function noiseBuffer(ctx: AudioContext) {
@@ -129,6 +132,27 @@ const PLAYERS: Record<SfxName, (ctx: AudioContext, t: number) => void> = {
     // 機内のチャイム（ポーン）：やわらかい倍音で長く響く
     const o = out(ctx, 0.3);
     [[659.25, 0.55, 2.6], [1318.5, 0.16, 1.6], [1977.8, 0.06, 1.0]].forEach(([f, a, d]) => tone(ctx, o, t, f, d, a, 'sine', 0.01));
+  },
+  print(ctx, t) {
+    const o = out(ctx, 0.5);
+    // ガシャン：レバーと歯車が噛む低い音
+    tone(ctx, o, t, 120, 0.12, 0.6, 'triangle', 0.002);
+    burst(ctx, o, t, 0.09, 'lowpass', 900, 0.7, 0.7);
+    burst(ctx, o, t + 0.05, 0.05, 'bandpass', 2400, 3, 0.4);
+    // ジジジ…：印字ヘッドが行ごとに打つ（0.8 秒）
+    for (let k = 0; k < 26; k++) burst(ctx, o, t + 0.18 + k * 0.031, 0.022, 'bandpass', 1500 + (k % 3) * 500, 2.2, 0.32);
+  },
+  stamp(ctx, t) {
+    // ポン：ゴム印が紙を打つ鈍い音
+    const o = out(ctx, 0.7);
+    tone(ctx, o, t, 160, 0.09, 0.8, 'sine', 0.002);
+    burst(ctx, o, t, 0.05, 'lowpass', 700, 0.8, 0.6);
+  },
+  thermal(ctx, t) {
+    // サーマル印字：高めの細かいノイズが一定に続く（0.9 秒）
+    const o = out(ctx, 0.14);
+    burst(ctx, o, t, 0.9, 'bandpass', 3800, 1.6, 0.5);
+    for (let k = 0; k < 18; k++) tone(ctx, o, t + k * 0.05, 2200, 0.02, 0.12, 'square', 0.001);
   },
   blip(ctx, t) {
     const o = out(ctx, 0.16);

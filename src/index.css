@@ -86,7 +86,7 @@
      * 上の文字・ボタンを置き始める線。時刻の帯（安全域）からさらに 18px 下げる。
      * iOS（ホーム画面アプリ）は時刻の帯のすぐ下をぼかして見せるので、そこに部品を置かない
      */
-    --safe-top: calc(max(env(safe-area-inset-top), 16px) + 18px);
+    --safe-top: calc(max(env(safe-area-inset-top), 16px) + 24px);
     --tabbar-pb: max(calc(env(safe-area-inset-bottom) - 6px), 14px);
     --nav-space: calc(60px + var(--tabbar-pb));
   }

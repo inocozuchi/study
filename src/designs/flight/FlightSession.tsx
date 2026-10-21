@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState, type PointerEvent as RPointerEvent, type ReactNode } from 'react';
 import { AnimatePresence, motion, useIsPresent } from 'framer-motion';
-import { AudioLines, Clock3, Layers, Maximize2, Music, Navigation, Pause, Play, Pointer, VolumeX } from 'lucide-react';
+import { AppWindow, AudioLines, Clock3, Coffee, Layers, Map as MapIcon, Maximize2, Music, Navigation, Pause, Play, PlaneLanding, VolumeX } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { hourFor } from '@/lib/scene';
 import { useTimer } from '@/store/TimerStore';
 import { MIN, fmtTimer } from '@/lib/time';
 import { clampZoom } from './FlightMap';
 import { flightCam, setFlightView, useFlightView } from './view';
-import { WindowView } from './WindowView';
-import { WindowIcon } from './parts';
+import { WindowView, windowUrls } from './WindowView';
+import { decodeAll } from '@/lib/preload';
 import type { DesignSessionProps } from '../types';
 
 const HOLD_MS = 1100;
@@ -42,19 +42,17 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
   const { timer } = t;
   const { settings, updateSettings } = useApp();
   const view = useFlightView();
-  const [hint, setHint] = useState(true);
   const [hold, setHold] = useState<{ x: number; y: number } | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<{ moved: boolean; start: { x: number; y: number }; pinch: { d: number; zoom: number } | null }>({ moved: false, start: { x: 0, y: 0 }, pinch: null });
 
-  useEffect(() => {
-    if (!hint) return;
-    const id = setTimeout(() => setHint(false), 5000);
-    return () => clearTimeout(id);
-  }, [hint]);
   useEffect(() => () => {
     if (holdTimer.current) clearTimeout(holdTimer.current);
+  }, []);
+  // 機窓ビューの画像は先に読み込んでおく（切り替えた瞬間に白い窓を見せない）
+  useEffect(() => {
+    void decodeAll(windowUrls());
   }, []);
 
   const cancelHold = () => {
@@ -117,7 +115,7 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
     if (timer.phase === 'focus') {
       navigator.vibrate?.(10);
       t.finishFocus();
-    } else setHint(true);
+    }
   };
 
   // 退場中は表示を固定する
@@ -148,10 +146,13 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>{view.window && <WindowView onClose={() => setFlightView({ window: false })} seat={b?.seat} hour={hourFor(settings.sky, new Date())} />}</AnimatePresence>
+      <AnimatePresence>{view.window && <WindowView seat={b?.seat} hour={hourFor(settings.sky, new Date())} />}</AnimatePresence>
+
+      {/* 上の真ん中：レーダー地図 ⇄ 機窓ビュー（いつでもワンタップで切り替え） */}
+      <ViewSwitch window={view.window} onChange={(w) => setFlightView({ window: w })} />
 
       {/* 左上 */}
-      <div className="pointer-events-none absolute left-4 top-[calc(var(--safe-top)+6px)] z-30 flex flex-col gap-2.5">
+      <div className="pointer-events-none absolute left-4 top-[calc(var(--safe-top)+6px)] z-40 flex flex-col gap-2.5">
         <GlassButton label={running ? '一時停止' : '再開'} onClick={() => (phase === 'focus' ? t.toggle() : rest ? t.skipBreak() : t.start())}>
           {phase === 'focus' && running ? <Pause size={18} fill="currentColor" strokeWidth={0} /> : <Play size={18} fill="currentColor" strokeWidth={0} />}
         </GlassButton>
@@ -167,7 +168,8 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
       </div>
 
       {/* 右上 */}
-      <div className="fl-glass pointer-events-auto absolute right-4 top-[calc(var(--safe-top)+6px)] z-30 flex flex-col rounded-full p-1" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
+      {/* 右上：地図の操作（機窓ビューの間は隠す） */}
+      <div className={`fl-glass absolute right-4 top-[calc(var(--safe-top)+6px)] z-30 flex flex-col rounded-full p-1 transition-opacity duration-300 ${view.window ? 'pointer-events-none opacity-0' : 'pointer-events-auto'}`} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
         {[
           { key: 'route', label: 'ルート全体', on: view.camera === 'route', Icon: Maximize2, act: () => setFlightView({ camera: 'route' }) },
           { key: 'plane', label: '機体を追う', on: view.camera === 'plane', Icon: Navigation, act: () => setFlightView({ camera: 'plane' }) },
@@ -177,23 +179,35 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
             <Icon size={17} />
           </button>
         ))}
-        <button onClick={() => setFlightView({ window: !view.window })} aria-label="窓の外" aria-pressed={view.window} className={`fl-btn h-10 w-10 ${view.window ? 'bg-white/20 text-[#FFD60A]' : ''}`}>
-          <WindowIcon />
-        </button>
       </div>
 
       {/* 下：計器 */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+10px)]">
-        <AnimatePresence>
-          {hint && !rest && !waiting && (
-            <motion.div initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 16, opacity: 0 }} className="fl-glass mx-auto mb-2.5 flex w-fit items-center gap-2 rounded-full py-1.5 pl-1.5 pr-4">
-              <span className="grid h-7 w-7 place-items-center rounded-full bg-white/15">
-                <Pointer size={15} />
-              </span>
-              <span className="text-[13px] font-semibold">タップで休憩 · 長押しで着陸</span>
-            </motion.div>
+        {/* 役割がひと目で分かる 2 つのボタン：休憩（巡航で待機）/ 長押しで着陸。休憩中は「ここで着陸」 */}
+        <div className="pointer-events-auto mx-auto mb-2.5 grid max-w-md grid-cols-2 gap-2" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
+          {rest ? (
+            <HoldButton onDone={onEnd} className="col-span-2 h-11 rounded-full">
+              <PlaneLanding size={16} /> ここで旅を終える（長押しで着陸）
+            </HoldButton>
+          ) : (
+            !waiting && (
+              <>
+                <button
+                  onClick={() => {
+                    navigator.vibrate?.(10);
+                    t.finishFocus();
+                  }}
+                  className="fl-glass flex h-12 items-center justify-center gap-1.5 rounded-full text-[14px] font-semibold"
+                >
+                  <Coffee size={16} /> 休憩する
+                </button>
+                <HoldButton onDone={onEnd} className="h-12 rounded-full">
+                  <PlaneLanding size={16} /> 長押しで着陸
+                </HoldButton>
+              </>
+            )
           )}
-        </AnimatePresence>
+        </div>
         <div className="fl-glass pointer-events-auto rounded-[26px] px-5 pb-3.5 pt-3" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
           <p className="fl-num truncate text-[12px] font-semibold text-[#FF9F0A]">{status}</p>
           <div className="mt-1.5 flex items-end justify-between">
@@ -234,6 +248,64 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+/** レーダー地図 ⇄ 機窓ビュー：大きなピルのセグメント。選択の面は index × 100% の x で滑る（layoutId は使わない） */
+function ViewSwitch({ window: on, onChange }: { window: boolean; onChange: (w: boolean) => void }) {
+  const items = [
+    { w: false, label: 'レーダー地図', Icon: MapIcon },
+    { w: true, label: '機窓ビュー', Icon: AppWindow },
+  ];
+  return (
+    <div
+      className="fl-glass pointer-events-auto absolute left-1/2 top-[calc(var(--safe-top)+6px)] z-40 flex h-11 w-[min(230px,52vw)] -translate-x-1/2 rounded-full p-1"
+      role="tablist"
+      aria-label="表示の切り替え"
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
+    >
+      <motion.span className="absolute bottom-1 left-1 top-1 rounded-full bg-white/20" style={{ width: 'calc(50% - 4px)' }} initial={false} animate={{ x: on ? '100%' : '0%' }} />
+      {items.map(({ w, label, Icon }) => (
+        <button key={label} role="tab" aria-selected={on === w} onClick={() => onChange(w)} className={`relative z-10 flex flex-1 items-center justify-center gap-1 text-[12.5px] font-semibold ${on === w ? 'text-[#FFD60A]' : 'text-white/70'}`}>
+          <Icon size={15} />
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** 長押し（1.1 秒）で決まるボタン。押している間、左からアンバーの帯が満ちていく。途中で離すと取り消し */
+function HoldButton({ onDone, className = '', children }: { onDone: () => void; className?: string; children: ReactNode }) {
+  const [held, setHeld] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stop = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    setHeld(false);
+  };
+  useEffect(() => stop, []);
+  return (
+    <button
+      onPointerDown={() => {
+        setHeld(true);
+        timer.current = setTimeout(() => {
+          timer.current = null;
+          setHeld(false);
+          navigator.vibrate?.(30);
+          onDone();
+        }, HOLD_MS);
+      }}
+      onPointerUp={stop}
+      onPointerLeave={stop}
+      onPointerCancel={stop}
+      onContextMenu={(e) => e.preventDefault()}
+      className={`fl-glass relative flex items-center justify-center gap-1.5 overflow-hidden text-[14px] font-semibold text-[#FFD60A] ${className}`}
+    >
+      <span className="pointer-events-none absolute inset-y-0 left-0 bg-[#FF9F0A]/35" style={{ width: held ? '100%' : '0%', transition: held ? `width ${HOLD_MS}ms linear` : 'width 200ms ease-out' }} />
+      <span className="relative flex items-center gap-1.5">{children}</span>
+    </button>
   );
 }
 

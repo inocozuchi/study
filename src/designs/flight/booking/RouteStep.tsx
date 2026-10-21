@@ -75,7 +75,7 @@ export function RouteStep({ draft, routes, route, patch, onClose, onNext }: { dr
       </FlightMap>
 
       {/* 上：閉じる・題・シャッフル・検索、出発地 */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-[#050608]/85 via-[#050608]/40 to-transparent px-4 pb-8 pt-safe">
+      <div className="pointer-events-none absolute inset-x-0 top-0 px-4 pb-8 pt-safe [text-shadow:0_1px_3px_rgba(0,0,0,0.8)]">
         <div className="mt-1 flex items-center justify-between">
           <button onClick={onClose} aria-label="閉じる" className="fl-btn fl-glass pointer-events-auto h-11 w-11">
             <X size={19} />
