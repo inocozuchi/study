@@ -112,7 +112,7 @@ function Shell() {
   useEffect(() => bgm.setTrack(settings.bgmTrackId), [settings.bgmTrackId]);
   useEffect(() => bgm.setPlaying(settings.bgmPlaying), [settings.bgmPlaying]);
 
-  const journeying = timer.phase !== 'idle' || !!timer.journeyStartedAt;
+  const journeying = timer.phase !== 'idle' || !!timer.journeyStartedAt || !!arrival;
   const onHome = tab === 'trail';
   const sceneHeld = useSceneHeld();
 

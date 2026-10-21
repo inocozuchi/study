@@ -54,7 +54,8 @@ export function FlightScene({ ended, paused }: DesignSceneProps) {
   // カメラ
   const first = useRef(true);
   useEffect(() => {
-    const instant = first.current;
+    // 予約の画面に隠れている間（paused）は、アニメーションせずにその場へ
+    const instant = first.current || paused;
     first.current = false;
     if (!path) {
       // ホーム：出発地を画面の上寄りに（挨拶の下・集中ボタンの上）

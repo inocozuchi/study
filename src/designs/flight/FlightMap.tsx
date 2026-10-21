@@ -30,13 +30,13 @@ const ZOOM_MIN = 0.14;
 const ZOOM_MAX = 3.2;
 
 /** 点の集まりが insets の内側に収まるカメラ */
-export function fitCamera(points: { x: number; y: number }[], size: { w: number; h: number }, inset: { top: number; bottom: number; left: number; right: number }, maxZoom = 1.4): CameraTarget {
+export function fitCamera(points: { x: number; y: number }[], size: { w: number; h: number }, inset: { top: number; bottom: number; left: number; right: number }, maxZoom = 1.4, fixedZoom?: number): CameraTarget {
   const xs = points.map((p) => p.x);
   const ys = points.map((p) => p.y);
   const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
   const w = Math.max(40, size.w - inset.left - inset.right);
   const h = Math.max(40, size.h - inset.top - inset.bottom);
-  const zoom = Math.min(maxZoom, Math.max(ZOOM_MIN, Math.min(w / Math.max(1, x1 - x0), h / Math.max(1, y1 - y0))));
+  const zoom = fixedZoom ?? Math.min(maxZoom, Math.max(ZOOM_MIN, Math.min(w / Math.max(1, x1 - x0), h / Math.max(1, y1 - y0))));
   // 余白の中心が点の中心に来るよう、中心をずらす
   const cx = (x0 + x1) / 2 - (inset.left - inset.right) / 2 / zoom;
   const cy = (y0 + y1) / 2 - (inset.top - inset.bottom) / 2 / zoom;
@@ -91,9 +91,10 @@ export function FlightMap({ cam, layer = 'dark', svg, children, onSize, classNam
 
   return (
     <MapCtx.Provider value={{ cam, w, h }}>
-      <div ref={ref} className={`absolute inset-0 overflow-hidden bg-[#050608] ${className}`}>
+      <div ref={ref} className={`absolute inset-0 isolate overflow-hidden bg-[#050608] ${className}`}>
         <motion.div className="pointer-events-none absolute left-0 top-0 origin-top-left" style={{ width: MAP.width, height: MAP.height, transform, willChange: 'transform' }}>
-          <img src={layer === 'dark' ? './flight/map-dark.svg' : './flight/map-lines.svg'} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none" />
+          {/* 地図の絵は別の合成レイヤーに（航路の線が動いても、大きな地図を描き直さない） */}
+          <img src={layer === 'dark' ? './flight/map-dark.svg' : './flight/map-lines.svg'} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none" style={{ willChange: 'transform' }} />
           <svg viewBox={`0 0 ${MAP.width} ${MAP.height}`} className="absolute inset-0 h-full w-full overflow-visible">
             {svg}
           </svg>

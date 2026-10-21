@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bell, CalendarDays, ChevronLeft, ChevronRight, Clock, Coffee, Database, Leaf, Mountain, Music, PlusSquare, Repeat, Smartphone, Sun, Timer, Trash2,
   Bug, CloudRain, Compass, Disc3, Flame, Flower2, Snowflake, Sprout, Sunrise, Sunset, TrainFrontTunnel, Trees, VolumeX,
-  Contrast, IdCard, Moon, Ruler, TrainFront, Type, User, Volume2, Waves, Wind,
+  AudioLines, Contrast, IdCard, Moon, Ruler, TrainFront, Type, User, Volume2, Waves, Wind,
 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { Toggle } from '@/components/ui/Toggle';
@@ -274,6 +274,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                 <Row icon={<TrainFront size={21} />} title="列車：種別" value={settings.trainClass === 'express' ? '特急' : '普通'} onClick={() => setPicker('trainClass')} />
                 <Row icon={<CloudRain size={19} />} title="列車：雨の景色" right={<Toggle checked={settings.trainWeather === 'rain'} onChange={(v) => updateSettings({ trainWeather: v ? 'rain' : 'clear' })} label="雨の景色" />} />
                 <Row icon={<Volume2 size={19} />} title="列車：走行音" right={<Toggle checked={settings.trainSound} onChange={set('trainSound')} label="走行音" />} />
+                <Row icon={<AudioLines size={19} />} title="航空：機内の音" detail="フライト中にジェットの低い音を鳴らす" right={<Toggle checked={settings.flightCabin} onChange={set('flightCabin')} label="機内の音" />} />
               </Group>
 
               <Group title="連携" footer="Google カレンダーの予定をタイムライン（週・月）にグレーで表示します。">

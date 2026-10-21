@@ -34,7 +34,9 @@ export function HomeScreen({ result, setResult }: Props) {
   const [modeOpen, setModeOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const journeying = timer.phase !== 'idle' || !!timer.journeyStartedAt;
+  // 到着した直後（リザルトを受け取るまでの 1 回の描画）も旅の画面のままにする。
+  // ここで一度ホームに戻ると、AnimatePresence（wait）が hud → home → result の速い切り替えで止まってしまう
+  const journeying = timer.phase !== 'idle' || !!timer.journeyStartedAt || !!t.arrival;
   const design = getDesign(settings.timerDesign);
 
   const onStarted = useCallback(() => {

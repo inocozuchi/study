@@ -24,11 +24,24 @@ export function RouteStep({ draft, routes, route, patch, onClose, onNext }: { dr
 
   // 行き先が変わったら、出発地と行き先が上の地図の部分に収まるようにカメラを動かす
   const path = useMemo(() => arc(origin, route.airport), [origin, route.airport]);
+  // ダイヤルを回している間は待ち、止まってから動かす（拡大率が変わるたびに大きな地図を描き直すため）。
+  // 拡大率は、行き先が見えなくなる・小さくなりすぎるときだけ変える
   useEffect(() => {
-    const safeTop = 150;
-    const target = fitCamera([path.p0, path.p2, path.p1], size, { top: safeTop, bottom: PANEL_H + 30, left: 46, right: 46 }, 1.25);
-    moveCamera(cam, target, first.current);
-    first.current = false;
+    const pts = [path.p0, path.p2, path.p1];
+    const inset = { top: 150, bottom: PANEL_H + 30, left: 46, right: 46 };
+    const target = fitCamera(pts, size, inset, 1.25);
+    if (first.current) {
+      first.current = false;
+      moveCamera(cam, target, true);
+      return;
+    }
+    const id = setTimeout(() => {
+      const z = cam.zoom.get();
+      // 収まらない（引く必要がある）か、ずっと寄れるときだけ拡大率を変え、それ以外は今の拡大率のまま動かす
+      const rezoom = target.zoom < z * 0.95 || target.zoom > z * 1.6;
+      moveCamera(cam, rezoom ? target : fitCamera(pts, size, inset, 1.25, z));
+    }, 260);
+    return () => clearTimeout(id);
   }, [path, size]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pick = (r: Route) => patch({ dest: r.airport.code, minutes: snapTo(r.minutes, draft.step) });

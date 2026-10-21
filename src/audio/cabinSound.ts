@@ -62,6 +62,11 @@ class CabinSound {
     return ctx;
   }
 
+  /** 音を先に作っておく（搭乗の前に。鳴らし始めの瞬間に重い計算をしない） */
+  prepare() {
+    this.build();
+  }
+
   /** 鳴らす / 止める（なめらかに） */
   set(on: boolean) {
     if (on === this.on) return;

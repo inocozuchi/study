@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, Plane } from 'lucide-react';
 import { playSfx } from '@/audio/sfx';
+import { cabinSound } from '@/audio/cabinSound';
 import { airportByCode, flightNo, type Route } from '../airports';
 import { Barcode2D } from '../parts';
 import { NOTCH_TOP, PassCard, type PassData } from '../PassCard';
@@ -39,6 +40,7 @@ export function PassStep({ draft, route, onBack, onBoard }: { draft: FlightDraft
     if (busy.current || phase !== 'ready') return;
     playSfx('tear');
     navigator.vibrate?.(12);
+    cabinSound.prepare();
     setPhase('torn');
     setTimeout(() => playSfx('blip'), 420);
   };

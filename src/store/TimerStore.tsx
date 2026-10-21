@@ -133,7 +133,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     (t: ActiveTimer, focusMs: number, endedAt: number, arrived: boolean): JourneyResult => {
       const b = t.booking ?? null;
       const ratio = arrived ? 1 : t.journeyTargetMs ? Math.min(1, focusMs / t.journeyTargetMs) : 0;
-      const km = b ? Math.round(b.km * ratio) : undefined;
+      const km = b ? Math.round(b.km * ratio * 10) / 10 : undefined;
       if (b && focusMs >= MIN) {
         addLog({
           mode: b.mode, from: b.from, fromName: b.fromName, to: b.to, toName: b.toName, seat: b.seat, task: b.task,

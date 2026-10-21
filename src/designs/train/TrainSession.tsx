@@ -5,7 +5,7 @@ import { useTimer } from '@/store/TimerStore';
 import { useApp } from '@/store/AppStore';
 import { fmtDuration, fmtTimer, MIN } from '@/lib/time';
 import { springBouncy } from '@/lib/motion';
-import { goalName, stopFor } from './stations';
+import { destinationOf, stopFor } from './stations';
 import type { DesignSessionProps } from '../types';
 
 const HOLD_MS = 1100;
@@ -79,8 +79,9 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
   const rest = frozen.current.phase === 'break';
   const waiting = frozen.current.phase === 'idle';
   const showHint = frozen.current.hint;
-  const shown = waiting ? 0 : t.remainingMs ?? t.elapsedMs;
-  const stop = stopFor(timer, settings, false);
+  // 予約した旅は集中中なら到着までの残り（休憩中は休憩の残り）
+  const shown = waiting ? 0 : timer.phase === 'focus' && t.journeyRemainingMs != null ? t.journeyRemainingMs : t.remainingMs ?? t.elapsedMs;
+  const stop = stopFor(timer, settings, false, t.journeyFocusMs / MIN);
   const label = rest ? `${stop.name} 停車中` : waiting ? `${stop.name} 停車中` : timer.running ? subject?.name ?? '集中' : '信号待ち';
 
   return (
@@ -99,7 +100,7 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
           <Music size={20} />
         </motion.button>
         <div className="mt-2 flex flex-col items-center">
-          <RollSign express={express} goal={goalName(settings)} />
+          <RollSign express={express} goal={destinationOf(timer, settings)} />
           <button onClick={() => !rest && !waiting && t.toggle()} className="pointer-events-auto mt-3 text-center" aria-label={timer.running ? '一時停止' : '再開'}>
             <span className="tabular block font-digits text-[40px] font-semibold leading-none tracking-wider text-[#F6ECD2] [text-shadow:0_2px_0_rgba(0,0,0,0.45),0_0_18px_rgba(0,0,0,0.3)]">{fmtTimer(shown)}</span>
             <span className="mt-1.5 inline-block rounded-full bg-black/35 px-2.5 py-0.5 text-[11px] font-bold text-[#F6ECD2]/90">{label}</span>
