@@ -26,11 +26,11 @@ function TrainRouteArt({ subject, progress, summited, className = '' }: RouteArt
   const here = [...STATIONS].reverse().find((s) => s.km <= km + 0.01) ?? STATIONS[0];
   return (
     <svg viewBox={VIEW} preserveAspectRatio="xMidYMid slice" className={className} aria-label={`東海道本線 ${here.name}まで`}>
-      <rect x="-2000" y="-2000" width="6000" height="6000" fill="#F1E3C4" />
+      <rect x="-2000" y="-2000" width="6000" height="6000" fill="#F4EEDD" />
       <image href="./train/map/tokaido.svg" x="0" y="0" width={MAP.width} height={MAP.height} />
       {/* 鉄道の記号（黒と白の旗竿） */}
       <polyline points={toPts(FULL_LINE)} fill="none" stroke="#2D241C" strokeWidth="9" strokeLinejoin="round" />
-      <polyline points={toPts(FULL_LINE)} fill="none" stroke="#F1E3C4" strokeWidth="5" strokeDasharray="14 14" strokeLinejoin="round" />
+      <polyline points={toPts(FULL_LINE)} fill="none" stroke="#F4EEDD" strokeWidth="5" strokeDasharray="14 14" strokeLinejoin="round" />
       {/* 進んだところ（科目の色） */}
       <polyline points={toPts(done)} fill="none" stroke={subject.color} strokeWidth="13" strokeLinecap="round" strokeLinejoin="round" />
       {STATIONS.filter((s) => MAJOR.includes(s.name)).map((s) => {
@@ -38,16 +38,16 @@ function TrainRouteArt({ subject, progress, summited, className = '' }: RouteArt
         const reached = s.km <= km + 0.01;
         return (
           <g key={s.name}>
-            <circle cx={p.x} cy={p.y} r="10" fill={reached ? subject.color : '#F1E3C4'} stroke="#2D241C" strokeWidth="4" />
+            <circle cx={p.x} cy={p.y} r="10" fill={reached ? subject.color : '#F4EEDD'} stroke="#2D241C" strokeWidth="4" />
             {(s.name === '東京' || s.name === '大阪' || s.name === here.name) && (
-              <text x={p.x} y={p.y - 24} textAnchor="middle" fontSize="44" fontWeight="700" fill="#2D241C" fontFamily="'Hiragino Mincho ProN','Yu Mincho','Noto Serif JP',serif" paintOrder="stroke" stroke="#F1E3C4" strokeWidth="10">
+              <text x={p.x} y={p.y - 24} textAnchor="middle" fontSize="44" fontWeight="700" fill="#2D241C" fontFamily="'Hiragino Mincho ProN','Yu Mincho','Noto Serif JP',serif" paintOrder="stroke" stroke="#F4EEDD" strokeWidth="10">
                 {s.name}
               </text>
             )}
           </g>
         );
       })}
-      <circle cx={head.x} cy={head.y} r="17" fill={subject.color} stroke="#F1E3C4" strokeWidth="6" />
+      <circle cx={head.x} cy={head.y} r="17" fill={subject.color} stroke="#F4EEDD" strokeWidth="6" />
     </svg>
   );
 }

@@ -60,8 +60,8 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
             <ChevronLeft size={21} />
           </button>
           <div className="text-center">
-            <p className="text-[17px] font-bold tracking-[0.2em] text-[#F6ECD2]">座席を指定</p>
-            <p className="text-[12px] tracking-wider text-[#E9CF94]">
+            <p className="text-[17px] font-bold tracking-[0.2em] text-[#F4EEDD]">座席を指定</p>
+            <p className="text-[12px] tracking-wider text-[#D9C08A]">
               {draft.origin} → {stop.station.name} · {jhm(draft.minutes)}
             </p>
             <Steps at={2} />
@@ -78,9 +78,9 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
           ).map((c) => {
             const on = draft.cls === c.cls;
             return (
-              <button key={c.cls} onClick={() => setCar(c.cls)} aria-pressed={on} className={`rounded-[8px] px-3 py-2 text-left ${on ? 'tr-enji' : 'border border-[#C9A86A]/40 bg-black/25 text-[#F6ECD2]/80'}`}>
+              <button key={c.cls} onClick={() => setCar(c.cls)} aria-pressed={on} className={`rounded-[8px] px-3 py-2 text-left ${on ? 'tr-enji' : 'border border-[#B8955A]/40 bg-black/25 text-[#F4EEDD]/80'}`}>
                 <span className="block text-[15px] font-bold tracking-[0.15em]">{c.name}</span>
-                <span className={`block text-[11px] ${on ? 'text-[#E9CF94]' : 'text-[#F6ECD2]/50'}`}>{c.note}</span>
+                <span className={`block text-[11px] ${on ? 'text-[#D9C08A]' : 'text-[#F4EEDD]/50'}`}>{c.note}</span>
               </button>
             );
           })}
@@ -99,7 +99,7 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
                         col ? (
                           <BoxSeat key={col} back={k === 0 ? 'top' : 'bottom'} {...seatProps(`${row}番${col}席`)} label={col} />
                         ) : (
-                          <span key="aisle" className="w-[44px] text-center text-[12px] font-bold text-[#F1E3C4]/55">
+                          <span key="aisle" className="w-[44px] text-center text-[12px] font-bold text-[#F4EEDD]/55">
                             {row}
                           </span>
                         ),
@@ -117,14 +117,14 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
       </div>
 
       <div className="absolute inset-x-0 bottom-0 z-20 px-3 pb-[calc(env(safe-area-inset-bottom)+10px)]">
-        <div className="flex items-center gap-3 rounded-[12px] border border-[#C9A86A]/45 bg-[#2a180e]/95 py-2 pl-4 pr-2 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.8)]">
-          <span className="min-w-0 flex-1 text-[#F6ECD2]">
-            <span className="block text-[11px] text-[#E9CF94]">{draft.seat ? '座席と集中すること' : '空いている席を選んでください'}</span>
+        <div className="flex items-center gap-3 rounded-[12px] border border-[#B8955A]/45 bg-[#2a180e]/95 py-2 pl-4 pr-2 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.8)]">
+          <span className="min-w-0 flex-1 text-[#F4EEDD]">
+            <span className="block text-[11px] text-[#D9C08A]">{draft.seat ? '座席と集中すること' : '空いている席を選んでください'}</span>
             <span className="flex items-center gap-1.5 truncate text-[15px] font-bold">
               {draft.seat ?? '—'}
               {draft.task && (
                 <>
-                  <span className="text-[#F6ECD2]/40">·</span>
+                  <span className="text-[#F4EEDD]/40">·</span>
                   {draft.icon && <Glyph icon={draft.icon} size={14} />}
                   <span className="truncate">{draft.task}</span>
                 </>
@@ -143,7 +143,7 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
 /** 客車の外板（ぶどう色）と窓、木の床 */
 function CarBody({ express, children }: { express: boolean; children: ReactNode }) {
   return (
-    <div className="relative mx-auto w-[318px] rounded-[18px] p-[14px] shadow-[0_24px_40px_-20px_rgba(0,0,0,0.9)]" style={{ background: 'linear-gradient(90deg,#3A2120,#4F2E2B 20%,#5A3531 50%,#4F2E2B 80%,#3A2120)' }}>
+    <div className="tr-carbody relative mx-auto w-[318px] rounded-[18px] p-[14px]">
       {/* 窓の列 */}
       {['left-[4px]', 'right-[4px]'].map((side) => (
         <div key={side} className={`absolute ${side} inset-y-6 flex w-[6px] flex-col justify-between`}>
@@ -153,7 +153,7 @@ function CarBody({ express, children }: { express: boolean; children: ReactNode 
         </div>
       ))}
       <div className="tr-floor relative overflow-hidden rounded-[8px] px-1 py-2">
-        <p className="pb-1 text-center text-[11px] tracking-[0.5em] text-[#F1E3C4]/60">{express ? '展望車 · 一等' : '三等客車'}</p>
+        <p className="pb-1 text-center text-[11px] tracking-[0.5em] text-[#F4EEDD]/60">{express ? '展望車 · 一等' : '三等客車'}</p>
         {children}
       </div>
     </div>
@@ -180,10 +180,10 @@ function BoxSeat({ id, mine, taken, icon, active, onTap, back, label }: SeatProp
         e.stopPropagation();
         onTap(e.currentTarget);
       }}
-      className={`relative flex h-[44px] w-[44px] flex-col overflow-hidden rounded-[6px] ${back === 'bottom' ? 'flex-col-reverse' : ''} ${active ? 'ring-2 ring-[#E9CF94]' : ''}`}
+      className={`relative flex h-[44px] w-[44px] flex-col overflow-hidden rounded-[6px] ${back === 'bottom' ? 'flex-col-reverse' : ''} ${active ? 'ring-2 ring-[#D9C08A]' : ''}`}
     >
-      <span className="h-[9px] w-full bg-[linear-gradient(180deg,#8B5A2B,#5E3A1C)] shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]" />
-      <span className={`grid flex-1 place-items-center text-[12px] font-bold ${mine ? 'bg-[radial-gradient(120%_120%_at_30%_20%,#F2DA9E,#C9A86A_70%)] text-[#3B2614]' : taken ? 'bg-[#3B2A26] text-[#F1E3C4]/25' : 'tr-velvet text-[#F1E3C4]/80'}`}>
+      <span className="tr-seatwood h-[9px] w-full" />
+      <span className={`grid flex-1 place-items-center text-[12px] font-bold ${mine ? 'tr-velvet-gold' : taken ? 'bg-[#3B2A26] text-[#F4EEDD]/25' : 'tr-velvet text-[#F4EEDD]/80'}`}>
         {mine && icon ? <Glyph icon={icon} size={17} /> : taken ? '×' : label}
       </span>
     </motion.button>
@@ -195,7 +195,7 @@ function Observation({ seatProps }: { seatProps: (id: string) => SeatProps }) {
   return (
     <div className="relative">
       {/* 中央の絨毯 */}
-      <span className="absolute inset-y-0 left-1/2 w-[64px] -translate-x-1/2 rounded-[4px]" style={{ background: 'repeating-linear-gradient(0deg,#6E1F2B 0 18px,#7B2433 18px 20px), #6E1F2B', boxShadow: 'inset 0 0 0 2px #C9A86A' }} />
+      <span className="absolute inset-y-0 left-1/2 w-[64px] -translate-x-1/2 rounded-[4px]" style={{ background: 'repeating-linear-gradient(0deg,#7A2830 0 18px,#7A2830 18px 20px), #7A2830', boxShadow: 'inset 0 0 0 2px #B8955A' }} />
       <div className="relative grid grid-cols-[1fr_64px_1fr] gap-y-3 px-2 py-2">
         {Array.from({ length: 7 }, (_, i) => (
           <div key={i} className="contents">
@@ -210,8 +210,8 @@ function Observation({ seatProps }: { seatProps: (id: string) => SeatProps }) {
         ))}
       </div>
       {/* 展望デッキ（真鍮の手すり） */}
-      <div className="relative mx-1 mt-2 rounded-b-[90px] border-[3px] border-t-0 border-[#C9A86A] bg-[#4A2E1C]/70 px-6 pb-7 pt-3 shadow-[inset_0_-6px_0_rgba(0,0,0,0.25)]">
-        <p className="text-center text-[11px] tracking-[0.4em] text-[#E9CF94]">展望デッキ</p>
+      <div className="relative mx-1 mt-2 rounded-b-[90px] border-[3px] border-t-0 border-[#B8955A] bg-[#4A2E1C]/70 px-6 pb-7 pt-3 shadow-[inset_0_-6px_0_rgba(0,0,0,0.25)]">
+        <p className="text-center text-[11px] tracking-[0.4em] text-[#D9C08A]">展望デッキ</p>
         <div className="mt-2 flex justify-center gap-6">
           <Armchair {...seatProps('展望 15番')} n={15} />
           <Armchair {...seatProps('展望 16番')} n={16} />
@@ -231,10 +231,9 @@ function Armchair({ id, mine, taken, icon, active, onTap, n }: SeatProps & { n: 
         e.stopPropagation();
         onTap(e.currentTarget);
       }}
-      className={`relative grid h-[48px] w-[56px] place-items-center rounded-[16px_16px_12px_12px] p-[5px] ${active ? 'ring-2 ring-[#E9CF94]' : ''}`}
-      style={{ background: 'linear-gradient(180deg,#8B5A2B,#5E3A1C)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25), 0 4px 8px -4px rgba(0,0,0,0.7)' }}
+      className={`tr-seatwood relative grid h-[48px] w-[56px] place-items-center rounded-[16px_16px_12px_12px] p-[5px] ${active ? 'ring-2 ring-[#D9C08A]' : ''}`}
     >
-      <span className={`grid h-full w-full place-items-center rounded-[11px] text-[12px] font-bold ${mine ? 'bg-[radial-gradient(120%_120%_at_30%_20%,#F2DA9E,#C9A86A_70%)] text-[#3B2614]' : taken ? 'bg-[#3B2A26] text-[#F1E3C4]/25' : 'tr-velvet text-[#F1E3C4]/85'}`}>
+      <span className={`grid h-full w-full place-items-center rounded-[11px] text-[12px] font-bold ${mine ? 'tr-velvet-gold' : taken ? 'bg-[#3B2A26] text-[#F4EEDD]/25' : 'tr-velvet text-[#F4EEDD]/85'}`}>
         {mine && icon ? <Glyph icon={icon} size={18} /> : taken ? '×' : n}
       </span>
     </motion.button>
@@ -248,7 +247,7 @@ function TagPopover({ seat, top, x, options, current, onPick }: { seat: string; 
   const width = 300;
   return (
     <motion.div
-      className="tr-paper absolute z-30 rounded-[6px] p-4 shadow-[0_0_0_2px_#6E1F2B,0_0_0_4px_#F1E3C4,0_0_0_5px_#6E1F2B,0_20px_40px_-14px_rgba(0,0,0,0.85)]"
+      className="tr-paper absolute z-30 rounded-[6px] p-4 shadow-[0_0_0_2px_#7A2830,0_0_0_4px_#F4EEDD,0_0_0_5px_#7A2830,0_20px_40px_-14px_rgba(0,0,0,0.85)]"
       style={{ top, left: `max(14px, min(calc(100% - ${width + 14}px), ${x - width / 2}px))`, width }}
       initial={{ opacity: 0, y: -8, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -256,15 +255,15 @@ function TagPopover({ seat, top, x, options, current, onPick }: { seat: string; 
       transition={{ type: 'spring', stiffness: 420, damping: 30 }}
       onClick={(e) => e.stopPropagation()}
     >
-      <p className="text-[13px] font-bold tracking-[0.15em] text-[#6E1F2B]">{seat}</p>
+      <p className="text-[13px] font-bold tracking-[0.15em] text-[#7A2830]">{seat}</p>
       <p className="mt-0.5 text-[17px] font-bold tracking-[0.1em]">何に集中しますか？</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {options.map((t) => {
           const on = current === t.name;
           return (
-            <button key={t.name} onClick={() => onPick(t)} className={`relative flex h-9 items-center gap-1.5 rounded-[4px] pl-5 pr-3 text-[14px] font-bold active:scale-95 ${on ? 'bg-[#6E1F2B] text-[#F6ECD2]' : 'bg-[#F7EDD3] text-[#2D241C] shadow-[inset_0_0_0_1px_rgba(107,74,43,0.55)]'}`}>
+            <button key={t.name} onClick={() => onPick(t)} className={`relative flex h-9 items-center gap-1.5 rounded-[4px] pl-5 pr-3 text-[14px] font-bold active:scale-95 ${on ? 'bg-[#7A2830] text-[#F4EEDD]' : 'bg-[#F7EDD3] text-[#2D241C] shadow-[inset_0_0_0_1px_rgba(107,74,43,0.55)]'}`}>
               {/* 札の穴 */}
-              <span className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-[#C9A86A] shadow-[inset_0_1px_1px_rgba(0,0,0,0.4)]" />
+              <span className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-[#B8955A] shadow-[inset_0_1px_1px_rgba(0,0,0,0.4)]" />
               <Glyph icon={t.icon} size={14} />
               {t.name}
             </button>

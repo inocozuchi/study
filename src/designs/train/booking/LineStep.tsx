@@ -34,7 +34,7 @@ export function LineStep({ draft, stops, stop, patch, onClose, onNext }: { draft
           <X size={19} />
         </button>
         <div className="mt-1 text-center">
-          <p className="text-[17px] font-bold tracking-[0.2em] text-[#F6ECD2]">乗車券を買ふ</p>
+          <p className="text-[17px] font-bold tracking-[0.2em] text-[#F4EEDD]">乗車券を買ふ</p>
           <Steps at={1} />
         </div>
         <button onClick={() => setOptions(true)} aria-label="旅の支度（天気・時間帯・走行音）" className="tr-brass mt-1 grid h-11 w-11 place-items-center rounded-full active:scale-95">
@@ -46,8 +46,8 @@ export function LineStep({ draft, stops, stop, patch, onClose, onNext }: { draft
       <div className="tr-paper tr-frame relative mx-3.5 mt-3 min-h-[200px] flex-1 overflow-hidden rounded-[6px]">
         <OldMap origin={draft.origin} minutes={draft.minutes} stops={stops} stop={stop} onPick={pick} />
         <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2">
-          <span className="rounded-[3px] border border-[#6B4A2B] bg-[#F1E3C4]/90 px-2 py-0.5 text-[12px] font-bold tracking-[0.25em] text-[#4A2E1C]">東海道本線</span>
-          <button onClick={() => patch({ origin: ORIGINS.find((o) => o !== draft.origin) ?? '東京', dest: null })} className="pointer-events-auto flex items-center gap-1 rounded-[3px] bg-[#6E1F2B] px-2 py-0.5 text-[12px] font-bold text-[#F6ECD2] active:scale-95">
+          <span className="rounded-[3px] border border-[#6B4A2B] bg-[#F4EEDD]/90 px-2 py-0.5 text-[12px] font-bold tracking-[0.25em] text-[#4A2E1C]">東海道本線</span>
+          <button onClick={() => patch({ origin: ORIGINS.find((o) => o !== draft.origin) ?? '東京', dest: null })} className="pointer-events-auto flex items-center gap-1 rounded-[3px] bg-[#7A2830] px-2 py-0.5 text-[12px] font-bold text-[#F4EEDD] active:scale-95">
             {draft.origin}發 <ArrowLeftRight size={12} />
           </button>
         </div>
@@ -60,9 +60,9 @@ export function LineStep({ draft, stops, stop, patch, onClose, onNext }: { draft
           <p className="pt-1.5 text-[12px] font-bold tracking-[0.3em] text-[#4A2E1C]">{stop.station.name}</p>
           <p className="-mt-0.5 text-[30px] font-bold leading-tight tracking-[0.18em]">{stop.station.kana}</p>
           <p className="pb-1 font-sans text-[11px] font-semibold tracking-[0.2em] text-[#6B7076]">{stop.station.roman}</p>
-          <div className="flex items-center justify-between bg-[#6E1F2B] px-3 py-1 text-[12px] font-bold text-[#F6ECD2]">
+          <div className="flex items-center justify-between bg-[#7A2830] px-3 py-1 text-[12px] font-bold text-[#F4EEDD]">
             <span>← {prev.name}</span>
-            <span className="text-[#E9CF94]">{express ? '特急' : '普通'}</span>
+            <span className="text-[#D9C08A]">{express ? '特急' : '普通'}</span>
             <span>{next ? `${next.name} →` : '終点'}</span>
           </div>
         </motion.div>
@@ -70,10 +70,10 @@ export function LineStep({ draft, stops, stop, patch, onClose, onNext }: { draft
 
       <div className="mt-4 shrink-0 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)]">
         <StepPlates step={draft.step} onChange={(s) => patch({ step: s, minutes: snapTo(draft.minutes, s), dest: null })} />
-        <p className="mt-2.5 flex items-baseline justify-between px-1 text-[#F6ECD2]">
-          <span className="text-[13px] tracking-[0.2em] text-[#E9CF94]">所要</span>
+        <p className="mt-2.5 flex items-baseline justify-between px-1 text-[#F4EEDD]">
+          <span className="text-[13px] tracking-[0.2em] text-[#D9C08A]">所要</span>
           <span className="text-[30px] font-bold tabular-nums tracking-wider">{jhm(draft.minutes)}</span>
-          <span className="text-[13px] tabular-nums text-[#F6ECD2]/75">營業キロ {stop.km} 粁</span>
+          <span className="text-[13px] tabular-nums text-[#F4EEDD]/75">營業キロ {stop.km} 粁</span>
         </p>
         <BrassRuler step={draft.step} value={draft.minutes} onChange={(v) => patch({ minutes: v, dest: null })} />
         <button onClick={onNext} className="tr-enji mt-3 h-14 w-full rounded-[12px] text-[18px] font-bold tracking-[0.3em] active:scale-[0.98]">
@@ -90,7 +90,7 @@ export function Steps({ at }: { at: 1 | 2 | 3 }) {
   return (
     <span className="mt-1 flex justify-center gap-1.5" aria-label={`ステップ ${at} / 3`}>
       {[1, 2, 3].map((i) => (
-        <span key={i} className={`h-1.5 w-1.5 rotate-45 ${i === at ? 'bg-[#E9CF94]' : 'bg-[#E9CF94]/30'}`} />
+        <span key={i} className={`h-1.5 w-1.5 rotate-45 ${i === at ? 'bg-[#D9C08A]' : 'bg-[#D9C08A]/30'}`} />
       ))}
     </span>
   );
@@ -162,9 +162,9 @@ function OldMap({ origin, minutes, stops, stop, onPick }: { origin: string; minu
         <svg viewBox={`0 0 ${MAP.width} ${MAP.height}`} className="absolute inset-0 h-full w-full overflow-visible">
           {/* 鉄道の記号（黒と白の旗竿） */}
           <motion.polyline points={toPts(FULL_LINE)} fill="none" stroke="#2D241C" strokeLinejoin="round" style={{ strokeWidth: base }} />
-          <motion.polyline points={toPts(FULL_LINE)} fill="none" stroke="#F1E3C4" strokeLinejoin="round" style={{ strokeWidth: inner, strokeDasharray: dash }} />
+          <motion.polyline points={toPts(FULL_LINE)} fill="none" stroke="#F4EEDD" strokeLinejoin="round" style={{ strokeWidth: inner, strokeDasharray: dash }} />
           {/* 選んだ区間（臙脂） */}
-          <motion.polyline points={toPts(track)} fill="none" stroke="#7B2433" strokeLinecap="round" strokeLinejoin="round" style={{ strokeWidth: route }} />
+          <motion.polyline points={toPts(track)} fill="none" stroke="#7A2830" strokeLinecap="round" strokeLinejoin="round" style={{ strokeWidth: route }} />
         </svg>
       </motion.div>
       {STATIONS.map((s) => {
@@ -187,16 +187,16 @@ function StationMark({ x, y, cx, cy, z, size, name, label, kind, onClick }: { x:
   if (kind === 'head') {
     return (
       <motion.span className="pointer-events-none absolute left-0 top-0" style={{ x: tx, y: ty }}>
-        <span className="block h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#F1E3C4] bg-[#7B2433] shadow-[0_0_0_2px_#7B2433]" />
+        <span className="block h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#F4EEDD] bg-[#7A2830] shadow-[0_0_0_2px_#7A2830]" />
       </motion.span>
     );
   }
   return (
     <motion.button type="button" onClick={onClick} disabled={!onClick} className="absolute left-0 top-0" style={{ x: tx, y: ty, zIndex: kind === 'stop' ? 1 : 2 }} aria-label={name}>
       <span className="flex -translate-x-1/2 -translate-y-[7px] flex-col items-center">
-        <span className={`block rounded-full border-[2px] ${kind === 'dest' ? 'h-4 w-4 border-[#7B2433] bg-[#F1E3C4]' : kind === 'origin' ? 'h-3.5 w-3.5 border-[#2D241C] bg-[#2D241C]' : 'h-3 w-3 border-[#2D241C] bg-[#F1E3C4]'}`} />
+        <span className={`block rounded-full border-[2px] ${kind === 'dest' ? 'h-4 w-4 border-[#7A2830] bg-[#F4EEDD]' : kind === 'origin' ? 'h-3.5 w-3.5 border-[#2D241C] bg-[#2D241C]' : 'h-3 w-3 border-[#2D241C] bg-[#F4EEDD]'}`} />
         {label && (
-          <span className={`tr-mincho mt-0.5 whitespace-nowrap rounded-[2px] px-1 text-[12px] font-bold leading-tight ${kind === 'dest' ? 'bg-[#7B2433] text-[#F6ECD2]' : 'bg-[#F1E3C4]/80 text-[#2D241C]'}`}>{name}</span>
+          <span className={`tr-mincho mt-0.5 whitespace-nowrap rounded-[2px] px-1 text-[12px] font-bold leading-tight ${kind === 'dest' ? 'bg-[#7A2830] text-[#F4EEDD]' : 'bg-[#F4EEDD]/80 text-[#2D241C]'}`}>{name}</span>
         )}
       </span>
     </motion.button>
@@ -213,10 +213,10 @@ function StepPlates({ step, onChange }: { step: TimeStep; onChange: (s: TimeStep
       {items.map(({ value, label, note, Icon }) => {
         const on = value === step;
         return (
-          <button key={value} onClick={() => onChange(value)} aria-pressed={on} className={`flex h-11 items-center justify-center gap-1.5 rounded-[8px] text-[14px] font-bold transition-colors ${on ? 'tr-brass' : 'border border-[#C9A86A]/45 bg-black/25 text-[#F6ECD2]/80'}`}>
+          <button key={value} onClick={() => onChange(value)} aria-pressed={on} className={`flex h-11 items-center justify-center gap-1.5 rounded-[8px] text-[14px] font-bold transition-colors ${on ? 'tr-brass' : 'border border-[#B8955A]/45 bg-black/25 text-[#F4EEDD]/80'}`}>
             <Icon size={15} />
             {label}
-            <span className={`text-[11px] ${on ? 'text-[#2B1D0E]/65' : 'text-[#F6ECD2]/50'}`}>{note}</span>
+            <span className={`text-[11px] ${on ? 'text-[#2B1D0E]/65' : 'text-[#F4EEDD]/50'}`}>{note}</span>
           </button>
         );
       })}
@@ -242,8 +242,7 @@ function BrassRuler({ step, value, onChange }: { step: TimeStep; value: number; 
   const width = (d.max - d.min) * ppm;
   return (
     <div
-      className="relative mt-2 h-[64px] touch-none select-none overflow-hidden rounded-[8px] border border-[#C9A86A]/50"
-      style={{ background: 'linear-gradient(180deg,#d9bd84,#b48c52 60%,#94713f)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 4px rgba(0,0,0,0.3)' }}
+      className="tr-ruler relative mt-2 h-[64px] touch-none select-none overflow-hidden rounded-[8px]"
       {...dial.bind}
       onPointerDown={(e) => {
         ambient.unlock();
@@ -275,10 +274,10 @@ function BrassRuler({ step, value, onChange }: { step: TimeStep; value: number; 
           ))}
       </motion.div>
       <svg className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2" width="18" height="14" viewBox="0 0 18 14" aria-hidden>
-        <path d="M1 0h16L9 13z" fill="#6E1F2B" stroke="#F1E3C4" strokeWidth="1.2" />
+        <path d="M1 0h16L9 13z" fill="#7A2830" stroke="#F4EEDD" strokeWidth="1.2" />
       </svg>
-      <span className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-[#7a5a2e]/70 to-transparent" />
-      <span className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[#7a5a2e]/70 to-transparent" />
+      <span className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-[#6b4a22]/45 to-transparent" />
+      <span className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[#6b4a22]/45 to-transparent" />
     </div>
   );
 }
@@ -298,7 +297,7 @@ function TripOptions({ draft, patch, onClose }: { draft: TrainDraft; patch: (p: 
   return (
     <motion.div className="absolute inset-0 z-30 bg-black/55" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
       <motion.div
-        className="tr-paper absolute inset-x-4 top-[calc(var(--safe-top)+64px)] rounded-[8px] p-5 shadow-[0_0_0_2px_#6B4A2B,0_0_0_5px_#F1E3C4,0_0_0_6px_#6B4A2B,0_24px_50px_-20px_rgba(0,0,0,0.9)]"
+        className="tr-paper absolute inset-x-4 top-[calc(var(--safe-top)+64px)] rounded-[8px] p-5 shadow-[0_0_0_2px_#6B4A2B,0_0_0_5px_#F4EEDD,0_0_0_6px_#6B4A2B,0_24px_50px_-20px_rgba(0,0,0,0.9)]"
         initial={{ y: -16, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: -16, opacity: 0 }}
@@ -330,8 +329,8 @@ function TripOptions({ draft, patch, onClose }: { draft: TrainDraft; patch: (p: 
             <span className="block text-[15px] font-bold text-[#2D241C]">走行音</span>
             <span className="block font-sans text-[11.5px] text-[#6B4A2B]">public/sounds/train.* を鳴らす</span>
           </span>
-          <button onClick={() => set({ trainSound: !o.trainSound })} aria-pressed={o.trainSound} aria-label="走行音" className={`relative h-8 w-14 rounded-full transition-colors ${o.trainSound ? 'bg-[#6E1F2B]' : 'bg-[#6B4A2B]/30'}`}>
-            <span className={`absolute top-1 h-6 w-6 rounded-full bg-[#F1E3C4] shadow transition-transform ${o.trainSound ? 'translate-x-7' : 'translate-x-1'}`} />
+          <button onClick={() => set({ trainSound: !o.trainSound })} aria-pressed={o.trainSound} aria-label="走行音" className={`relative h-8 w-14 rounded-full transition-colors ${o.trainSound ? 'bg-[#7A2830]' : 'bg-[#6B4A2B]/30'}`}>
+            <span className={`absolute top-1 h-6 w-6 rounded-full bg-[#F4EEDD] shadow transition-transform ${o.trainSound ? 'translate-x-7' : 'translate-x-1'}`} />
           </button>
         </div>
         <button onClick={onClose} className="tr-enji mt-5 h-11 w-full rounded-[8px] text-[15px] font-bold tracking-[0.3em]">

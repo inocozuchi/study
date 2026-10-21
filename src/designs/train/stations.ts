@@ -60,7 +60,9 @@ export function stopFor(timer: ActiveTimer, settings: Settings, ended: boolean, 
   if (ended) return { kind: 'terminal', name: goal, roman: roman(goal, 'TERMINAL'), prev: timer.cycle > 0 ? station(at)[0] : origin, next: '' };
   if (!journeying) {
     const from = settings.trainFrom || origin;
-    return { kind: 'origin', name: from, roman: roman(from, stationByName(from).roman.toUpperCase()), prev: '', next: station(0)[0] };
+    // 東海道本線の駅なら、隣は実際の次の駅
+    const onLine = stationByName(from).name === from;
+    return { kind: 'origin', name: from, roman: roman(from, stationByName(from).roman.toUpperCase()), prev: '', next: onLine ? stopsFrom(from)[0]?.station.name ?? '' : station(0)[0] };
   }
   if (timer.phase === 'focus') return { kind: 'signal', name: '', roman: '', prev: '', next: '' };
   const [name, rom] = station(at);

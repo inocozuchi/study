@@ -14,6 +14,8 @@
   - fence：左右の端がつながるよう、左右反転したものを横につなぐ。時間帯・天気ごとに色を合わせた版を各フォルダへ
   - mid：上下左右の黒い帯を切り、左右反転をつないでループにする（重ねると家が二重に見える）。上端を空へ溶かす
   - sky：黒い帯を切り、左右の端を重ねてつなぎ目のないループにする
+  - station：窓枠と下の暗い帯を切り落とし、駅名標の位置と、その上に重ねる文字の色を書く
+    （駅のホームだけ作り直すとき：python3 scripts/process-train-assets.py station）
 """
 import json
 from pathlib import Path
@@ -210,15 +212,56 @@ def sky(name: str):
     return {'width': img.width, 'height': img.height}
 
 
-def main():
-    layout = {'frame': frame_table(), 'fence': fence(), 'sets': {}}
-    for s in SETS:
-        p = pole(s, SRC / 'day' / 'pole.jpeg', sunset=True) if s == 'sunset' else pole(s, SRC / s / 'pole.jpeg')
-        layout['sets'][s] = {'sky': sky(s), 'mid': mid(s), 'pole': p}
+# 駅のホーム（休憩・終着で停車する景色）。アップロードの窓枠・下の暗い帯を切り落とす範囲（元の画像の px）と、
+# 駅名標の位置（切ったあとの画像に対する割合。line は矢印の線の高さ）
+STATION = {
+    'day': {'crop': (290, 135, 2880, 1240), 'sign': (0.412, 0.147, 0.588, 0.342), 'line': 0.281},
+    'sunset': {'crop': (255, 115, 2495, 1345), 'sign': (0.401, 0.221, 0.601, 0.397), 'line': 0.341},
+    'night': {'crop': (40, 0, 2712, 1350), 'sign': (0.411, 0.273, 0.589, 0.446), 'line': 0.389},
+    'rain': {'crop': (30, 0, 2722, 1410), 'sign': (0.411, 0.239, 0.589, 0.406), 'line': 0.353},
+}
+
+
+def station(name: str):
+    cfg = STATION[name]
+    img = Image.open(SRC / name / 'station.jpeg').convert('RGB').crop(cfg['crop'])
+    x0, y0, x1, y1 = cfg['sign']
+    # 駅名標の地の明るさで、上に重ねる文字の色を決める（暗い看板には明るい文字）
+    w, h = img.size
+    board = np.asarray(img.crop((int(w * (x0 + 0.02)), int(h * (y0 + 0.02)), int(w * (x1 - 0.02)), int(h * (cfg['line'] - 0.02))))).astype(np.float32)
+    lum = float((board[..., 0] * 0.299 + board[..., 1] * 0.587 + board[..., 2] * 0.114).mean() / 255)
+    img = resize_h(img, 1000)
+    save(img, OUT / name / 'station.webp', quality=80)
+    return {
+        'width': img.width,
+        'height': img.height,
+        'sign': {'x': x0, 'y': y0, 'w': round(x1 - x0, 4), 'h': round(y1 - y0, 4), 'line': cfg['line']},
+        'ink': '#2A2622' if lum > 0.32 else '#EFE6D2',
+    }
+
+
+def write_layout(layout):
     text = json.dumps(layout, indent=2) + '\n'
     (OUT / 'layout.json').write_text(text)
     # アプリが読み込む寸法（窓の位置・画像の大きさ）。public のファイルは import できないので src にも置く
     (ROOT / 'src' / 'designs' / 'train' / 'scene' / 'assets.json').write_text(text)
+
+
+def main():
+    import sys
+
+    if sys.argv[1:] == ['station']:
+        # 駅のホームだけを作り直す（ほかの素材はそのまま）
+        layout = json.loads((OUT / 'layout.json').read_text())
+        for s in SETS:
+            layout['sets'][s]['station'] = station(s)
+        write_layout(layout)
+        return
+    layout = {'frame': frame_table(), 'fence': fence(), 'sets': {}}
+    for s in SETS:
+        p = pole(s, SRC / 'day' / 'pole.jpeg', sunset=True) if s == 'sunset' else pole(s, SRC / s / 'pole.jpeg')
+        layout['sets'][s] = {'sky': sky(s), 'mid': mid(s), 'pole': p, 'station': station(s)}
+    write_layout(layout)
     print('layout.json', json.dumps(layout['frame']))
 
 

@@ -1,5 +1,6 @@
 import { fmtDuration, pad } from '@/lib/time';
 import { goalName, originName } from './stations';
+import grain from './grain.png';
 import type { ProfileCardProps } from '../types';
 
 
@@ -46,7 +47,7 @@ export function Ticket({ info }: ProfileCardProps) {
   return (
     <div
       className="relative aspect-[1.48] w-full overflow-hidden rounded-[6px] shadow-[0_14px_30px_-16px_rgba(20,50,30,0.55)]"
-      style={{ containerType: 'inline-size', backgroundColor: '#DDF0E7', backgroundImage: `${GROUND}, linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0))`, color: ink, fontFamily: 'var(--font-text)' }}
+      style={{ containerType: 'inline-size', backgroundColor: '#DDF0E7', backgroundImage: `url(${grain}), ${GROUND}`, color: ink, fontFamily: 'var(--font-text)' }}
       aria-label={`きっぷ ${from}から${to}`}
     >
 

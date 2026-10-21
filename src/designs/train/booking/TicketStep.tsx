@@ -72,7 +72,7 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
   return (
     <div className="tr-wood tr-mincho absolute inset-0 overflow-hidden">
       {/* ランプの明かり */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_30%_at_50%_18%,rgba(255,196,120,0.28),transparent_70%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_30%_at_50%_18%,rgba(255,190,120,0.16),transparent_70%)]" />
 
       <div className="absolute inset-x-0 top-0 z-30 px-4 pt-safe">
         <div className="mt-1 flex items-center justify-between">
@@ -80,7 +80,7 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
             <ChevronLeft size={21} />
           </button>
           <div className="text-center">
-            <p className="text-[17px] font-bold tracking-[0.2em] text-[#F6ECD2]">{phase === 'ready' ? '乗車券' : phase === 'bell' ? '発車いたします' : '改札'}</p>
+            <p className="text-[17px] font-bold tracking-[0.2em] text-[#F4EEDD]">{phase === 'ready' ? '乗車券' : phase === 'bell' ? '発車いたします' : '改札'}</p>
             <Steps at={3} />
           </div>
           <span className="w-11" />
@@ -120,21 +120,21 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
 
       {/* 改札口：木の囲いと真鍮の差し込み口。切符はこの奥へ入る */}
       <div className="absolute inset-x-0 bottom-0 z-20" style={{ top: `calc(var(--safe-top) + ${GATE_TOP}px)` }}>
-        <div className="mx-auto h-full w-[min(96vw,380px)] rounded-t-[10px]" style={{ background: 'linear-gradient(180deg,#6b4628,#4a2e1c 40%,#3b2416)', boxShadow: 'inset 0 2px 0 rgba(255,220,170,0.25), 0 -12px 24px -10px rgba(0,0,0,0.7)' }}>
+        <div className="tr-gate mx-auto h-full w-[min(96vw,380px)] rounded-t-[10px]">
           <div className="tr-brass mx-auto -mt-[7px] flex h-[16px] w-[86%] items-center justify-center rounded-[4px] px-2">
             <span className="h-[5px] w-full rounded-full bg-[#1a0f08] shadow-[inset_0_2px_3px_rgba(0,0,0,0.9)]" />
           </div>
-          <div className="mx-auto mt-5 w-fit rounded-[4px] border-2 border-[#C9A86A] bg-[#F1E3C4] px-4 py-1 text-[18px] font-bold tracking-[0.5em] text-[#4A2E1C] shadow-[0_6px_12px_-6px_rgba(0,0,0,0.7)]" aria-label="改札口">
+          <div className="mx-auto mt-5 w-fit rounded-[4px] border-2 border-[#B8955A] bg-[#F4EEDD] px-4 py-1 text-[18px] font-bold tracking-[0.5em] text-[#4A2E1C] shadow-[0_6px_12px_-6px_rgba(0,0,0,0.7)]" aria-label="改札口">
             口札改
           </div>
           <div className="absolute inset-x-0 bottom-0 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)]">
             <AnimatePresence mode="popLayout">
               {phase === 'ready' ? (
-                <motion.p key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mb-2 text-center text-[12.5px] text-[#F6ECD2]/60">
+                <motion.p key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mb-2 text-center text-[12.5px] text-[#F4EEDD]/60">
                   切符を下へスワイプしても通れます
                 </motion.p>
               ) : (
-                <motion.p key="bell" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mb-2 text-center text-[13px] font-bold tracking-[0.2em] text-[#E9CF94]">
+                <motion.p key="bell" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mb-2 text-center text-[13px] font-bold tracking-[0.2em] text-[#D9C08A]">
                   {phase === 'bell' ? `${data.to}ゆき、まもなく発車いたします` : 'パチン'}
                 </motion.p>
               )}
@@ -165,10 +165,10 @@ function Punch() {
         <path d="M22 44 L30 80 L22 82 L14 46 Z" fill="#3B2614" />
       </motion.g>
       <motion.g style={{ originX: '20px', originY: '44px' }} initial={{ rotate: 16 }} animate={{ rotate: 0 }} transition={{ delay: 0.12, duration: 0.06 }}>
-        <path d="M8 6 L30 6 L30 12 L8 12 Z" transform="translate(0 0)" fill="#E9CF94" stroke="#5E431F" strokeWidth="1" />
+        <path d="M8 6 L30 6 L30 12 L8 12 Z" transform="translate(0 0)" fill="#D9C08A" stroke="#5E431F" strokeWidth="1" />
         <path d="M16 44 L4 78 L12 82 L24 46 Z" fill="#4A2E1C" />
       </motion.g>
-      <circle cx="20" cy="44" r="4" fill="#E9CF94" stroke="#5E431F" />
+      <circle cx="20" cy="44" r="4" fill="#D9C08A" stroke="#5E431F" />
     </svg>
   );
 }

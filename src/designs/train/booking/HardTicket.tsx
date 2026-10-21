@@ -71,7 +71,7 @@ export function HardTicket({ data, punched = false, stamp }: { data: HardTicketD
               <path d="M1 8h22M17 2l8 6-8 6" fill="none" stroke="#2D241C" strokeWidth="2.6" />
             </svg>
             <div className="text-center">
-              <p className="font-bold leading-none text-[#6E1F2B]" style={{ fontSize: '10.5cqw' }}>
+              <p className="font-bold leading-none text-[#7A2830]" style={{ fontSize: '10.5cqw' }}>
                 {spaced(data.to)}
               </p>
               <p className="mt-[0.6cqw] font-bold" style={{ fontSize: '3.4cqw' }}>

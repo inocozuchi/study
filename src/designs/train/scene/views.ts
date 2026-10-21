@@ -26,6 +26,7 @@ export const url = {
   sky: (v: TrainView) => `${BASE}/${v}/sky.webp`,
   mid: (v: TrainView) => `${BASE}/${v}/mid.webp`,
   pole: (v: TrainView) => `${BASE}/${v}/pole.webp`,
+  station: (v: TrainView) => `${BASE}/${v}/station.webp`,
 };
 
 export { assets };

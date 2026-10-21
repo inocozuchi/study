@@ -1,33 +1,44 @@
-/* 列車デザイン専用（クラス名は tr-） */
+/* 列車デザイン専用（クラス名は tr-）
+ *
+ * 質感は大正・昭和の「上質紙・古布・使い込んだ木の家具」：マットで温かい。
+ *  - どの面にも grain.png（ごく薄い紙・布の粒。点ひとつの不透明度 2〜8%、平均 1%）を重ね、画面のツヤを消す
+ *  - 上の縁の白い光沢線は使わない。立体感は内側へのわずかな影と、温かい色のドロップシャドウだけ
+ *  - 色：生成り #F4EEDD / くすんだ臙脂 #7A2830 / 真鍮 #B8955A / ダークウッド #3B2416（純白・純黒は使わない）
+ */
 
-/* HUD のボタン：深緑の革に真鍮の縁 */
+/* HUD のボタン：使い込んだ木に真鍮の縁 */
 .tr-btn {
   @apply rounded-full font-bold;
-  color: #f6ecd2;
-  background: radial-gradient(120% 120% at 30% 20%, #3f5a4a, #233a2f);
-  box-shadow: inset 0 0 0 2px #c9a86a, inset 0 0 0 3.5px rgba(0, 0, 0, 0.35), 0 6px 14px -6px rgba(0, 0, 0, 0.6);
+  color: #f4eedd;
+  background: url('./grain.png'), #4a3020;
+  box-shadow: inset 0 0 0 1.5px #b8955a, inset 0 2px 5px rgba(20, 10, 4, 0.45), 0 5px 12px -6px rgba(50, 25, 10, 0.6);
 }
 
-/* 方向幕（白地の巻き取り幕） */
+/* 方向幕（生成りの布の幕） */
 .tr-roll {
-  background: linear-gradient(180deg, #f9f7f0, #ece7da);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12), 0 0 0 4px #1d1f22, 0 8px 18px -8px rgba(0, 0, 0, 0.7);
+  background: url('./grain.png'), #f4eedd;
+  box-shadow: inset 0 1px 3px rgba(60, 40, 20, 0.22), 0 0 0 4px #2a1a10, 0 8px 18px -8px rgba(40, 20, 8, 0.65);
 }
 
-/* マルスの指定席券：うすい緑の地紋 */
+/* 停車中のカード・ヒント（生成りの厚紙） */
+.tr-card {
+  background: url('./grain.png'), #f4eedd;
+  color: #2a2622;
+  box-shadow: inset 0 0 0 1px rgba(90, 60, 30, 0.18), 0 12px 26px -12px rgba(40, 20, 8, 0.6);
+}
+
+/* マルスの指定席券：うすい緑の地紋（光沢の円は置かない） */
 .tr-ticket {
-  background-color: #dcefdc;
-  background-image: repeating-linear-gradient(45deg, rgba(46, 125, 91, 0.09) 0 1px, transparent 1px 5px),
-    repeating-linear-gradient(-45deg, rgba(46, 125, 91, 0.09) 0 1px, transparent 1px 5px),
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.5), transparent 70%);
+  background-color: #dcebd8;
+  background-image: url('./grain.png'), repeating-linear-gradient(45deg, rgba(46, 125, 91, 0.09) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(-45deg, rgba(46, 125, 91, 0.09) 0 1px, transparent 1px 5px);
   color: #1f2a24;
 }
 
 /* 硬券：厚紙の生成り */
 .tr-hard {
-  background-color: #f1e3c4;
-  background-image: repeating-linear-gradient(90deg, rgba(150, 110, 60, 0.07) 0 1px, transparent 1px 4px),
-    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.45), transparent 70%);
+  background-color: #f2e8cf;
+  background-image: url('./grain.png'), repeating-linear-gradient(90deg, rgba(150, 110, 60, 0.07) 0 1px, transparent 1px 4px);
   color: #2d241c;
 }
 
@@ -49,63 +60,122 @@
   animation: tr-rain 0.55s linear infinite;
   will-change: transform;
 }
-.tr-reduced .tr-rain { animation-play-state: paused; }
 
-/* ───────── 予約（大正・昭和レトロ）：木目・真鍮・臙脂・生成りの紙・明朝 ───────── */
+/* 窓ガラスを流れる雨粒：1 粒ずつ止まりかけては流れ落ちる（transform だけ） */
+@keyframes tr-drop {
+  0% { transform: translate3d(0, -6%, 0); }
+  28% { transform: translate3d(0, 18%, 0); }
+  34% { transform: translate3d(-1px, 22%, 0); }
+  62% { transform: translate3d(-2px, 58%, 0); }
+  70% { transform: translate3d(-2px, 63%, 0); }
+  100% { transform: translate3d(-4px, 108%, 0); }
+}
+.tr-drop-lane { position: absolute; top: 0; height: 100%; animation: tr-drop linear infinite; will-change: transform; }
+.tr-drop {
+  position: relative;
+  border-radius: 50% 50% 48% 48% / 58% 58% 42% 42%;
+  background: radial-gradient(circle at 42% 34%, rgba(240, 246, 250, 0.55), rgba(200, 216, 230, 0.18) 46%, rgba(20, 32, 44, 0.28) 74%, transparent 78%);
+}
+/* 粒の通ったあと（上へのびる細い水の跡） */
+.tr-drop::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 70%;
+  width: 1.5px;
+  height: 46px;
+  transform: translateX(-50%);
+  background: linear-gradient(0deg, rgba(210, 226, 240, 0.32), transparent);
+}
+.tr-bead {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, rgba(240, 246, 250, 0.5), rgba(30, 40, 50, 0.22) 70%, transparent 74%);
+}
+.tr-reduced .tr-rain, .tr-reduced .tr-drop-lane { animation-play-state: paused; }
+
+/* ───────── 予約・リザルト（大正・昭和レトロ）：木目・真鍮・臙脂・生成りの紙・明朝 ───────── */
 .tr-mincho { font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', 'Shippori Mincho', 'Noto Serif JP', 'Noto Serif CJK JP', serif; }
 .tr-wood {
   background-color: #3b2416;
-  background-image: repeating-linear-gradient(91deg, rgba(255, 214, 160, 0.035) 0 2px, transparent 2px 11px),
+  background-image: url('./grain.png'), repeating-linear-gradient(91deg, rgba(255, 214, 160, 0.03) 0 2px, transparent 2px 11px),
     repeating-linear-gradient(88.5deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 17px),
-    radial-gradient(70% 40% at 50% 8%, rgba(255, 196, 120, 0.18), transparent 70%),
-    linear-gradient(180deg, #4a2e1c, #2a180e);
-  color: #f6ecd2;
+    radial-gradient(70% 40% at 50% 8%, rgba(255, 190, 120, 0.12), transparent 70%), linear-gradient(180deg, #45291a, #2a180e);
+  color: #f4eedd;
 }
 .tr-paper {
-  background-color: #f1e3c4;
-  background-image: radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.5), transparent 70%),
-    repeating-linear-gradient(90deg, rgba(150, 110, 60, 0.06) 0 1px, transparent 1px 4px);
+  background-color: #f4eedd;
+  background-image: url('./grain.png'), repeating-linear-gradient(90deg, rgba(150, 110, 60, 0.05) 0 1px, transparent 1px 4px);
   color: #2d241c;
 }
 /* 古地図の二重の枠 */
-.tr-frame { box-shadow: inset 0 0 0 2px #6b4a2b, inset 0 0 0 5px #f1e3c4, inset 0 0 0 6px #6b4a2b, 0 16px 30px -16px rgba(0, 0, 0, 0.8); }
+.tr-frame { box-shadow: inset 0 0 0 2px #6b4a2b, inset 0 0 0 5px #f4eedd, inset 0 0 0 6px #6b4a2b, 0 16px 30px -16px rgba(40, 20, 8, 0.75); }
+/* 真鍮：つや消し。縁の光沢は付けず、わずかに内側へへこませる */
 .tr-brass {
-  background: linear-gradient(180deg, #ecd39a, #c19a5f 55%, #8e6b3a);
+  background: url('./grain.png'), #b8955a;
   color: #2b1d0e;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(0, 0, 0, 0.25), 0 3px 8px -3px rgba(0, 0, 0, 0.7);
+  box-shadow: inset 0 -2px 4px rgba(70, 45, 15, 0.28), inset 0 0 0 1px rgba(90, 60, 25, 0.35), 0 3px 8px -3px rgba(50, 28, 10, 0.55);
 }
 .tr-enji {
-  background: linear-gradient(180deg, #8f2c3d, #6e1f2b);
-  color: #f6ecd2;
-  box-shadow: inset 0 0 0 1.5px #c9a86a, inset 0 0 0 3px rgba(0, 0, 0, 0.25), 0 8px 18px -8px rgba(0, 0, 0, 0.7);
+  background: url('./grain.png'), #7a2830;
+  color: #f4eedd;
+  box-shadow: inset 0 0 0 1.5px #b8955a, inset 0 2px 5px rgba(30, 6, 8, 0.35), 0 8px 18px -8px rgba(50, 20, 10, 0.65);
 }
-.tr-enji:disabled { filter: grayscale(0.7) brightness(0.7); }
+.tr-enji:disabled { filter: grayscale(0.7) brightness(0.75); }
+/* 座席のビロード（古布） */
 .tr-velvet {
-  background: radial-gradient(120% 120% at 30% 20%, #a3394a, #6e1f2b 70%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+  background: url('./grain.png'), #7a2830;
+  box-shadow: inset 0 -3px 5px rgba(30, 6, 8, 0.35);
 }
-/* 琺瑯の駅名標 */
+/* 選んだ席：金糸の刺繍の布 */
+.tr-velvet-gold {
+  background: url('./grain.png'), #c8a86a;
+  box-shadow: inset 0 -3px 5px rgba(80, 55, 20, 0.35);
+  color: #3b2614;
+}
+/* 座席の木の枠（背もたれ・肘掛け） */
+.tr-seatwood {
+  background: url('./grain.png'), #6b4628;
+  box-shadow: inset 0 -2px 3px rgba(30, 15, 6, 0.35), 0 3px 6px -3px rgba(30, 15, 6, 0.6);
+}
+/* 琺瑯の駅名標（生成り） */
 .tr-enamel {
-  background: linear-gradient(180deg, #fbfaf4, #ece6d6);
-  color: #1f2328;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12), 0 0 0 3px #2a2522, 0 10px 22px -10px rgba(0, 0, 0, 0.8);
+  background: url('./grain.png'), #f4eedd;
+  color: #2a2622;
+  box-shadow: inset 0 1px 4px rgba(60, 40, 20, 0.2), 0 0 0 3px #2a1a10, 0 10px 22px -10px rgba(40, 20, 8, 0.7);
+}
+/* 真鍮の物差し */
+.tr-ruler {
+  background: url('./grain.png'), #b8955a;
+  box-shadow: inset 0 2px 5px rgba(70, 45, 15, 0.35), inset 0 0 0 1px rgba(90, 60, 25, 0.4);
 }
 /* 床板（客車の通路） */
 .tr-floor {
   background-color: #6b4628;
-  background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 14px),
-    repeating-linear-gradient(90deg, rgba(255, 220, 170, 0.05) 0 3px, transparent 3px 9px);
+  background-image: url('./grain.png'), repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 14px),
+    repeating-linear-gradient(90deg, rgba(255, 220, 170, 0.04) 0 3px, transparent 3px 9px);
+}
+/* 客車の外板（ぶどう色） */
+.tr-carbody {
+  background: url('./grain.png'), linear-gradient(90deg, #3a2120, #4f2e2b 20%, #55332f 50%, #4f2e2b 80%, #3a2120);
+  box-shadow: 0 24px 40px -20px rgba(30, 12, 6, 0.85);
+}
+/* 改札口の木の囲い */
+.tr-gate {
+  background: url('./grain.png'), linear-gradient(180deg, #5e3d24, #45291a 40%, #3b2416);
+  box-shadow: inset 0 3px 6px rgba(20, 10, 4, 0.35), 0 -12px 24px -10px rgba(30, 14, 6, 0.6);
 }
 /* 硬券の地紋（うすい緑。特急はうすい紅） */
 .tr-ground {
-  background-color: #f2e6c9;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='10'><path d='M0 5 Q4 0 8 5 T16 5' fill='none' stroke='%239FC7A6' stroke-opacity='.55' stroke-width='.7'/><path d='M0 10 Q4 5 8 10 T16 10' fill='none' stroke='%239FC7A6' stroke-opacity='.35' stroke-width='.6'/></svg>"),
-    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.45), transparent 70%);
+  background-color: #f2e8cf;
+  background-image: url('./grain.png'), url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='10'><path d='M0 5 Q4 0 8 5 T16 5' fill='none' stroke='%239FC7A6' stroke-opacity='.5' stroke-width='.7'/><path d='M0 10 Q4 5 8 10 T16 10' fill='none' stroke='%239FC7A6' stroke-opacity='.3' stroke-width='.6'/></svg>");
   color: #2d241c;
 }
 .tr-ground-express {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='10'><path d='M0 5 Q4 0 8 5 T16 5' fill='none' stroke='%23D9A0A8' stroke-opacity='.55' stroke-width='.7'/><path d='M0 10 Q4 5 8 10 T16 10' fill='none' stroke='%23D9A0A8' stroke-opacity='.35' stroke-width='.6'/></svg>"),
-    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.45), transparent 70%);
+  background-image: url('./grain.png'), url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='10'><path d='M0 5 Q4 0 8 5 T16 5' fill='none' stroke='%23D9A0A8' stroke-opacity='.5' stroke-width='.7'/><path d='M0 10 Q4 5 8 10 T16 10' fill='none' stroke='%23D9A0A8' stroke-opacity='.3' stroke-width='.6'/></svg>");
 }
 /* スタンプのインク（紙に染みる） */
 .tr-ink { mix-blend-mode: multiply; }
+
+/* 駅名標に重ねる駅名（ホーロー看板の印字） */
+.tr-sign-ink { font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', 'Shippori Mincho', 'Noto Serif JP', serif; }
