@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { AppProvider, useApp } from '@/store/AppStore';
 import { TimerProvider, useTimer, type JourneyResult } from '@/store/TimerStore';
@@ -20,18 +20,20 @@ import { ambientFiles } from '@/audio/ambientFiles';
 import { loadAmbientLibrary } from '@/audio/ambientLibrary';
 import { hourFor } from '@/lib/scene';
 import { getDesign } from '@/designs';
-import { hideBoot } from '@/lib/boot';
+import { markBoot } from '@/lib/boot';
 import { applyFont } from '@/lib/fonts';
 import { applyAppearance, setEdgeColors } from '@/lib/theme';
 import { useSceneHeld } from '@/lib/sceneHold';
+import { useDepth } from '@/lib/depth';
 import { useNow } from '@/hooks/useNow';
-import { springSoft } from '@/lib/motion';
+import { easeIOS, spring, springSheet, springSoft } from '@/lib/motion';
 import { chromeFor } from '@/lib/chrome';
 import { LayoutProbe } from '@/components/debug/LayoutProbe';
 
 export default function App() {
   return (
-    <MotionConfig reducedMotion="user">
+    // 動きの既定は iOS のバネ（transition を書いていない動きもすべて物理スプリングで動く）
+    <MotionConfig reducedMotion="user" transition={spring}>
       <AppProvider>
         <Gate />
       </AppProvider>
@@ -42,7 +44,7 @@ export default function App() {
 function Gate() {
   const { ready, settings, epoch } = useApp();
   useEffect(() => {
-    if (ready) hideBoot();
+    if (ready) markBoot('data');
   }, [ready]);
   const font = ready ? settings.font : undefined;
   useEffect(() => {
@@ -115,6 +117,7 @@ function Shell() {
   const journeying = timer.phase !== 'idle' || !!timer.journeyStartedAt || !!arrival;
   const onHome = tab === 'trail';
   const sceneHeld = useSceneHeld();
+  const depth = useDepth();
 
   // 予約した時間に届いて自動で旅が終わったら、リザルトを出す（ほかのタブにいてもホームに戻ったときに見える）
   useEffect(() => {
@@ -128,10 +131,18 @@ function Shell() {
   const sceneShown = chrome.fullscreen && !sceneHeld;
 
   return (
-    <div className="app-frame overflow-hidden bg-page" data-probe="root">
+    <div className="app-frame overflow-hidden bg-black" data-probe="root">
+      {/* アプリ全体（シーン・画面・タブバー）。シートが開いている間は少し奥へ引っ込む（iOS のシート表示） */}
+      <motion.div
+        className="absolute inset-0 overflow-hidden bg-page"
+        initial={false}
+        animate={depth ? { scale: 0.94, y: 8, borderRadius: 14 } : { scale: 1, y: 0, borderRadius: 0 }}
+        transition={springSheet}
+        style={{ transformOrigin: '50% 40%' }}
+      >
       {/* 背景の層：全画面の画面でだけシーンを見せる。ほかの画面では止めて隠す（地の色の上にカードを並べる） */}
       <div className="absolute inset-0" style={{ visibility: sceneShown ? 'visible' : 'hidden' }} data-probe={sceneShown ? 'scene' : undefined}>
-        <SceneLayer ended={!!result} paused={!sceneShown} />
+        <SceneLayer ended={!!result} paused={!sceneShown} shown={sceneShown} />
       </div>
 
       <AnimatePresence mode="popLayout" initial={false} custom={direction}>
@@ -173,6 +184,9 @@ function Shell() {
         </div>
         <TabBar tab={tab} onChange={setTab} />
       </div>
+      {/* 奥へ引っ込んだときの暗がり（filter は使わない：iPhone で重い） */}
+      <motion.div className="pointer-events-none absolute inset-0 z-[90] bg-black" initial={false} animate={{ opacity: depth ? 0.22 : 0 }} transition={{ duration: 0.35, ease: easeIOS }} />
+      </motion.div>
 
       {/* 時刻の帯の下に敷くもの（全画面のシーンでは何も敷かない） */}
       <div className="status-band z-[80]" data-area={chrome.statusArea} data-probe="status" aria-hidden />
@@ -184,7 +198,7 @@ function Shell() {
 }
 
 /** 背景シーン：選択中のタイマーデザインに描画を任せる */
-function SceneLayer({ ended, paused }: { ended: boolean; paused: boolean }) {
+function SceneLayer({ ended, paused, shown }: { ended: boolean; paused: boolean; shown: boolean }) {
   const { settings } = useApp();
   const { timer, elapsedMs } = useTimer();
   const now = useNow(60_000);
@@ -202,9 +216,28 @@ function SceneLayer({ ended, paused }: { ended: boolean; paused: boolean }) {
     setEdgeColors(!paused && design.edgeColors ? design.edgeColors(sceneHour, settings) : null);
   }, [paused, sceneHour, settings.season, design]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => setEdgeColors(null), []);
+
+  // シーンの画像がすべてデコードされるまで中身を見せない（地の色・駅名の文字だけが先に出る一瞬を作らない）。
+  // モードを切り替えたら、新しいシーンの準備ができるまで落ち着いた暗い色で待ち、そろったらフェードイン
+  const [readyFor, setReadyFor] = useState<string | null>(null);
+  const ready = readyFor === design.id;
+  const onReady = useCallback(() => setReadyFor(design.id), [design.id]);
+  useEffect(() => {
+    if (ready) return;
+    // 画像が読めないときも、いつまでも隠したままにしない
+    const id = setTimeout(onReady, 3000);
+    return () => clearTimeout(id);
+  }, [ready, onReady]);
+  // 起動画面：最初に見えるシーンの準備ができたら（シーンを見せない画面ならすぐ）閉じてよい
+  useEffect(() => {
+    if (ready || !shown) markBoot('scene');
+  }, [ready, shown]);
+
   return (
-    <div className="absolute inset-0">
-      <Scene hour={hour} ended={ended} paused={paused} />
+    <div className="absolute inset-0 overflow-hidden" style={{ background: design.skeleton ?? '#16181D' }}>
+      <div className="scene-fade absolute inset-0" style={{ opacity: ready ? 1 : 0 }}>
+        <Scene key={design.id} hour={hour} ended={ended} paused={paused} onReady={onReady} />
+      </div>
     </div>
   );
 }

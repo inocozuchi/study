@@ -83,7 +83,7 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
     >
       {/* 上部：音楽・時間・完了 */}
       <div className="pointer-events-none flex items-start justify-between px-5 pt-safe">
-        <motion.button whileTap={{ scale: 0.88 }} transition={springBouncy} onClick={onMusic} aria-label="サウンド" className="mt-ink-btn pointer-events-auto relative mt-2 grid h-12 w-12 place-items-center">
+        <motion.button transition={springBouncy} onClick={onMusic} aria-label="サウンド" className="mt-ink-btn pointer-events-auto relative mt-2 grid h-12 w-12 place-items-center">
           <Music size={20} />
           <CrayonOutline shape="circle" color="rgba(255,248,234,0.4)" width={1.4} />
         </motion.button>
@@ -92,7 +92,6 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
           <span className="mt-1 inline-block rounded-full bg-ink/35 px-2.5 py-0.5 font-maru text-[11px] font-bold  text-paper/90">{label}</span>
         </button>
         <motion.button
-          whileTap={{ scale: 0.88 }}
           transition={springBouncy}
           onClick={() => (rest ? t.skipBreak() : waiting ? t.start() : t.finishFocus())}
           aria-label={rest ? '休憩を終えて出発' : waiting ? '次の登りへ' : '集中を完了して休憩'}
@@ -116,7 +115,7 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
                 <span className="block font-maru text-[18px] font-bold">{rest ? '休息' : 'ひと息'}</span>
                 <span className="block text-[13px] text-ink-soft">{new Date().toLocaleDateString('ja-JP')} · ここまで {fmtDuration(t.journeyFocusMs / MIN)}</span>
               </span>
-              <motion.button whileTap={{ scale: 0.92 }} onClick={() => (rest ? t.skipBreak() : t.start())} className="rounded-full px-3 py-2 font-maru text-[16px] font-bold text-crayon-blue">
+              <motion.button onClick={() => (rest ? t.skipBreak() : t.start())} className="rounded-full px-3 py-2 font-maru text-[16px] font-bold text-crayon-blue">
                 出発
               </motion.button>
             </motion.div>

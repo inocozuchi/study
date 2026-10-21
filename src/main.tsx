@@ -4,8 +4,11 @@ import App from './App';
 import './index.css';
 import { applyCachedFont } from './lib/fonts';
 import { consumeRedirect } from './lib/googleCalendar';
+import { installPress } from './lib/press';
 
 applyCachedFont();
+// すべてのボタンの押し込み（iOS のタップ感）
+installPress();
 // Google カレンダーの接続から戻ってきたときは、タイムラインを開いて予定を見せる
 if (consumeRedirect()) {
   try {

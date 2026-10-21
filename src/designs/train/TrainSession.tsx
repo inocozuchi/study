@@ -101,7 +101,7 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
     >
       {/* 上部：音楽・方向幕と時間・完了 */}
       <div className="pointer-events-none flex items-start justify-between px-5 pt-safe">
-        <motion.button whileTap={{ scale: 0.88 }} transition={springBouncy} onClick={onMusic} aria-label="サウンド" className="tr-btn pointer-events-auto mt-2 grid h-12 w-12 place-items-center">
+        <motion.button transition={springBouncy} onClick={onMusic} aria-label="サウンド" className="tr-btn pointer-events-auto mt-2 grid h-12 w-12 place-items-center">
           <Music size={20} />
         </motion.button>
         <div className="mt-2 flex flex-col items-center">
@@ -112,7 +112,6 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
           </button>
         </div>
         <motion.button
-          whileTap={{ scale: 0.88 }}
           transition={springBouncy}
           onClick={() => (rest ? t.skipBreak() : waiting ? t.start() : t.finishFocus())}
           aria-label={rest ? '休憩を終えて発車' : waiting ? '発車' : '集中を完了して停車'}
@@ -131,7 +130,7 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
                 <span className="block text-[19px] font-extrabold tracking-[0.12em]">{stop.name}</span>
                 <span className="mt-0.5 block text-[12px] font-semibold text-[#6B7076]">停車中 · ここまで {fmtDuration(t.journeyFocusMs / MIN)}</span>
               </span>
-              <motion.button whileTap={{ scale: 0.94 }} onClick={() => (rest ? t.skipBreak() : t.start())} className="self-stretch bg-[#7A2830] px-5 text-[16px] font-extrabold tracking-[0.1em] text-[#F4EEDD]">
+              <motion.button onClick={() => (rest ? t.skipBreak() : t.start())} className="self-stretch bg-[#7A2830] px-5 text-[16px] font-extrabold tracking-[0.1em] text-[#F4EEDD]">
                 発車
               </motion.button>
             </motion.div>

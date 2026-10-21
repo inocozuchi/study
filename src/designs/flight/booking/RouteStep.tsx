@@ -227,7 +227,7 @@ function Ruler({ step, value, onChange }: { step: TimeStep; value: number; onCha
         if (e.key === 'ArrowLeft') onChange(Math.max(d.min, value - d.step));
       }}
     >
-      <motion.div className="absolute left-1/2 top-3" style={{ x: dial.x, width }}>
+      <motion.div className="absolute left-1/2 top-3" style={{ x: dial.x, width, willChange: 'transform' }}>
         <svg width={width + 2} height={52} className="absolute left-0 top-0 overflow-visible">
           {ticks.map((t) => (
             <line key={t.x} x1={t.x + 1} x2={t.x + 1} y1={0} y2={t.h} stroke={t.major ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.35)'} strokeWidth={t.major ? 1.6 : 1} />

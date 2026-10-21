@@ -6,7 +6,6 @@ import { springBouncy } from '@/lib/motion';
 export function CheckCircle({ checked, onChange, color, size = 26, label }: { checked: boolean; onChange: () => void; color?: string; size?: number; label?: string }) {
   return (
     <motion.button
-      whileTap={{ scale: 0.82 }}
       transition={springBouncy}
       onClick={onChange}
       role="checkbox"

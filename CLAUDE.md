@@ -55,7 +55,10 @@ src/
   lib/fonts.ts          フォント設定（FONTS。選んだ書体を Google Fonts から読み込み、CSS 変数で全体に反映）
   hooks/                useNow, useWakeLock など
   lib/theme.ts          外観（ライト / ダーク / 端末）を <html data-theme> に。画面の外の帯の色（theme-color・--edge）
-  lib/sceneHold.ts      全画面の画面（設定など）がシーンを覆っている間、シーンの描画を止める
+  lib/sceneHold.ts      全画面の画面（設定など）がシーンを覆っている間、シーンの描画を止める（出きってから 550ms 後に隠す）
+  lib/depth.ts          シートなどが開いている間、後ろのアプリを奥へ引っ込める（usePresentDepth / useDepth）
+  lib/press.ts          すべてのボタンの押し込み（scale 0.94 → バネで 1.0）。main.tsx で 1 回入れる
+  lib/preload.ts        画像を先に読み込みデコードまで済ませる（decodeAll。シーンはこれが終わるまで隠す）
   lib/chrome.ts         画面ごとの枠（全画面のシーン・時刻の帯の下・タブバー）の表
   lib/tasks.ts          予約の座席で選ぶ「集中すること」の定番（フォーカス・作業・簿記・読む…）。選んだ名前が科目になる
   lib/googleCalendar.ts Google カレンダー（読み取りのみ・OAuth のブラウザ向けの流れ）
@@ -297,7 +300,7 @@ interface TimerDesign {
 - **退場するもの（シート・モーダル・オーバーレイ）の中に AnimatePresence mode="wait" を入れ子にしない**（同じく退場が止まる）。
   どうしても必要なら `useIsPresent()` で退場中は表示を固定する（MountainSession を参照）。
 - 閉じるアニメーションの間に中身が消えないよう、シートに渡すデータは最後の値を ref に残して表示する（PickerModal / EntrySheet / 予定の詳細）。
-- アプリ全体を `<MotionConfig reducedMotion="user">` で包んでいる。登山シーンは視差を減らす設定で歩く速さと地面の流れを一緒に落とす。列車は景色の流れを半分にし、揺れを止める。
+- アプリ全体を `<MotionConfig reducedMotion="user" transition={spring}>` で包んでいる（transition を書いていない動きもバネで動く）。登山シーンは視差を減らす設定で歩く速さと地面の流れを一緒に落とす。列車は景色の流れを半分にし、揺れを止める。
 
 ## デザインシステム（アプリ本体 = 泰山木POS と同じ）
 
@@ -353,16 +356,30 @@ interface TimerDesign {
 - 上部のぼかしはどこにも置かない。
 
 ### アニメーション原則（`lib/motion.ts`）
-- 既定スプリング：`{ type: 'spring', stiffness: 380, damping: 32 }`（UI 全般）
+- 既定スプリング：`{ type: 'spring', stiffness: 380, damping: 32 }`（UI 全般。MotionConfig の既定）
 - ソフト：`{ stiffness: 220, damping: 28 }`（画面遷移・大きな面）
-- タップ：`whileTap={{ scale: 0.96 }}`（`Pressable` コンポーネント）
-- シートは下からスプリング、ドラッグで閉じる。モーダルは scale 0.94→1 + fade。
-- タブ・セグメントの選択インジケータは index に合わせて x をスプリングで動かす（layoutId は使わない）。
+- 時間で決める動きのカーブは 2 つだけ：`easeIOS` = `cubic-bezier(0.22, 1, 0.36, 1)`（初速が速くスッと収まる）/ `easeSpring` = `cubic-bezier(0.34, 1.56, 0.64, 1)`（わずかに弾む）。
+  Tailwind の `ease`（既定）・`ease-out`・`ease-in-out` も `easeIOS`、`ease-spring` が弾むカーブ。`linear` は進み具合（長押しの輪・回転）だけ。
+- **押し込み**：`lib/press.ts` がアプリ全体のボタン（button / role=button / a / data-press）に付ける。押すと `scale: 0.94`（横に広いカードは 0.97）、離すと弾むカーブで 1.0。
+  CSS の `scale` プロパティを Web Animations で動かすので transform（framer-motion・translate）と重ねても位置はずれない。
+  **`whileTap` や `active:scale-*` を個別に書かない**（二重に縮む）。縮み具合は `data-press-scale`（`Pressable` の `scale`）、効かせないときは `data-no-press`。
+- **シートの奥行き**：シート・予約・設定・ツールが開いている間（`usePresentDepth(open)`）、App の stage（シーン・画面・タブバー）が `scale 0.94`・下へ 8px・角丸 14px・暗がり 22% へバネで引っ込む（後ろは黒）。
+  stage の中の `fixed` は stage に対して置かれるので、**全画面の重ね（予約・設定・シート）は createPortal で body の直下に出す**。
+- シートは下からスプリング、ドラッグで閉じる。設定も下からせり上がる。予約は「集中」ボタンの光が広がり、下から少し小さくふわっと現れる。モーダルは scale 0.94→1 + fade。
+- タブ・セグメントの選択インジケータは index に合わせて x をスプリングで動かす（layoutId は使わない）。タブバーのピルは動く間だけ横に少し伸びる（流体のピル）。
+- ホームの「集中」ボタン：ふくらみ・光・広がる輪が 4.8 秒でゆっくり呼吸する（CSS の `.focus-breath` / `.focus-glow` / `.focus-ring`）。
+- 動く要素は transform と opacity だけ。動かしている間ずっと動くもの（車窓・ダイヤル・地図・シート）にだけ `will-change` を付ける（付けすぎると iPhone のメモリを食う）。
 - `prefers-reduced-motion` を尊重（Canvas の粒子量・視差を削減）。
 
 ## 起動画面
 - `index.html` の `#boot`（アイコン + iOS の読み込みインジケーター）が JS より先に描かれる。iOS の起動画像（`public/splash/`。ライト・ダークの 2 種類）と同じ位置・大きさ・背景色（外観に合わせる）。
-- アプリの準備ができたら `lib/boot.ts` の `hideBoot()` でフェードして消す（`App.tsx` の `Gate`）。
+- 起動画面のアイコンには現れる動きをつけない（iOS の起動画像からそのまま続き、点滅しない）。`body` の背景は起動画面・アプリの地と同じ色。
+- 閉じるのは 1 回だけ（`lib/boot.ts` の `markBoot`）：データの読み込み（`Gate`）・最初に見えるシーンの画像のデコード（`SceneLayer`。シーンを見せない画面ならすぐ）・起動から 600ms が
+  すべてそろったとき（遅いときも 3.5 秒で）。フェードアウト + `scale(1.04)`。
+- **シーンの読み込み**：シーンは `onReady` を呼ぶまで `opacity: 0`（後ろはデザインの `skeleton` の暗い色）。そろったら 380ms でフェードイン。モードを切り替えたときも同じ。
+  列車は車内・空・中景・フェンス・電柱・駅の画像を `decodeAll`、航空は地図の SVG、登山はクレヨンの焼き込み（`bakeTracker`）が終わるまで待つ。読めないときも 3 秒で見せる。
+  列車の景色の組を切り替えるときも、新しい組の画像のデコードが終わってから重ねる。窓の中の地の色は暗い色（水色の四角を見せない）。
+- ホームの挨拶・バッジの後ろは上からうすく暗くし（`HomeIdle` のグラデーション）、シーンの絵と文字がぶつからないようにする。
 - アイコンを変えたら `scripts/generate-assets.mjs` を実行し、`index.html` の #boot の SVG も同じ図柄に揃える。
 
 ## 音のループ原則（BGM・環境音）

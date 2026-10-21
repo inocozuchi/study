@@ -25,7 +25,7 @@ export function SeasonPicker({ draft, onChange }: DesignSetupProps) {
         {SEASON_ORDER.map((s) => {
           const active = s === season;
           return (
-            <motion.button key={s} whileTap={{ scale: 0.9 }} transition={springBouncy} onClick={() => onChange({ season: s })} className="flex flex-col items-center gap-1.5" aria-pressed={active} aria-label={`${SEASONS[s].label}の山`}>
+            <motion.button key={s} transition={springBouncy} onClick={() => onChange({ season: s })} className="flex flex-col items-center gap-1.5" aria-pressed={active} aria-label={`${SEASONS[s].label}の山`}>
               <span className={`relative block w-full overflow-hidden rounded-card transition-shadow ${active ? 'shadow-[0_0_0_2.5px_rgb(var(--c-accent))]' : 'shadow-[0_0_0_1px_rgb(var(--c-line))]'}`}>
                 <SeasonSwatch season={s} className="block aspect-[4/3] w-full" />
                 {active && (
@@ -47,7 +47,6 @@ export function SeasonPicker({ draft, onChange }: DesignSetupProps) {
           return (
             <motion.button
               key={o.value}
-              whileTap={{ scale: 0.92 }}
               transition={springBouncy}
               onClick={() => onChange({ sky: o.value })}
               aria-pressed={active}

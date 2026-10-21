@@ -58,7 +58,7 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
     <div className="tr-wood tr-mincho absolute inset-0">
       <div className="absolute inset-x-0 top-0 z-20 bg-gradient-to-b from-[#2a180e] via-[#2a180e]/90 to-transparent px-4 pb-5 pt-safe">
         <div className="mt-1 flex items-center justify-between">
-          <button onClick={onBack} aria-label="戻る" className="tr-brass grid h-11 w-11 place-items-center rounded-full active:scale-95">
+          <button onClick={onBack} aria-label="戻る" className="tr-brass grid h-11 w-11 place-items-center rounded-full">
             <ChevronLeft size={21} />
           </button>
           <div className="text-center">
@@ -175,7 +175,6 @@ interface SeatProps {
 function BoxSeat({ id, mine, taken, icon, active, onTap, back, label }: SeatProps & { back: 'top' | 'bottom'; label: string }) {
   return (
     <motion.button
-      whileTap={taken ? undefined : { scale: 0.92 }}
       disabled={taken}
       aria-label={`${id}${taken ? '（ふさがっています）' : mine ? '（選択中）' : ''}`}
       onClick={(e) => {
@@ -226,7 +225,6 @@ function Observation({ seatProps }: { seatProps: (id: string) => SeatProps }) {
 function Armchair({ id, mine, taken, icon, active, onTap, n }: SeatProps & { n: number }) {
   return (
     <motion.button
-      whileTap={taken ? undefined : { scale: 0.92 }}
       disabled={taken}
       aria-label={`${id}${taken ? '（ふさがっています）' : mine ? '（選択中）' : ''}`}
       onClick={(e) => {
@@ -263,7 +261,7 @@ function TagPopover({ seat, top, x, options, current, onPick }: { seat: string; 
         {options.map((t) => {
           const on = current === t.name;
           return (
-            <button key={t.name} onClick={() => onPick(t)} className={`relative flex h-9 items-center gap-1.5 rounded-[4px] pl-5 pr-3 text-[14px] font-bold active:scale-95 ${on ? 'bg-[#7A2830] text-[#F4EEDD]' : 'bg-[#F7EDD3] text-[#2D241C] shadow-[inset_0_0_0_1px_rgba(107,74,43,0.55)]'}`}>
+            <button key={t.name} onClick={() => onPick(t)} className={`relative flex h-9 items-center gap-1.5 rounded-[4px] pl-5 pr-3 text-[14px] font-bold ${on ? 'bg-[#7A2830] text-[#F4EEDD]' : 'bg-[#F7EDD3] text-[#2D241C] shadow-[inset_0_0_0_1px_rgba(107,74,43,0.55)]'}`}>
               {/* 札の穴 */}
               <span className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-[#B8955A] shadow-[inset_0_1px_1px_rgba(0,0,0,0.4)]" />
               <Glyph icon={t.icon} size={14} />

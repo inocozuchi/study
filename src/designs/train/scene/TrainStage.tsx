@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { trainSound } from '@/audio/trainSound';
+import { decodeAll } from '@/lib/preload';
 import { VIEWS, assets, isNight, trainLayout, url, viewFor, type TrainLayout, type TrainView } from './views';
 import { CLASSES } from '../booking/line';
 import type { TrainClass } from '@/types';
@@ -28,6 +29,8 @@ export interface TrainStageProps {
   station?: StationSign | null;
   /** 集中の 1 回が終わるまでの ms と、そこで止まる駅。終わる瞬間に止まるよう、早めにブレーキをかけ始める */
   approach?: { inMs: number; sign: StationSign } | null;
+  /** 最初の景色の画像（車内・空・中景・フェンス・電柱・駅）のデコードが終わったら 1 回呼ぶ */
+  onReady?: () => void;
 }
 
 /** 巡航の速さ（普通 = 1。快速 1.2・急行 1.42・特急 1.65 倍で流れる）と加速（1 秒あたり）は CLASSES。普通は約 10 秒、特急は約 12 秒で巡航に届く */
@@ -81,6 +84,9 @@ interface Tracks {
   station: HTMLDivElement | null;
 }
 
+/** 1 組の景色に要る画像 */
+const viewUrls = (v: TrainView) => [url.sky(v), url.mid(v), url.fence(v), url.pole(v), url.station(v)];
+
 /** 窓の高さに合わせたときの駅のホームの幅（px） */
 const stationW = (v: TrainView, wh: number) => (assets.sets[v].station.width / assets.sets[v].station.height) * wh;
 
@@ -96,7 +102,7 @@ const stationW = (v: TrainView, wh: number) => (assets.sets[v].station.width / a
  *   D = (窓の幅 + ホームの幅) / 2、減速度 = 流れる速さ × v² / (2D)
  * 発車すると、ホームは加速に合わせて左へ流れ去る。
  */
-export function TrainStage({ hour, moving, cls, rain, paused = false, sound, station = null, approach = null }: TrainStageProps) {
+export function TrainStage({ hour, moving, cls, rain, paused = false, sound, station = null, approach = null, onReady }: TrainStageProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [L, setL] = useState<TrainLayout | null>(null);
   const view = viewFor(hour, rain);
@@ -104,11 +110,26 @@ export function TrainStage({ hour, moving, cls, rain, paused = false, sound, sta
 
   // 表示中の景色の組（切り替えの間は 2 組）
   const [views, setViews] = useState<{ v: TrainView; fade: boolean }[]>([{ v: view, fade: false }]);
+  // 新しい組は画像のデコードが終わってから重ねる（読み込み途中の白い・水色の面を見せない）
   useEffect(() => {
-    setViews((cur) => (cur[cur.length - 1].v === view ? cur : [...cur.filter((x) => x.v !== view), { v: view, fade: true }]));
-    const id = setTimeout(() => setViews((cur) => cur.slice(-1)), FADE_MS + 200);
-    return () => clearTimeout(id);
+    let cancelled = false;
+    let id: ReturnType<typeof setTimeout> | undefined;
+    void decodeAll(viewUrls(view)).then(() => {
+      if (cancelled) return;
+      setViews((cur) => (cur[cur.length - 1].v === view ? cur : [...cur.filter((x) => x.v !== view), { v: view, fade: true }]));
+      id = setTimeout(() => setViews((cur) => cur.slice(-1)), FADE_MS + 200);
+    });
+    return () => {
+      cancelled = true;
+      if (id) clearTimeout(id);
+    };
   }, [view]);
+  // 最初の組と車内の絵がそろったら知らせる（それまでシーンは隠れている）
+  const readyRef = useRef(onReady);
+  readyRef.current = onReady;
+  useEffect(() => {
+    void decodeAll([url.frame, ...viewUrls(view)]).then(() => readyRef.current?.());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const tracks = useRef(new Map<TrainView, Tracks>());
   const wireRef = useRef<HTMLCanvasElement>(null);
@@ -157,7 +178,7 @@ export function TrainStage({ hour, moving, cls, rain, paused = false, sound, sta
   // ほかの時間帯・天気の画像は、少したってから先に読み込んでおく（切り替えで白く抜けない）
   useEffect(() => {
     const id = setTimeout(() => {
-      for (const v of VIEWS) for (const u of [url.sky(v), url.mid(v), url.fence(v), url.pole(v), url.station(v)]) new Image().src = u;
+      for (const v of VIEWS) void decodeAll(viewUrls(v));
     }, 4000);
     return () => clearTimeout(id);
   }, []);
@@ -324,7 +345,7 @@ export function TrainStage({ hour, moving, cls, rain, paused = false, sound, sta
       {L && (
         <>
           {/* 窓の外：窓の形に切り抜いた中だけで景色が流れる */}
-          <div className="absolute overflow-hidden" style={{ left: L.win.x, top: L.win.y, width: L.win.w, height: L.win.h, background: '#8FB7DA' }}>
+          <div className="absolute overflow-hidden" style={{ left: L.win.x, top: L.win.y, width: L.win.w, height: L.win.h, background: '#2B2F36' }}>
             {views.map(({ v, fade }) => (
               <ViewLayers key={v} view={v} L={L} fade={fade} part="back" bind={(t) => bindTracks(v, t)} />
             ))}

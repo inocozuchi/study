@@ -91,7 +91,7 @@ export function WindowView({ onClose, seat, hour }: { onClose: () => void; seat?
         <img src={`${BASE}flight/window-frame.webp`} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full select-none" style={{ zIndex: 10, filter: FRAME_FILTER[set] }} />
       </div>
 
-      <button onClick={onClose} aria-label="窓を閉じる（地図に戻る）" className="fl-glass absolute left-1/2 top-[calc(var(--safe-top)+10px)] z-20 flex h-10 -translate-x-1/2 items-center gap-1.5 rounded-full pl-3 pr-4 text-[14px] font-semibold active:scale-95">
+      <button onClick={onClose} aria-label="窓を閉じる（地図に戻る）" className="fl-glass absolute left-1/2 top-[calc(var(--safe-top)+10px)] z-20 flex h-10 -translate-x-1/2 items-center gap-1.5 rounded-full pl-3 pr-4 text-[14px] font-semibold">
         <X size={16} /> 地図に戻る
       </button>
       <p className="absolute inset-x-0 top-[calc(var(--safe-top)+60px)] z-20 text-center text-[12px] text-white/70 [text-shadow:0_1px_4px_rgba(0,0,0,0.6)]">シェードは上下にドラッグして開け閉めできます</p>

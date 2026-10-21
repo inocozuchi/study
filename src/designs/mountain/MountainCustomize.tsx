@@ -38,7 +38,7 @@ export function MountainCustomize({ draft, onChange }: DesignSetupProps) {
 
 function Cell({ label, active, onClick, children }: { label: string; active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button onClick={onClick} aria-pressed={active} aria-label={label} className={`relative overflow-hidden rounded-card bg-sunken pt-2 transition-shadow active:scale-[0.97] ${active ? 'shadow-[inset_0_0_0_2px_rgb(var(--c-accent))]' : ''}`}>
+    <button onClick={onClick} aria-pressed={active} aria-label={label} className={`relative overflow-hidden rounded-card bg-sunken pt-2 transition-shadow ${active ? 'shadow-[inset_0_0_0_2px_rgb(var(--c-accent))]' : ''}`}>
       {children}
       <span className={`block py-1.5 text-[12px] font-bold ${active ? 'text-accent-ink' : 'text-fg-2'}`}>{label}</span>
       {active && (

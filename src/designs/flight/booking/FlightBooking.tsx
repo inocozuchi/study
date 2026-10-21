@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
+import { easeIOS, springSheet } from '@/lib/motion';
+import { usePresentDepth } from '@/lib/depth';
 import { useApp } from '@/store/AppStore';
 import { useHoldScene } from '@/lib/sceneHold';
 import { airportByCode, nearestRoute, routesFrom, type Route } from '../airports';
@@ -40,6 +43,7 @@ export function FlightBooking({ open, onClose, onStart }: DesignBookingProps) {
   const [page, setPage] = useState<1 | 2 | 3>(1);
   const [draft, setDraft] = useState<FlightDraft>(() => fresh());
   useHoldScene(open);
+  usePresentDepth(open);
 
   function fresh(): FlightDraft {
     const step = settings.bookingStep ?? 'pomodoro';
@@ -68,14 +72,17 @@ export function FlightBooking({ open, onClose, onStart }: DesignBookingProps) {
     });
   };
 
-  return (
+  // body の直下に出す（後ろのアプリが奥へ引っ込む transform の影響を受けないように）
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
           key="flight-booking"
           className="fl-root fixed inset-x-0 top-0 z-[70] h-app overflow-hidden bg-[#050608]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: 0.35 } }}
+          // 「集中」ボタンから広がるように、下から少し小さくふわっと現れる（バネ）
+          initial={{ opacity: 0, scale: 0.92, y: 40 }}
+          animate={{ opacity: 1, scale: 1, y: 0, transition: { ...springSheet, opacity: { duration: 0.3, ease: easeIOS } } }}
+          style={{ willChange: 'transform, opacity' }}
           // 搭乗したら、搭乗券ごと少し大きくなりながら溶けて、下の地図（フライト中の画面）が現れる
           exit={{ opacity: 0, scale: 1.06, transition: { duration: 0.7, ease: [0.4, 0, 0.2, 1] } }}
         >
@@ -98,6 +105,7 @@ export function FlightBooking({ open, onClose, onStart }: DesignBookingProps) {
           </AnimatePresence>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

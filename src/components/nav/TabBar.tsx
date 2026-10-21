@@ -1,6 +1,10 @@
-import { motion } from 'framer-motion';
+import { useEffect, useRef } from 'react';
+import { animate, motion, useMotionValue } from 'framer-motion';
 import { CalendarDays, ChartColumn, Route, Tent, type LucideIcon } from 'lucide-react';
-import { spring } from '@/lib/motion';
+import { easeIOS, spring } from '@/lib/motion';
+
+/** 選択の面が滑るバネ（液体のように少し伸びて、スッと収まる） */
+const PILL = { type: 'spring' as const, stiffness: 420, damping: 34, mass: 0.8 };
 
 export type TabKey = 'trail' | 'timeline' | 'routes' | 'insights';
 
@@ -17,10 +21,19 @@ export const TAB_BAR_H = 60;
 /**
  * iOS 風のタブバー：画面の下に浮いたカプセル。アイコンだけ（名前は読み上げ用）。
  * 左右と下に余白を取り、iPhone の角の丸みで欠けないようにする。
- * 選ばれたタブは淡い青の面がスプリングで移動する（layoutId は使わない）。
+ * 選ばれたタブは淡い青の面がスプリングで横へ滑る（layoutId は使わない）。動く間だけ横に少し伸び、着くと縮む（流体のピル）。
  */
 export function TabBar({ tab, onChange }: { tab: TabKey; onChange: (t: TabKey) => void }) {
   const idx = Math.max(0, TABS.findIndex((t) => t.key === tab));
+  const stretch = useMotionValue(1);
+  const prev = useRef(idx);
+  useEffect(() => {
+    if (prev.current === idx) return;
+    const far = Math.abs(idx - prev.current);
+    prev.current = idx;
+    const c = animate(stretch, [1, 1 + 0.12 * Math.min(3, far), 1], { duration: 0.5, ease: easeIOS, times: [0, 0.35, 1] });
+    return () => c.stop();
+  }, [idx, stretch]);
   return (
     <div className="tabbar-pad px-6">
       <nav
@@ -30,10 +43,10 @@ export function TabBar({ tab, onChange }: { tab: TabKey; onChange: (t: TabKey) =
       >
         <motion.span
           className="absolute bottom-1.5 left-1.5 top-1.5 rounded-full bg-accent-soft"
-          style={{ width: `calc((100% - 12px) / ${TABS.length})` }}
+          style={{ width: `calc((100% - 12px) / ${TABS.length})`, scaleX: stretch, willChange: 'transform' }}
           initial={false}
           animate={{ x: `${idx * 100}%` }}
-          transition={spring}
+          transition={PILL}
         />
         {TABS.map(({ key, label, icon: Icon }) => {
           const active = key === tab;
@@ -41,7 +54,6 @@ export function TabBar({ tab, onChange }: { tab: TabKey; onChange: (t: TabKey) =
             <motion.button
               key={key}
               onClick={() => onChange(key)}
-              whileTap={{ scale: 0.9 }}
               transition={spring}
               aria-label={label}
               aria-current={active ? 'page' : undefined}

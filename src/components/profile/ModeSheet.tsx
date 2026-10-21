@@ -21,7 +21,7 @@ export function ModeSheet({ open, onClose }: { open: boolean; onClose: () => voi
                 onClose();
               }}
               aria-pressed={active}
-              className={`card flex min-h-[72px] w-full items-center gap-3 px-4 py-3 text-left transition-transform duration-100 enabled:active:scale-[0.985] enabled:active:bg-accent-soft disabled:opacity-60 ${active ? 'shadow-[inset_0_0_0_2px_rgb(var(--c-accent))]' : ''}`}
+              className={`card flex min-h-[72px] w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-100 enabled:active:bg-accent-soft disabled:opacity-60 ${active ? 'shadow-[inset_0_0_0_2px_rgb(var(--c-accent))]' : ''}`}
             >
               <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-card ${active ? 'bg-accent text-white' : 'bg-sunken text-fg-2'}`}><m.Icon size={26} strokeWidth={1.8} /></span>
               <span className="min-w-0 flex-1">

@@ -69,15 +69,17 @@
       html[data-theme='dark'], html[data-theme='dark'] body { background: #0E1015; }
       #boot {
         position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center;
-        background: #F2F3F7; transition: opacity 0.45s ease;
+        background: #F2F3F7;
+        transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
       }
       html[data-theme='dark'] #boot { background: #0E1015; }
       html[data-theme='dark'] #boot .spinner i { background: rgba(255,255,255,0.8); }
-      #boot.hide { opacity: 0; pointer-events: none; }
+      /* 閉じるとき：フェードアウトしながら少しだけ手前へ（1 回だけ） */
+      #boot.hide { opacity: 0; transform: scale(1.04); pointer-events: none; }
       #boot .icon {
         width: 112px; height: 112px; border-radius: 25px; overflow: hidden;
         box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 18px 40px rgba(0,0,0,0.45);
-        animation: boot-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        /* 現れる動きはつけない：iOS の起動画像と同じ絵がそのまま続くので、ここで点滅しない */
       }
       #boot .icon svg { display: block; width: 100%; height: 100%; }
       /* iOS の読み込みインジケーター（12 本の線が順に濃くなる）。読み込みが長いときだけ現れる */
@@ -90,10 +92,9 @@
         background: #6B6E7A; transform-origin: 1px 10px; opacity: 0.15;
         animation: boot-spoke 1s linear infinite;
       }
-      @keyframes boot-in { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
       @keyframes boot-fade { to { opacity: 1; } }
       @keyframes boot-spoke { 0% { opacity: 1; } 100% { opacity: 0.15; } }
-      @media (prefers-reduced-motion: reduce) { #boot .icon { animation: none; } }
+      @media (prefers-reduced-motion: reduce) { #boot.hide { transform: none; } }
     </style>
   </head>
   <body>

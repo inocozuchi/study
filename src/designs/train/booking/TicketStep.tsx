@@ -76,7 +76,7 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
 
       <div className="absolute inset-x-0 top-0 z-30 px-4 pt-safe">
         <div className="mt-1 flex items-center justify-between">
-          <button onClick={onBack} disabled={phase !== 'ready'} aria-label="戻る" className="tr-brass grid h-11 w-11 place-items-center rounded-full active:scale-95 disabled:opacity-0">
+          <button onClick={onBack} disabled={phase !== 'ready'} aria-label="戻る" className="tr-brass grid h-11 w-11 place-items-center rounded-full disabled:opacity-0">
             <ChevronLeft size={21} />
           </button>
           <div className="text-center">
@@ -139,7 +139,7 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
                 </motion.p>
               )}
             </AnimatePresence>
-            <button onClick={pass} disabled={phase !== 'ready'} className="tr-enji h-14 w-full rounded-[12px] text-[18px] font-bold tracking-[0.3em] active:scale-[0.98]">
+            <button onClick={pass} disabled={phase !== 'ready'} className="tr-enji h-14 w-full rounded-[12px] text-[18px] font-bold tracking-[0.3em]">
               改札を通る
             </button>
           </div>

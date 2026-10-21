@@ -23,4 +23,5 @@ export const flightDesign: TimerDesign = {
   Booking: FlightBooking,
   routes: flightRoutes,
   edgeColors: () => ({ top: '#050608', bottom: '#050608' }),
+  skeleton: '#050608',
 };

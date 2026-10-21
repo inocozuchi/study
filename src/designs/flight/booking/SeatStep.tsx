@@ -149,7 +149,6 @@ function TaskGlyph({ icon, size = 16 }: { icon: SubjectIconKey; size?: number })
 function Seat({ id, mine, taken, icon, active, onTap }: { id: string; mine: boolean; taken: boolean; icon: SubjectIconKey | null; active: boolean; onTap: (el: HTMLElement) => void }) {
   return (
     <motion.button
-      whileTap={taken ? undefined : { scale: 0.9 }}
       disabled={taken}
       aria-label={`${id}${taken ? '（埋まっています）' : mine ? '（選択中）' : ''}`}
       onClick={(e) => {
@@ -197,7 +196,7 @@ function TaskPopover({ seat, top, x, options, current, onPick }: { seat: string;
             <button
               key={t.name}
               onClick={() => onPick(t)}
-              className="flex h-9 items-center gap-1.5 rounded-full px-3 text-[13.5px] font-semibold transition-transform active:scale-95"
+              className="flex h-9 items-center gap-1.5 rounded-full px-3 text-[13.5px] font-semibold transition-transform"
               style={{ background: on ? tint : `${tint}2E`, color: on ? '#0B0C0F' : '#F5F6F8', boxShadow: `inset 0 0 0 1px ${tint}66, inset 0 1px 0 rgba(255,255,255,0.18)` }}
             >
               <TaskGlyph icon={t.icon} size={15} />

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { usePresentDepth } from '@/lib/depth';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bell, CalendarDays, ChevronLeft, ChevronRight, Clock, Coffee, Database, Leaf, Mountain, Music, PlusSquare, Repeat, Smartphone, Sun, Timer, Trash2,
@@ -42,7 +43,7 @@ function Row({ icon, title, detail, value, onClick, right, danger = false }: { i
   return (
     <Comp
       onClick={onClick}
-      className={`card flex min-h-[60px] w-full items-center gap-3 px-4 py-3.5 text-left transition-transform duration-100 ${onClick ? 'active:scale-[0.985] active:bg-accent-soft' : ''}`}
+      className={`card flex min-h-[60px] w-full items-center gap-3 px-4 py-3.5 text-left transition-colors duration-100 ${onClick ? 'active:bg-accent-soft' : ''}`}
     >
       {right ? (
         <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-chip bg-sunken text-fg-2">{icon}</span>
@@ -200,13 +201,15 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
   }, [picker]);
   const skyLabel = SKY_LABEL[settings.sky];
   const probe = useLayoutProbe();
+  // 下からせり上がり、後ろのホームは少し奥へ引っ込む（iOS のシート）
+  usePresentDepth(open);
 
   return createPortal(
     <>
       <AnimatePresence>
         {open && (
           <motion.div
-            className="fixed inset-x-0 top-0 h-app z-40 overflow-y-auto bg-page text-fg" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={springSheet}>
+            className="fixed inset-x-0 top-0 h-app z-40 overflow-y-auto bg-page text-fg" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={springSheet} style={{ willChange: 'transform' }}>
             {/* 時刻の帯の下は地の色で塗る（スクロールした項目が時刻に重ならない）。この画面と一緒に動く */}
             <div className="status-band z-10" data-area={OVERLAY_CHROME.statusArea} aria-hidden />
             <div className="mx-auto max-w-xl px-4 pb-[calc(env(safe-area-inset-bottom)+40px)] pt-safe">

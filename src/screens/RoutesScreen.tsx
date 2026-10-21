@@ -98,7 +98,7 @@ function RouteCard({ mode, subject, minutes, delay, onClick }: { mode?: DesignRo
   const remain = Math.max(0, subject.targetMinutes - minutes);
   const Art = mode?.Art;
   return (
-    <GlassCard delay={delay} className="overflow-hidden" whileTap={{ scale: 0.985 }} onClick={onClick} role="button" tabIndex={0} onKeyDown={(e) => {
+    <GlassCard delay={delay} className="overflow-hidden" onClick={onClick} role="button" tabIndex={0} onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onClick();
@@ -213,7 +213,6 @@ function RouteDetailSheet({ mode, subject, onClose, onEdit }: { mode?: DesignRou
 
           {timer.phase !== 'focus' && (
             <motion.button
-              whileTap={{ scale: 0.97 }}
               onClick={() => {
                 setSubject(live.id);
                 onClose();
