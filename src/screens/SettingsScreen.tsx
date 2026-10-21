@@ -75,6 +75,8 @@ const SKY_LABEL: Record<SkyOverride, string> = { auto: '旅の時間', clock: '�
 
 const FONT_SAMPLE = Array.from(new Set(FONTS.map((f) => `${f.label}${f.detail}　集中 25:00`).join(''))).join('');
 
+const TRAIN_CLASS_LABEL: Record<TrainClass, string> = { local: '普通', rapid: '快速', kyuko: '急行', express: '特急' };
+
 type PickerKey = 'focus' | 'short' | 'long' | 'every' | 'bgm' | 'ambient' | 'sky' | 'season' | 'font' | 'appearance' | 'trainClass';
 
 const AMBIENT_PRESETS: { key: string; label: string; mix: AmbientMix; icon: ReactNode }[] = [
@@ -178,6 +180,8 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
       value: settings.trainClass,
       options: [
         { value: 'local', label: '普通', detail: '各駅にのんびり', icon: <TrainFront size={18} /> },
+        { value: 'rapid', label: '快速', detail: '景色が約 1.2 倍速', icon: <TrainFront size={18} /> },
+        { value: 'kyuko', label: '急行', detail: '景色が約 1.4 倍速', icon: <TrainFrontTunnel size={18} /> },
         { value: 'express', label: '特急', detail: '景色が約 1.6 倍速', icon: <TrainFrontTunnel size={18} /> },
       ],
       onSelect: (v) => updateSettings({ trainClass: v as TrainClass }),
@@ -271,7 +275,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                 <Row icon={<Mountain size={21} />} title="モード" value={getDesign(settings.timerDesign).name} onClick={() => setModeOpen(true)} />
                 <Row icon={<IdCard size={21} />} title="旅のパス" value={`${settings.userName} · ${settings.goal.trim() || '目標を決める'}`} onClick={() => setProfileOpen(true)} />
                 <Row icon={<SeasonIcon season={settings.season} size={21} />} title="登山：シーズン" value={SEASONS[settings.season].label} onClick={() => setPicker('season')} />
-                <Row icon={<TrainFront size={21} />} title="列車：種別" value={settings.trainClass === 'express' ? '特急' : '普通'} onClick={() => setPicker('trainClass')} />
+                <Row icon={<TrainFront size={21} />} title="列車：種別" value={TRAIN_CLASS_LABEL[settings.trainClass] ?? '普通'} onClick={() => setPicker('trainClass')} />
                 <Row icon={<CloudRain size={19} />} title="列車：雨の景色" right={<Toggle checked={settings.trainWeather === 'rain'} onChange={(v) => updateSettings({ trainWeather: v ? 'rain' : 'clear' })} label="雨の景色" />} />
                 <Row icon={<Volume2 size={19} />} title="列車：走行音" right={<Toggle checked={settings.trainSound} onChange={set('trainSound')} label="走行音" />} />
                 <Row icon={<AudioLines size={19} />} title="航空：機内の音" detail="フライト中にジェットの低い音を鳴らす" right={<Toggle checked={settings.flightCabin} onChange={set('flightCabin')} label="機内の音" />} />

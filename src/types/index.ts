@@ -91,6 +91,10 @@ export interface JourneyBooking {
   task: string;
   step: TimeStep;
   bookedAt: number;
+  /** 列車：路線・進む向き（1 = 下り、-1 = 上り）・種別 */
+  line?: TrainLine;
+  dir?: 1 | -1;
+  cls?: TrainClass;
 }
 
 /** 旅の記録（ログブック）。到着、または途中で旅を終えたときに 1 件残す */
@@ -113,7 +117,10 @@ export interface TravelLog {
   endedAt: number;
   arrived: boolean;
 }
-export type TrainClass = 'local' | 'express';
+/** 列車の種別：普通 / 快速 / 急行 / 特急 */
+export type TrainClass = 'local' | 'rapid' | 'kyuko' | 'express';
+/** 列車の路線：函館・宗谷本線 / 東北本線 / 東海道・山陽本線 / 鹿児島本線・指宿枕崎線 / 稚内〜枕崎 全線走破 */
+export type TrainLine = 'hokkaido' | 'tohoku' | 'tokaido' | 'kyushu' | 'trail';
 export type TrainWeather = 'clear' | 'rain';
 
 export interface Settings {
@@ -154,14 +161,17 @@ export interface Settings {
   /** 1 日の始まり（起床）と終わり（就寝）。0 時からの分。就寝は 24 時を過ぎてもよい（25:00 = 翌 1 時） */
   wakeMin: number;
   sleepMin: number;
-  /** 列車：普通 / 特急 */
+  /** 列車：普通 / 快速 / 急行 / 特急 */
   trainClass: TrainClass;
   /** 列車の走行音（public/sounds/train.*） */
   trainSound: boolean;
   /** 列車：天気（雨なら雨の景色） */
   trainWeather: TrainWeather;
-  /** 列車の予約：出発駅（東海道線の駅名） */
+  /** 列車の予約：出発駅（路線の駅名） */
   trainFrom: string;
+  /** 列車の路線と進む向き（1 = 下り、-1 = 上り）。着いた駅から同じ向きに乗り継ぐ */
+  trainLine: TrainLine;
+  trainDir: 1 | -1;
   /** 航空の予約：出発空港（空港コード） */
   flightFrom: string;
   /** 航空：機内の環境音（ジェットの低い音） */

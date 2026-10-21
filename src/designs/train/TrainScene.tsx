@@ -4,14 +4,14 @@ import { useTimer } from '@/store/TimerStore';
 import { MIN } from '@/lib/time';
 import { TrainStage, type StationSign } from './scene/TrainStage';
 import { stopFor, type StopInfo } from './stations';
-import { STATIONS } from './booking/line';
+import { classOf, kanaOf } from './booking/line';
 import type { ActiveTimer, JourneyBooking } from '@/types';
 import type { DesignSceneProps } from '../types';
 
-/** 止まる場所 → 駅名標の文字（東海道本線の駅はかな、ほかの駅はローマ字を小さく） */
+/** 止まる場所 → 駅名標の文字（路線の駅はかな、ほかの駅はローマ字を小さく） */
 const toSign = (st: StopInfo): StationSign => ({
   name: st.name,
-  reading: STATIONS.find((s) => s.name === st.name)?.kana ?? st.roman,
+  reading: kanaOf(st.name) ?? st.roman,
   prev: st.prev,
   next: st.next,
 });
@@ -52,7 +52,7 @@ export function TrainScene({ hour, ended, paused }: DesignSceneProps) {
     <TrainStage
       hour={ended ? 21.6 : hour}
       moving={moving}
-      express={settings.trainClass === 'express'}
+      cls={classOf(timer.booking?.cls ?? settings.trainClass)}
       rain={settings.trainWeather === 'rain'}
       paused={paused}
       sound={settings.trainSound && journeying && !ended}

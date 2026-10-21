@@ -31,6 +31,8 @@ export const DEFAULT_SETTINGS: Settings = {
   trainSound: true,
   trainWeather: 'clear',
   trainFrom: '東京',
+  trainLine: 'tokaido',
+  trainDir: 1,
   flightFrom: 'HND',
   flightCabin: true,
   bookingStep: 'pomodoro',
