@@ -150,7 +150,7 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
       <AnimatePresence>{view.window && <WindowView onClose={() => setFlightView({ window: false })} />}</AnimatePresence>
 
       {/* 左上 */}
-      <div className="pointer-events-none absolute left-4 top-[calc(env(safe-area-inset-top)+6px)] z-30 flex flex-col gap-2.5">
+      <div className="pointer-events-none absolute left-4 top-[calc(var(--safe-top)+6px)] z-30 flex flex-col gap-2.5">
         <GlassButton label={running ? '一時停止' : '再開'} onClick={() => (phase === 'focus' ? t.toggle() : rest ? t.skipBreak() : t.start())}>
           {phase === 'focus' && running ? <Pause size={18} fill="currentColor" strokeWidth={0} /> : <Play size={18} fill="currentColor" strokeWidth={0} />}
         </GlassButton>
@@ -166,7 +166,7 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
       </div>
 
       {/* 右上 */}
-      <div className="fl-glass pointer-events-auto absolute right-4 top-[calc(env(safe-area-inset-top)+6px)] z-30 flex flex-col rounded-full p-1" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
+      <div className="fl-glass pointer-events-auto absolute right-4 top-[calc(var(--safe-top)+6px)] z-30 flex flex-col rounded-full p-1" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
         {[
           { key: 'route', label: 'ルート全体', on: view.camera === 'route', Icon: Maximize2, act: () => setFlightView({ camera: 'route' }) },
           { key: 'plane', label: '機体を追う', on: view.camera === 'plane', Icon: Navigation, act: () => setFlightView({ camera: 'plane' }) },

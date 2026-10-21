@@ -75,7 +75,7 @@ export function SeatStep({ draft, route, patch, onBack, onNext }: { draft: Fligh
       </div>
 
       <div className="no-scrollbar absolute inset-0 overflow-y-auto overscroll-contain" onClick={() => setOpen(null)}>
-        <div ref={content} className="relative mx-auto w-full max-w-[393px] pb-[calc(env(safe-area-inset-bottom)+120px)] pt-[calc(env(safe-area-inset-top)+64px)]">
+        <div ref={content} className="relative mx-auto w-full max-w-[393px] pb-[calc(env(safe-area-inset-bottom)+120px)] pt-[calc(var(--safe-top)+64px)]">
           <Fuselage>
             {Array.from({ length: ROWS }, (_, i) => i + 1).map((row) => (
               <div key={row} className="flex items-center justify-center gap-[6px]" style={{ height: ROW_H }}>

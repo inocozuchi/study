@@ -26,7 +26,7 @@ export function WindowView({ onClose }: { onClose: () => void }) {
       onPointerDown={(e) => e.stopPropagation()}
       onPointerUp={(e) => e.stopPropagation()}
     >
-      <button onClick={onClose} aria-label="窓を閉じる（地図に戻る）" className="fl-glass absolute left-1/2 top-[calc(env(safe-area-inset-top)+10px)] flex h-10 -translate-x-1/2 items-center gap-1.5 rounded-full pl-3 pr-4 text-[14px] font-semibold active:scale-95">
+      <button onClick={onClose} aria-label="窓を閉じる（地図に戻る）" className="fl-glass absolute left-1/2 top-[calc(var(--safe-top)+10px)] flex h-10 -translate-x-1/2 items-center gap-1.5 rounded-full pl-3 pr-4 text-[14px] font-semibold active:scale-95">
         <X size={16} /> 地図に戻る
       </button>
 
@@ -78,7 +78,7 @@ export function WindowView({ onClose }: { onClose: () => void }) {
           </motion.div>
         </div>
       </div>
-      <p className="absolute top-[calc(env(safe-area-inset-top)+62px)] text-[12px] text-white/45">シェードは上下にドラッグして開け閉めできます</p>
+      <p className="absolute top-[calc(var(--safe-top)+62px)] text-[12px] text-white/45">シェードは上下にドラッグして開け閉めできます</p>
     </motion.div>
   );
 }

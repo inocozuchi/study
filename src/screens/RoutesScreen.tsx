@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Lock, Mountain, Pencil, Plus } from 'lucide-react';
+import { Check, Lock, Mountain, Pencil, Plus, Route } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { useTimer } from '@/store/TimerStore';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -15,12 +15,18 @@ import { METERS_PER_MINUTE, STAGES, fmtMeters, routeProgress, stageFor } from '@
 import { fmtDateJa, fmtDuration, fmtTime } from '@/lib/time';
 import { alpha } from '@/lib/subjects';
 import { springSoft } from '@/lib/motion';
+import { getDesign, type DesignRoutes } from '@/designs';
 import type { Subject } from '@/types';
 
 type View = 'routes' | 'journal';
 
+/**
+ * 科目ごとの道のり。旅のモードに合わせて見た目が変わる：登山＝山岳ルート、列車＝路線図、航空＝航路図
+ * （列車・航空はデザインの routes。累計の集中がその道のりの上の現在地になる）。
+ */
 export function RoutesScreen() {
-  const { activeSubjects, minutesBySubject } = useApp();
+  const { activeSubjects, minutesBySubject, settings } = useApp();
+  const mode = getDesign(settings.timerDesign).routes;
   const [view, setView] = useState<View>('routes');
   const [editing, setEditing] = useState<Subject | null | undefined>(undefined);
   const [detail, setDetail] = useState<Subject | null>(null);
@@ -32,8 +38,10 @@ export function RoutesScreen() {
     <div className="mx-auto max-w-xl px-5 pb-nav pt-safe">
       <header className="flex items-end justify-between pt-2">
         <div>
-          <p className="text-[13px] font-semibold text-fg-2">{activeSubjects.length} ルート · 登頂 {summited.length}</p>
-          <h1 className="text-[32px] font-bold leading-tight tracking-tight">山岳ルート</h1>
+          <p className="text-[13px] font-semibold text-fg-2">
+            {activeSubjects.length} {mode?.unit ?? 'ルート'} · {mode?.doneWord ?? '登頂'} {summited.length}
+          </p>
+          <h1 className="text-[32px] font-bold leading-tight tracking-tight">{mode?.title ?? '山岳ルート'}</h1>
         </div>
         <Pressable onClick={() => setEditing(null)} aria-label="ルートを追加" className="grid h-11 w-11 place-items-center rounded-full bg-accent text-white shadow-raised">
           <Plus size={22} strokeWidth={2.6} />
@@ -45,42 +53,50 @@ export function RoutesScreen() {
         onChange={setView}
         className="mt-4"
         options={[
-          { value: 'routes', label: '登山中のルート' },
-          { value: 'journal', label: '旅の記録帳' },
+          { value: 'routes', label: mode?.tabs[0] ?? '登山中のルート' },
+          { value: 'journal', label: mode?.tabs[1] ?? '旅の記録帳' },
         ]}
       />
 
       {view === 'routes' ? (
         <div className="mt-4 space-y-3">
           {ongoing.map((s, i) => (
-            <RouteCard key={s.id} subject={s} minutes={minutesBySubject[s.id] ?? 0} delay={i * 0.05} onClick={() => setDetail(s)} />
+            <RouteCard key={s.id} mode={mode} subject={s} minutes={minutesBySubject[s.id] ?? 0} delay={i * 0.05} onClick={() => setDetail(s)} />
           ))}
           {summited.map((s, i) => (
-            <RouteCard key={s.id} subject={s} minutes={minutesBySubject[s.id] ?? 0} delay={(ongoing.length + i) * 0.05} onClick={() => setDetail(s)} />
+            <RouteCard key={s.id} mode={mode} subject={s} minutes={minutesBySubject[s.id] ?? 0} delay={(ongoing.length + i) * 0.05} onClick={() => setDetail(s)} />
           ))}
           {activeSubjects.length === 0 && (
             <GlassCard className="p-6 text-center">
-              <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent-soft text-accent-ink"><Mountain size={28} strokeWidth={1.9} /></span>
-              <p className="mt-2 text-[15px] font-semibold">まだルートがありません</p>
-              <p className="mt-1 text-[13px] text-fg-2">勉強したい科目ごとに、登る山を決めましょう</p>
+              <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent-soft text-accent-ink">{mode ? <Route size={28} strokeWidth={1.9} /> : <Mountain size={28} strokeWidth={1.9} />}</span>
+              <p className="mt-2 text-[15px] font-semibold">まだ{mode?.unit ?? 'ルート'}がありません</p>
+              <p className="mt-1 text-[13px] text-fg-2">{mode ? '科目ごとに、集中した時間だけ道のりを進みます' : '勉強したい科目ごとに、登る山を決めましょう'}</p>
               <button onClick={() => setEditing(null)} className="mt-4 rounded-full bg-accent px-5 py-2.5 text-[14px] font-bold text-white">最初のルートをひらく</button>
             </GlassCard>
           )}
         </div>
+      ) : mode ? (
+        <LogBook mode={mode} />
       ) : (
         <Journal summited={summited} />
       )}
 
-      <RouteDetailSheet subject={detail} onClose={() => setDetail(null)} onEdit={(s) => { setDetail(null); setEditing(s); }} />
+      <RouteDetailSheet mode={mode} subject={detail} onClose={() => setDetail(null)} onEdit={(s) => { setDetail(null); setEditing(s); }} />
       <SubjectEditorSheet open={editing !== undefined} subject={editing} onClose={() => setEditing(undefined)} />
     </div>
   );
 }
 
-function RouteCard({ subject, minutes, delay, onClick }: { subject: Subject; minutes: number; delay: number; onClick: () => void }) {
+/** 道のりの上の現在地（最後に通り過ぎた印） */
+function stopAt(mode: DesignRoutes, prog: number) {
+  return [...mode.stops].reverse().find((s) => s.at <= prog + 1e-6) ?? mode.stops[0];
+}
+
+function RouteCard({ mode, subject, minutes, delay, onClick }: { mode?: DesignRoutes; subject: Subject; minutes: number; delay: number; onClick: () => void }) {
   const prog = routeProgress(subject, minutes);
   const stage = subject.summitedAt ? STAGES[4] : stageFor(prog);
   const remain = Math.max(0, subject.targetMinutes - minutes);
+  const Art = mode?.Art;
   return (
     <GlassCard delay={delay} className="overflow-hidden" whileTap={{ scale: 0.985 }} onClick={onClick} role="button" tabIndex={0} onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -89,19 +105,19 @@ function RouteCard({ subject, minutes, delay, onClick }: { subject: Subject; min
         }
       }}>
       <div className="relative h-36">
-        <MountainArt stage={stage.index} color={subject.color} progress={prog} summited={!!subject.summitedAt} className="absolute inset-0 h-full w-full" />
+        {Art ? <Art subject={subject} progress={prog} summited={!!subject.summitedAt} className="absolute inset-0 h-full w-full" /> : <MountainArt stage={stage.index} color={subject.color} progress={prog} summited={!!subject.summitedAt} className="absolute inset-0 h-full w-full" />}
         <div className="absolute inset-0 bg-gradient-to-t from-night-950/80 via-night-950/10 to-transparent" />
         {/* 絵の上の文字は外観に関係なく白 */}
         <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-bold text-white">
-          <span className="h-1.5 w-1.5 rounded-full" style={{ background: stage.tint }} />
-          {subject.summitedAt ? '登頂済み' : `${stage.index + 1}. ${stage.name}`}
+          <span className="h-1.5 w-1.5 rounded-full" style={{ background: mode ? subject.color : stage.tint }} />
+          {mode ? (subject.summitedAt ? mode.doneWord : `現在地 ${stopAt(mode, prog).name}`) : subject.summitedAt ? '登頂済み' : `${stage.index + 1}. ${stage.name}`}
         </div>
         <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.35)]">
           <div className="flex items-center gap-2.5">
             <SubjectBadge subject={subject} size={38} />
             <div className="leading-tight">
               <p className="text-[17px] font-bold">{subject.name}</p>
-              <p className="text-[12px] text-white/75">{subject.mountainName}</p>
+              <p className="text-[12px] text-white/75">{mode?.lineName ?? subject.mountainName}</p>
             </div>
           </div>
           <p className="tabular text-[22px] font-bold tracking-tight">{Math.floor(prog * 100)}<span className="text-[13px] text-white/75">%</span></p>
@@ -112,15 +128,15 @@ function RouteCard({ subject, minutes, delay, onClick }: { subject: Subject; min
           <motion.div className="h-full rounded-full" style={{ background: `linear-gradient(90deg, ${alpha(subject.color, 0.6)}, ${subject.color})` }} initial={{ width: 0 }} animate={{ width: `${prog * 100}%` }} transition={{ ...springSoft, delay: delay + 0.15 }} />
         </div>
         <div className="tabular mt-2 flex justify-between text-[12px] text-fg-2">
-          <span>標高 {fmtMeters(minutes * METERS_PER_MINUTE)} / {fmtMeters(subject.targetMinutes * METERS_PER_MINUTE)}</span>
-          <span>{subject.summitedAt ? `${fmtDateJa(subject.summitedAt, false)} 登頂` : `登頂まであと ${fmtDuration(remain)}`}</span>
+          <span>{mode ? mode.distance(prog) : `標高 ${fmtMeters(minutes * METERS_PER_MINUTE)} / ${fmtMeters(subject.targetMinutes * METERS_PER_MINUTE)}`}</span>
+          <span>{subject.summitedAt ? `${fmtDateJa(subject.summitedAt, false)} ${mode?.doneWord ?? '登頂'}` : `${mode?.doneWord ?? '登頂'}まであと ${fmtDuration(remain)}`}</span>
         </div>
       </div>
     </GlassCard>
   );
 }
 
-function RouteDetailSheet({ subject, onClose, onEdit }: { subject: Subject | null; onClose: () => void; onEdit: (s: Subject) => void }) {
+function RouteDetailSheet({ mode, subject, onClose, onEdit }: { mode?: DesignRoutes; subject: Subject | null; onClose: () => void; onEdit: (s: Subject) => void }) {
   const { minutesBySubject, sessions, subjectById } = useApp();
   const { setSubject, timer } = useTimer();
   const live = subject ? subjectById(subject.id) ?? subject : null;
@@ -132,7 +148,7 @@ function RouteDetailSheet({ subject, onClose, onEdit }: { subject: Subject | nul
     <Sheet
       open={!!live}
       onClose={onClose}
-      title={live?.mountainName}
+      title={mode ? mode.title : live?.mountainName}
       subtitle={live && `${live.name} · 累計 ${fmtDuration(minutes)}`}
       action={live && (
         <Pressable onClick={() => onEdit(live)} className="flex h-8 items-center gap-1 rounded-full bg-fill px-3 text-[13px] font-semibold">
@@ -143,9 +159,13 @@ function RouteDetailSheet({ subject, onClose, onEdit }: { subject: Subject | nul
       {live && (
         <div className="pb-4">
           <div className="overflow-hidden rounded-3xl">
-            <MountainArt stage={live.summitedAt ? 4 : stageFor(prog).index} color={live.color} progress={prog} summited={!!live.summitedAt} className="h-40 w-full" />
+            {mode ? <mode.Art subject={live} progress={prog} summited={!!live.summitedAt} className="h-40 w-full" /> : <MountainArt stage={live.summitedAt ? 4 : stageFor(prog).index} color={live.color} progress={prog} summited={!!live.summitedAt} className="h-40 w-full" />}
           </div>
 
+          {mode ? (
+            <StopList mode={mode} subject={live} prog={prog} />
+          ) : (
+          <>
           <p className="section-label mb-3 mt-5">ルートの道のり</p>
           <ol className="relative">
             {STAGES.map((st, i) => {
@@ -174,6 +194,8 @@ function RouteDetailSheet({ subject, onClose, onEdit }: { subject: Subject | nul
               );
             })}
           </ol>
+          </>
+          )}
 
           {recent.length > 0 && (
             <>
@@ -198,7 +220,7 @@ function RouteDetailSheet({ subject, onClose, onEdit }: { subject: Subject | nul
               }}
               className="btn-primary mt-5 w-full"
             >
-              このルートを次の登山に選ぶ
+              {mode?.chooseLabel ?? 'このルートを次の登山に選ぶ'}
             </motion.button>
           )}
         </div>
@@ -273,4 +295,87 @@ function Journal({ summited }: { summited: Subject[] }) {
 
 function SectionTitle({ children }: { children: ReactNode }) {
   return <h2 className="mb-3 text-[17px] font-bold tracking-tight">{children}</h2>;
+}
+
+/** 列車・航空の道のり：駅・空港の印を、通り過ぎたか・いまどこかで並べる */
+function StopList({ mode, subject, prog }: { mode: DesignRoutes; subject: Subject; prog: number }) {
+  const done = !!subject.summitedAt;
+  const here = stopAt(mode, done ? 1 : prog);
+  return (
+    <>
+      <p className="section-label mb-3 mt-5">{mode.lineName}</p>
+      <ol className="relative">
+        {mode.stops.map((st, i) => {
+          const reached = done || prog >= st.at - 1e-6;
+          const current = st === here && !done;
+          return (
+            <li key={`${st.name}-${i}`} className="relative flex gap-3 pb-3.5 last:pb-0">
+              {i < mode.stops.length - 1 && <span className="absolute left-[11px] top-6 h-[calc(100%-14px)] w-[2px] rounded-full" style={{ background: reached ? alpha(subject.color, 0.6) : 'rgb(var(--c-line))' }} />}
+              <span className="relative mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full" style={{ background: reached ? subject.color : 'rgb(var(--c-fill))', boxShadow: current ? `0 0 0 4px ${alpha(subject.color, 0.25)}` : 'none' }}>
+                {reached && !current && <Check size={13} strokeWidth={3} className="text-white" />}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className={`text-[15px] font-semibold ${reached ? '' : 'text-fg-2'}`}>
+                  {st.name}
+                  {current && <span className="ml-2 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: alpha(subject.color, 0.2), color: subject.color }}>現在地</span>}
+                </p>
+                <p className="tabular text-[11.5px] text-fg-3">
+                  {i === 0 ? '出発' : `${fmtDuration(st.at * subject.targetMinutes)} から`} · {mode.distance(st.at).split(' / ')[0]} km
+                </p>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </>
+  );
+}
+
+/** 列車・航空の記録：予約した旅のログブック */
+function LogBook({ mode }: { mode: DesignRoutes }) {
+  const { logs } = useApp();
+  const list = useMemo(() => logs.filter((l) => l.mode === mode.logMode).sort((a, b) => b.endedAt - a.endedAt), [logs, mode.logMode]);
+  const km = list.reduce((s, l) => s + l.km, 0);
+  const minutes = list.reduce((s, l) => s + l.minutes, 0);
+  const arrived = list.filter((l) => l.arrived).length;
+  return (
+    <div className="mt-4 space-y-3">
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          ['旅', `${list.length}`],
+          ['距離', `${Math.round(km).toLocaleString()} km`],
+          ['集中', fmtDuration(minutes, true)],
+        ].map(([k, v]) => (
+          <GlassCard key={k} className="px-3 py-3 text-center">
+            <p className="text-[12px] text-fg-2">{k}</p>
+            <p className="tabular mt-0.5 text-[17px] font-bold">{v}</p>
+          </GlassCard>
+        ))}
+      </div>
+      {list.length ? (
+        <GlassCard className="divide-y divide-line">
+          {list.slice(0, 30).map((l) => (
+            <div key={l.id} className="flex items-center gap-3 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[15px] font-semibold">
+                  {l.fromName} → {l.toName}
+                  {!l.arrived && <span className="ml-1.5 text-[12px] font-medium text-fg-2">（途中まで）</span>}
+                </p>
+                <p className="tabular truncate text-[12px] text-fg-2">
+                  {fmtDateJa(l.endedAt, false)} · {l.seat} · {l.task}
+                </p>
+              </div>
+              <div className="tabular text-right text-[13px]">
+                <p className="font-semibold">{l.km.toLocaleString()} km</p>
+                <p className="text-fg-2">{fmtDuration(l.minutes)}</p>
+              </div>
+            </div>
+          ))}
+        </GlassCard>
+      ) : (
+        <GlassCard className="p-5 text-center text-[13px] text-fg-2">予約した旅を終えると、ここに記録が残ります</GlassCard>
+      )}
+      {arrived > 0 && <p className="text-center text-[12px] text-fg-2">予約どおりに{mode.doneWord === '到着' ? '到着' : '終着まで乗車'}：{arrived} 回</p>}
+    </div>
+  );
 }

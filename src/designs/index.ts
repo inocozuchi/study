@@ -24,4 +24,4 @@ export const TRAVEL_MODES: { id: TravelMode; mode: TimerDesign; available: boole
   { id: 'flight', mode: flightDesign, available: true, Icon: PlanePicto },
 ];
 
-export type { BookingPlan, DesignBookingProps, ProfileInfo, TimerDesign, TimerDesignId } from './types';
+export type { BookingPlan, DesignBookingProps, DesignRoutes, ProfileInfo, TimerDesign, TimerDesignId } from './types';

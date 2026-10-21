@@ -84,7 +84,7 @@ export function PassStep({ draft, route, onBack, onBoard }: { draft: FlightDraft
         </AnimatePresence>
       </div>
 
-      <div className="absolute inset-x-0 top-[calc(env(safe-area-inset-top)+126px)] mx-auto w-[min(92vw,360px)]">
+      <div className="absolute inset-x-0 top-[calc(var(--safe-top)+126px)] mx-auto w-[min(92vw,360px)]">
         <motion.div initial={{ y: 40, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ type: 'spring', stiffness: 220, damping: 24 }}>
           <PassCard
             data={data}

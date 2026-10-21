@@ -149,6 +149,7 @@ interface TimerDesign {
   ProfileCard     // 旅のパスのカード（登山者 ID カード / 指定席券）
   ProfileOptions? // 旅のパスに差し込むカスタマイズ（登山：ハイカーの服・テント）
   edgeColors?     // ホームで画面の外の帯（ステータスバー・ホームバー）を塗る色
+  routes?         // ルートの画面の見た目（列車＝路線図、航空＝航路図。ないモードは山岳ルート）
 }
 ```
 
@@ -168,6 +169,12 @@ interface TimerDesign {
 
 タイマーは「旅（journey）」単位：`startJourney` → 集中/休憩を繰り返す → `endJourney`（長押し）。
 予約した旅は予定の集中時間（`journeyTargetMs`）に届くと自動で到着し、リザルトを出す（`arrival` → App が `setResult`）。
+
+## ルートの画面（旅のモードに連動）
+- `RoutesScreen` は選んでいるモードの `design.routes` を使う：登山＝山岳ルート（MountainArt・標高・登頂スタンプ）、
+  列車＝路線図（東海道本線 東京→大阪。科目の累計の割合だけ線路が伸びる）、航空＝航路図（東アジア周遊便 HND→…→HND）。
+- 列車・航空のカードの絵は各デザインの `routes.tsx`（地図の SVG を `<image>` で敷いた 1 枚の静的な SVG。動かさない）。
+  詳しいシートは駅・空港の印の一覧、記録のタブはログブック（`TravelLog`）。
 
 ## 予約（列車・航空）
 - 3 ステップ：① 時間と行き先（上に地図、下に横目盛りダイヤル。刻みは「ポモドーロ 25 分刻み」/「フリー 5 分刻み」）→
@@ -314,6 +321,8 @@ interface TimerDesign {
 ### 余白・レイアウト（iPhone のホーム画面アプリ）
 - 画面左右 16–20px、カード内 16–20px、要素間 8/12/16/24。
 - **全画面**：`viewport-fit=cover` + `black-translucent`。シーンは時刻の帯の下まで広がり、上に帯を作らない。文字・ボタンは `pt-safe` で時刻の下へ。
+- **上の部品の線は `--safe-top`**（安全域 + 18px。`pt-safe` もこれ）。iOS のホーム画面アプリは時刻の帯のすぐ下をぼかして見せるので、そこに部品を置かない。
+  デザインの中で上からの位置を決めるときも `calc(var(--safe-top) + …)` を使う（`env(safe-area-inset-top)` を直接使わない）。
 - **iOS 26 のホーム画面アプリの高さ**（WebKit 301108）：cover + black-translucent で文書が画面より低いと、iOS は高さを時刻の帯の分だけ短く渡す
   （fixed の枠・タブバーが短い下端で止まり、下に地の色の帯が残る）。`index.css` の `@media (display-mode: standalone)` で
   `html { min-height: min(100lvh, calc(100% + env(safe-area-inset-top))) }` として文書を画面の高さまで伸ばす。この規則は消さない。

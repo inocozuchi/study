@@ -88,7 +88,7 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
       </div>
 
       <div className="no-scrollbar absolute inset-0 overflow-y-auto overscroll-contain" onClick={() => setOpen(null)}>
-        <div ref={content} className="relative mx-auto w-full max-w-[393px] pb-[calc(env(safe-area-inset-bottom)+120px)] pt-[calc(env(safe-area-inset-top)+150px)]">
+        <div ref={content} className="relative mx-auto w-full max-w-[393px] pb-[calc(env(safe-area-inset-bottom)+120px)] pt-[calc(var(--safe-top)+150px)]">
           <CarBody express={draft.cls === 'express'}>
             {draft.cls === 'local' ? (
               Array.from({ length: BOXES }, (_, b) => (
