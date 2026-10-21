@@ -23,7 +23,16 @@ export const TAB_BAR_H = 60;
  * 左右と下に余白を取り、iPhone の角の丸みで欠けないようにする。
  * 選ばれたタブは淡い青の面がスプリングで横へ滑る（layoutId は使わない）。動く間だけ横に少し伸び、着くと縮む（流体のピル）。
  */
-export function TabBar({ tab, onChange }: { tab: TabKey; onChange: (t: TabKey) => void }) {
+/** タブバーの着せ替え（ホームにいる間は旅のモードの色。ほかの画面はアプリ本体の白いバー） */
+export interface TabBarSkin {
+  bar: string;
+  pill: string;
+  on: string;
+  off: string;
+}
+const PLAIN: TabBarSkin = { bar: 'border border-line bg-surface shadow-raised', pill: 'bg-accent-soft', on: 'text-accent-ink', off: 'text-fg-2' };
+
+export function TabBar({ tab, onChange, skin = PLAIN }: { tab: TabKey; onChange: (t: TabKey) => void; skin?: TabBarSkin }) {
   const idx = Math.max(0, TABS.findIndex((t) => t.key === tab));
   const stretch = useMotionValue(1);
   const prev = useRef(idx);
@@ -37,12 +46,12 @@ export function TabBar({ tab, onChange }: { tab: TabKey; onChange: (t: TabKey) =
   return (
     <div className="tabbar-pad px-6">
       <nav
-        className="relative mx-auto flex max-w-[340px] rounded-full border border-line bg-surface p-1.5 shadow-raised"
+        className={`relative mx-auto flex max-w-[340px] rounded-full p-1.5 transition-colors duration-300 ${skin.bar}`}
         style={{ height: TAB_BAR_H }}
         aria-label="メインナビゲーション"
       >
         <motion.span
-          className="absolute bottom-1.5 left-1.5 top-1.5 rounded-full bg-accent-soft"
+          className={`absolute bottom-1.5 left-1.5 top-1.5 rounded-full transition-colors duration-300 ${skin.pill}`}
           style={{ width: `calc((100% - 12px) / ${TABS.length})`, scaleX: stretch, willChange: 'transform' }}
           initial={false}
           animate={{ x: `${idx * 100}%` }}
@@ -57,7 +66,7 @@ export function TabBar({ tab, onChange }: { tab: TabKey; onChange: (t: TabKey) =
               transition={spring}
               aria-label={label}
               aria-current={active ? 'page' : undefined}
-              className={`relative z-10 grid flex-1 place-items-center rounded-full transition-colors duration-150 ${active ? 'text-accent-ink' : 'text-fg-2'}`}
+              className={`relative z-10 grid flex-1 place-items-center rounded-full transition-colors duration-150 ${active ? skin.on : skin.off}`}
             >
               <Icon size={24} strokeWidth={active ? 2.3 : 1.9} />
             </motion.button>

@@ -90,16 +90,16 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
       {/* ランプの明かり */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_30%_at_50%_18%,rgba(255,190,120,0.16),transparent_70%)]" />
 
-      <div className="absolute inset-x-0 top-0 z-30 px-4 pt-safe">
-        <div className="mt-1 flex items-center justify-between">
-          <button onClick={onBack} disabled={phase !== 'ready'} aria-label="戻る" className="tr-brass grid h-11 w-11 place-items-center rounded-full disabled:opacity-0">
-            <ChevronLeft size={21} />
+      <div className="absolute inset-x-0 top-0 z-30">
+        <div className="screen-header">
+          <button onClick={onBack} disabled={phase !== 'ready'} aria-label="戻る" className="btn-icon tr-brass disabled:opacity-0">
+            <ChevronLeft />
           </button>
-          <div className="text-center">
+          <div>
             <p className="text-[17px] font-bold tracking-[0.2em] text-[#F4EEDD]">{phase === 'issuing' ? '発券中' : phase === 'ready' ? '乗車券' : phase === 'bell' ? '発車いたします' : '改札'}</p>
             <Steps at={3} />
           </div>
-          <span className="w-11" />
+          <span />
         </div>
       </div>
 
@@ -169,7 +169,7 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
           <div className="mx-auto mt-5 w-fit rounded-[4px] border-2 border-[#B8955A] bg-[#F4EEDD] px-4 py-1 text-[18px] font-bold tracking-[0.5em] text-[#4A2E1C] shadow-[0_6px_12px_-6px_rgba(0,0,0,0.7)]" aria-label="改札口">
             口札改
           </div>
-          <div className="absolute inset-x-0 bottom-0 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)]">
+          <div className="absolute inset-x-0 bottom-0 px-3 pb-[calc(env(safe-area-inset-bottom)+14px)]">
             <AnimatePresence mode="popLayout">
               {phase === 'ready' ? (
                 <motion.p key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mb-2 text-center text-[12.5px] text-[#F4EEDD]/60">
@@ -181,7 +181,7 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
                 </motion.p>
               )}
             </AnimatePresence>
-            <button onClick={pass} disabled={phase !== 'ready'} className="tr-enji h-14 w-full rounded-[12px] text-[18px] font-bold tracking-[0.3em]">
+            <button onClick={pass} disabled={phase !== 'ready'} className="btn-cta tr-cta tr-enji">
               改札を通る
             </button>
           </div>

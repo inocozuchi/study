@@ -92,11 +92,11 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
       onContextMenu={(e) => e.preventDefault()}
     >
       {/* 上部：音楽・方向幕と時間・完了 */}
-      <div className="pointer-events-none flex items-start justify-between px-5 pt-safe">
-        <motion.button transition={springBouncy} onClick={onMusic} aria-label="サウンド" className="tr-btn pointer-events-auto mt-2 grid h-12 w-12 place-items-center">
-          <Music size={20} />
+      <div className="screen-header pointer-events-none !h-auto !items-start">
+        <motion.button transition={springBouncy} onClick={onMusic} aria-label="サウンド" className="btn-icon tr-btn pointer-events-auto mt-px">
+          <Music />
         </motion.button>
-        <div className="mt-2 flex flex-col items-center">
+        <div className="flex flex-col items-center">
           <RollSign cls={cls} goal={destinationOf(timer, settings)} />
           <button onClick={() => !rest && !waiting && t.toggle()} className="pointer-events-auto mt-3 text-center" aria-label={timer.running ? '一時停止' : '再開'}>
             <span className="tabular block font-digits text-[40px] font-semibold leading-none tracking-wider text-[#F4EEDD] [text-shadow:0_2px_0_rgba(0,0,0,0.45),0_0_18px_rgba(0,0,0,0.3)]">{fmtTimer(shown)}</span>
@@ -107,9 +107,9 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
           transition={springBouncy}
           onClick={() => (rest ? t.skipBreak() : waiting ? t.start() : t.finishFocus())}
           aria-label={rest ? '休憩を終えて発車' : waiting ? '発車' : '集中を完了して停車'}
-          className="tr-btn pointer-events-auto mt-2 grid h-12 w-12 place-items-center"
+          className="btn-icon tr-btn pointer-events-auto mt-px"
         >
-          <Check size={22} strokeWidth={3} />
+          <Check strokeWidth={3} />
         </motion.button>
       </div>
 

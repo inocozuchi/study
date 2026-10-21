@@ -181,7 +181,8 @@ function Shell() {
             <IslandPlayer visible={!onHome && !immersive} onOpen={() => setTab('trail')} />
           </div>
         </div>
-        <TabBar tab={tab} onChange={setTab} />
+        {/* ホームにいる間は、タブバーも旅のモードの色に着せ替える */}
+        <TabBar tab={tab} onChange={setTab} skin={onHome ? getDesign(settings.timerDesign).home.tabbar : undefined} />
       </div>
       {/* 奥へ引っ込んだときの暗がり（filter は使わない：iPhone で重い） */}
       <motion.div className="pointer-events-none absolute inset-0 z-[90] bg-black" initial={false} animate={{ opacity: depth ? 0.22 : 0 }} transition={{ duration: 0.35, ease: easeIOS }} />

@@ -57,22 +57,22 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
   return (
     <div className="tr-wood tr-mincho absolute inset-0">
       {/* 見出し：文字の後ろは塗りの面（ぼかし・暗いグラデーションを文字に重ねない）。下の縁だけ座席へ溶かす */}
-      <div className="absolute inset-x-0 top-0 z-20 bg-[#2a180e] px-4 pb-3 pt-safe after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-5 after:bg-gradient-to-b after:from-[#2a180e] after:to-transparent after:content-['']">
-        <div className="mt-1 flex items-center justify-between">
-          <button onClick={onBack} aria-label="戻る" className="tr-brass grid h-11 w-11 place-items-center rounded-full">
-            <ChevronLeft size={21} />
+      <div className="absolute inset-x-0 top-0 z-20 bg-[#2a180e] pb-3 after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-5 after:bg-gradient-to-b after:from-[#2a180e] after:to-transparent after:content-['']">
+        <div className="screen-header">
+          <button onClick={onBack} aria-label="戻る" className="btn-icon tr-brass">
+            <ChevronLeft />
           </button>
-          <div className="text-center">
+          <div>
             <p className="text-[17px] font-bold tracking-[0.2em] text-[#F4EEDD]">座席を指定</p>
-            <p className="text-[12px] tracking-wider text-[#D9C08A]">
-              {draft.origin} → {stop.station.name} · {jhm(draft.minutes)}
-            </p>
             <Steps at={2} />
           </div>
-          <span className="w-11" />
+          <span />
         </div>
+        <p className="mt-1 px-5 text-center text-[12px] tracking-wider text-[#D9C08A]">
+          {draft.origin} → {stop.station.name} · {jhm(draft.minutes)}
+        </p>
         {/* 客車の札 */}
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-2.5 grid grid-cols-2 gap-2 px-5">
           {(
             [
               { obs: false, name: '三等客車', note: '普通・快速 · 木のボックス席' },
@@ -91,7 +91,7 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
       </div>
 
       <div className="no-scrollbar absolute inset-0 overflow-y-auto overscroll-contain" onClick={() => setOpen(null)}>
-        <div ref={content} className="relative mx-auto w-full max-w-[393px] pb-[calc(env(safe-area-inset-bottom)+120px)] pt-[calc(var(--safe-top)+150px)]">
+        <div ref={content} className="relative mx-auto w-full max-w-[393px] pb-[calc(env(safe-area-inset-bottom)+140px)] pt-[calc(var(--safe-top)+150px)]">
           <CarBody express={isObservation(draft.cls)}>
             {!isObservation(draft.cls) ? (
               Array.from({ length: BOXES }, (_, b) => (
@@ -119,9 +119,9 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 z-20 px-3 pb-[calc(env(safe-area-inset-bottom)+10px)]">
-        <div className="flex items-center gap-3 rounded-[12px] border border-[#B8955A]/45 bg-[#2a180e]/95 py-2 pl-4 pr-2 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.8)]">
-          <span className="min-w-0 flex-1 text-[#F4EEDD]">
+      <div className="cta-dock absolute inset-x-0 bottom-0 z-20 bg-[#2a180e]/95 pt-2.5 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.8)]">
+        <div>
+          <span className="block min-w-0 px-1 pb-2 text-[#F4EEDD]">
             <span className="block text-[11px] text-[#D9C08A]">{draft.seat ? '座席と集中すること' : '空いている席を選んでください'}</span>
             <span className="flex items-center gap-1.5 truncate text-[15px] font-bold">
               {draft.seat ?? '—'}
@@ -134,7 +134,7 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
               )}
             </span>
           </span>
-          <button disabled={!draft.seat || !draft.task} onClick={onNext} className="tr-enji h-12 rounded-[10px] px-4 text-[15px] font-bold tracking-[0.15em]">
+          <button disabled={!draft.seat || !draft.task} onClick={onNext} className="btn-cta tr-cta tr-enji">
             切符を発券する
           </button>
         </div>
@@ -262,7 +262,7 @@ function TagPopover({ seat, top, x, options, current, onPick }: { seat: string; 
         {options.map((t) => {
           const on = current === t.name;
           return (
-            <button key={t.name} onClick={() => onPick(t)} className={`relative flex h-9 items-center gap-1.5 rounded-[4px] pl-5 pr-3 text-[14px] font-bold ${on ? 'bg-[#7A2830] text-[#F4EEDD]' : 'bg-[#F7EDD3] text-[#2D241C] shadow-[inset_0_0_0_1px_rgba(107,74,43,0.55)]'}`}>
+            <button key={t.name} onClick={() => onPick(t)} className={`btn-pill relative pl-5 pr-3 ${on ? 'bg-[#7A2830] text-[#F4EEDD]' : 'bg-[#F7EDD3] text-[#2D241C] shadow-[inset_0_0_0_1px_rgba(107,74,43,0.55)]'}`}>
               {/* 札の穴 */}
               <span className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-[#B8955A] shadow-[inset_0_1px_1px_rgba(0,0,0,0.4)]" />
               <Glyph icon={t.icon} size={14} />
@@ -280,12 +280,12 @@ function TagPopover({ seat, top, x, options, current, onPick }: { seat: string; 
             }}
           >
             <input autoFocus value={name} onChange={(e) => setName(e.target.value)} maxLength={20} placeholder="例：英単語、論文、資格" className="h-9 min-w-0 flex-1 rounded-[4px] bg-white/70 px-3 font-sans text-[15px] text-[#2D241C] outline-none shadow-[inset_0_0_0_1px_rgba(107,74,43,0.5)]" />
-            <button type="submit" className="tr-enji h-9 rounded-[4px] px-3.5 text-[14px] font-bold">
+            <button type="submit" className="btn-pill tr-enji">
               追加
             </button>
           </form>
         ) : (
-          <button onClick={() => setAdding(true)} className="flex h-9 items-center gap-1 rounded-[4px] border border-dashed border-[#6B4A2B]/60 px-3 text-[14px] font-bold text-[#6B4A2B]">
+          <button onClick={() => setAdding(true)} className="btn-pill border border-[#6B4A2B]/60 text-[14px] font-bold text-[#6B4A2B]">
             <Plus size={14} /> 追加
           </button>
         )}

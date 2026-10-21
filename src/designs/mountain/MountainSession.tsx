@@ -74,12 +74,11 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
       onContextMenu={(e) => e.preventDefault()}
     >
       {/* 上部：音楽・時間・完了 */}
-      <div className="pointer-events-none flex items-start justify-between px-5 pt-safe">
-        <motion.button transition={springBouncy} onClick={onMusic} aria-label="サウンド" className="mt-ink-btn pointer-events-auto relative mt-2 grid h-12 w-12 place-items-center">
-          <Music size={20} />
-          <CrayonOutline shape="circle" color="rgba(255,248,234,0.4)" width={1.4} />
+      <div className="screen-header pointer-events-none !h-auto !items-start">
+        <motion.button transition={springBouncy} onClick={onMusic} aria-label="サウンド" className="btn-icon mt-chip pointer-events-auto mt-px">
+          <Music />
         </motion.button>
-        <button onClick={() => !rest && !waiting && t.toggle()} className="pointer-events-auto mt-2 text-center" aria-label={timer.running ? '一時停止' : '再開'}>
+        <button onClick={() => !rest && !waiting && t.toggle()} className="pointer-events-auto text-center" aria-label={timer.running ? '一時停止' : '再開'}>
           <span className="block font-digits text-[38px] font-semibold leading-none tracking-wider text-paper [text-shadow:0_2px_0_rgba(46,34,28,0.55),0_0_18px_rgba(0,0,0,0.25)]">{fmtTimer(shown)}</span>
           <span className="mt-1 inline-block rounded-full bg-ink/35 px-2.5 py-0.5 font-maru text-[11px] font-bold  text-paper/90">{label}</span>
         </button>
@@ -87,10 +86,9 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
           transition={springBouncy}
           onClick={() => (rest ? t.skipBreak() : waiting ? t.start() : t.finishFocus())}
           aria-label={rest ? '休憩を終えて出発' : waiting ? '次の登りへ' : '集中を完了して休憩'}
-          className="mt-ink-btn pointer-events-auto relative mt-2 grid h-12 w-12 place-items-center"
+          className="btn-icon mt-chip pointer-events-auto mt-px"
         >
-          <Check size={22} strokeWidth={3} />
-          <CrayonOutline shape="circle" color="rgba(255,248,234,0.4)" width={1.4} />
+          <Check strokeWidth={3} />
         </motion.button>
       </div>
 

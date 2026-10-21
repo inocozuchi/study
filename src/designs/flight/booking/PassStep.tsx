@@ -70,16 +70,16 @@ export function PassStep({ draft, route, onBack, onBoard }: { draft: FlightDraft
       {/* ガラスが透けて見えるよう、うしろに色の光をにじませる */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(40%_28%_at_22%_34%,rgba(255,159,10,0.32),transparent),radial-gradient(46%_30%_at_80%_58%,rgba(10,132,255,0.3),transparent),radial-gradient(30%_20%_at_50%_80%,rgba(191,90,242,0.18),transparent)]" />
 
-      <div className="absolute inset-x-0 top-0 z-10 px-4 pt-safe">
-        <div className="mt-1 flex items-center justify-between">
-          <button onClick={onBack} disabled={phase !== 'ready'} aria-label="戻る" className="fl-btn fl-glass h-11 w-11 disabled:opacity-0">
-            <ChevronLeft size={21} />
+      <div className="absolute inset-x-0 top-0 z-10">
+        <div className="screen-header">
+          <button onClick={onBack} disabled={phase !== 'ready'} aria-label="戻る" className="btn-icon fl-btn fl-glass disabled:opacity-0">
+            <ChevronLeft />
           </button>
-          <div className="text-center">
+          <div>
             <p className="text-[15px] font-semibold">搭乗券</p>
             <Steps at={3} />
           </div>
-          <span className="w-11" />
+          <span />
         </div>
         {/* 機内モードの帯 */}
         <AnimatePresence>
@@ -165,8 +165,8 @@ export function PassStep({ draft, route, onBack, onBoard }: { draft: FlightDraft
         </AnimatePresence>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)]">
-        <button onClick={phase === 'ready' ? checkIn : board} disabled={phase === 'scanning' || phase === 'printing'} className="fl-cta h-14 w-full text-[17px]">
+      <div className="cta-dock absolute inset-x-0 bottom-0">
+        <button onClick={phase === 'ready' ? checkIn : board} disabled={phase === 'scanning' || phase === 'printing'} className="btn-cta fl-cta">
           {phase === 'printing' ? '発券中…' : phase === 'ready' ? 'チェックイン' : phase === 'torn' ? '搭乗' : '搭乗中…'}
         </button>
       </div>

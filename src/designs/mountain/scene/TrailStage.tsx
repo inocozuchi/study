@@ -210,6 +210,8 @@ export function TrailStage({ hour, stage, mood, season, paused = false, hikerLoo
           <div className="pointer-events-none absolute inset-0" style={{ background: '#121A3C', opacity: sky.night * 0.55, transition: 'opacity 2s' }} />
           <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(255,150,90,0), #FF8A5C)', opacity: sky.glow * 0.16, transition: 'opacity 2s' }} />
           <LightLayer L={L} refs={lightRefs} />
+          {/* 水彩紙の凹凸：シーン全体に 1 枚だけ重ねる（静止した半透明の層。合成モードは使わない） */}
+          <div className="mt-paper-tooth pointer-events-none absolute inset-0" aria-hidden />
         </>
       )}
     </div>

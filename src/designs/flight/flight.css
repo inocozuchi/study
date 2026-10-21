@@ -30,7 +30,6 @@
   color: #f5f6f8;
   transition: transform 0.12s ease;
 }
-.fl-btn:active { transform: scale(0.92); }
 .fl-cta {
   border-radius: 9999px;
   background: #ffffff;
@@ -39,7 +38,6 @@
   box-shadow: 0 10px 30px -10px rgba(255, 255, 255, 0.35);
   transition: transform 0.12s ease, opacity 0.2s;
 }
-.fl-cta:active { transform: scale(0.97); }
 .fl-cta:disabled { opacity: 0.35; }
 
 /* レーダーの掃引（合成レイヤーで回すだけ） */
@@ -97,3 +95,40 @@
   88%, 92% { opacity: 1; }
 }
 .fl-blink { animation: fl-blink 1.6s linear infinite; }
+
+/* ───────── ホームの着せ替え（iOS Liquid Glass のダーク） ───────── */
+.fl-chip {
+  background: rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #f5f6f8;
+  box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.7);
+}
+.fl-tabbar {
+  background: rgba(18, 20, 26, 0.85);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 14px 32px -14px rgba(0, 0, 0, 0.85);
+}
+.fl-tabbar-pill { background: #ff9f0a; box-shadow: 0 0 16px -2px rgba(255, 159, 10, 0.55); }
+
+/* 「集中」ボタン：フロストガラスの円と、静かに脈打つアンバーの計器リング */
+.fl-gauge {
+  background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06) 70%);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+  backdrop-filter: blur(20px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #f5f6f8;
+  box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.fl-gauge-ring { animation: fl-gauge-pulse 3.6s cubic-bezier(0.45, 0, 0.55, 1) infinite; will-change: opacity; }
+@keyframes fl-gauge-pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+.fl-gauge-glow {
+  background: radial-gradient(circle, rgba(255, 159, 10, 0.35) 0%, rgba(255, 159, 10, 0) 66%);
+  animation: fl-gauge-glow 3.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  will-change: opacity, transform;
+}
+@keyframes fl-gauge-glow { 0%, 100% { opacity: 0.3; transform: scale(0.94); } 50% { opacity: 0.85; transform: scale(1.05); } }
+@media (prefers-reduced-motion: reduce) { .fl-gauge-ring, .fl-gauge-glow { animation: none; } }

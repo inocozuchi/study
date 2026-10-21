@@ -152,7 +152,7 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
       <ViewSwitch window={view.window} onChange={(w) => setFlightView({ window: w })} />
 
       {/* 左上 */}
-      <div className="pointer-events-none absolute left-4 top-[calc(var(--safe-top)+6px)] z-40 flex flex-col gap-2.5">
+      <div className="pointer-events-none absolute left-4 top-[calc(var(--safe-top)+1px)] z-40 flex flex-col gap-2.5">
         <GlassButton label={running ? '一時停止' : '再開'} onClick={() => (phase === 'focus' ? t.toggle() : rest ? t.skipBreak() : t.start())}>
           {phase === 'focus' && running ? <Pause size={18} fill="currentColor" strokeWidth={0} /> : <Play size={18} fill="currentColor" strokeWidth={0} />}
         </GlassButton>
@@ -169,13 +169,13 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
 
       {/* 右上 */}
       {/* 右上：地図の操作（機窓ビューの間は隠す） */}
-      <div className={`fl-glass absolute right-4 top-[calc(var(--safe-top)+6px)] z-30 flex flex-col rounded-full p-1 transition-opacity duration-300 ${view.window ? 'pointer-events-none opacity-0' : 'pointer-events-auto'}`} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
+      <div className={`fl-glass absolute right-4 top-[calc(var(--safe-top)+1px)] z-30 flex flex-col rounded-full transition-opacity duration-300 ${view.window ? 'pointer-events-none opacity-0' : 'pointer-events-auto'}`} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
         {[
           { key: 'route', label: 'ルート全体', on: view.camera === 'route', Icon: Maximize2, act: () => setFlightView({ camera: 'route' }) },
           { key: 'plane', label: '機体を追う', on: view.camera === 'plane', Icon: Navigation, act: () => setFlightView({ camera: 'plane' }) },
           { key: 'layer', label: '地図のレイヤー', on: view.layer === 'lines', Icon: Layers, act: () => setFlightView({ layer: view.layer === 'dark' ? 'lines' : 'dark' }) },
         ].map(({ key, label, on, Icon, act }) => (
-          <button key={key} onClick={act} aria-label={label} aria-pressed={on} className={`fl-btn h-10 w-10 ${on ? 'bg-white/20 text-[#FFD60A]' : ''}`}>
+          <button key={key} onClick={act} aria-label={label} aria-pressed={on} className={`btn-icon fl-btn ${on ? 'bg-white/20 text-[#FFD60A]' : ''}`}>
             <Icon size={17} />
           </button>
         ))}
@@ -259,7 +259,7 @@ function ViewSwitch({ window: on, onChange }: { window: boolean; onChange: (w: b
   ];
   return (
     <div
-      className="fl-glass pointer-events-auto absolute left-1/2 top-[calc(var(--safe-top)+6px)] z-40 flex h-11 w-[min(230px,52vw)] -translate-x-1/2 rounded-full p-1"
+      className="fl-glass pointer-events-auto absolute left-1/2 top-[calc(var(--safe-top)+1px)] z-40 flex h-[42px] w-[min(230px,52vw)] -translate-x-1/2 rounded-full p-1"
       role="tablist"
       aria-label="表示の切り替え"
       onPointerDown={(e) => e.stopPropagation()}
@@ -317,7 +317,7 @@ function GlassButton({ label, onClick, active = false, children }: { label: stri
       onPointerUp={(e) => e.stopPropagation()}
       aria-label={label}
       aria-pressed={active}
-      className={`fl-btn fl-glass pointer-events-auto h-11 w-11 ${active ? 'text-[#FFD60A]' : ''}`}
+      className={`btn-icon fl-btn fl-glass pointer-events-auto ${active ? 'text-[#FFD60A]' : ''}`}
     >
       {children}
     </button>

@@ -1,5 +1,6 @@
 import './flight.css';
 import { BoardingPass } from './BoardingPass';
+import { FlightFocus } from './HomeFocus';
 import { FlightBooking } from './booking/FlightBooking';
 import { FlightScene } from './FlightScene';
 import { FlightSession } from './FlightSession';
@@ -24,4 +25,12 @@ export const flightDesign: TimerDesign = {
   routes: flightRoutes,
   edgeColors: () => ({ top: '#050608', bottom: '#050608' }),
   skeleton: '#050608',
+  home: {
+    chip: 'fl-chip',
+    scrim: 'linear-gradient(180deg, rgba(5,6,8,0.75) 0%, rgba(5,6,8,0.35) 70%, rgba(5,6,8,0) 100%)',
+    greeting: 'text-[#F5F6F8]',
+    tabbar: { bar: 'fl-tabbar', pill: 'fl-tabbar-pill', on: 'text-[#1A1206]', off: 'text-white/60' },
+    Focus: FlightFocus,
+    bloom: 'rgba(255,159,10,0.75)',
+  },
 };

@@ -1,4 +1,5 @@
 import './train.css';
+import { TrainFocus } from './HomeFocus';
 import { TrainScene } from './TrainScene';
 import { TrainSession } from './TrainSession';
 import { TrainResult } from './TrainResult';
@@ -25,5 +26,14 @@ export const trainDesign: TimerDesign = {
   routes: trainRoutes,
   // 画面の外の帯は車内の絵の上端・下端の色（夜は暗く）
   skeleton: '#2A221D',
+  home: {
+    chip: 'tr-chip',
+    // 上の木目のパネル（窓枠の上）に溶ける焦げ茶。窓の中の景色・駅名標には文字を置かない
+    scrim: 'linear-gradient(180deg, rgba(30,18,10,0.55) 0%, rgba(30,18,10,0.25) 70%, rgba(30,18,10,0) 100%)',
+    greeting: 'tr-mincho text-[#F4EEDD] [text-shadow:0_1px_2px_rgba(20,10,4,0.8)]',
+    tabbar: { bar: 'tr-tabbar', pill: 'tr-tabbar-pill', on: 'text-[#F4EEDD]', off: 'text-[#F4EEDD]/55' },
+    Focus: TrainFocus,
+    bloom: 'rgba(212,175,115,0.85)',
+  },
   edgeColors: (hour) => (isNight(hour) ? { top: '#15130F', bottom: '#110E0D' } : { top: assets.frame.edge.top, bottom: assets.frame.edge.bottom }),
 };

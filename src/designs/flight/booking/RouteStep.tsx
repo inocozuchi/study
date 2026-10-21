@@ -75,34 +75,34 @@ export function RouteStep({ draft, routes, route, patch, onClose, onNext }: { dr
       </FlightMap>
 
       {/* 上：閉じる・題・シャッフル・検索、出発地 */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 px-4 pb-8 pt-safe [text-shadow:0_1px_3px_rgba(0,0,0,0.8)]">
-        <div className="mt-1 flex items-center justify-between">
-          <button onClick={onClose} aria-label="閉じる" className="fl-btn fl-glass pointer-events-auto h-11 w-11">
-            <X size={19} />
+      <div className="pointer-events-none absolute inset-x-0 top-0 pb-8 [text-shadow:0_1px_3px_rgba(0,0,0,0.8)]">
+        <div className="screen-header">
+          <button onClick={onClose} aria-label="閉じる" className="btn-icon fl-btn fl-glass pointer-events-auto">
+            <X />
           </button>
-          <div className="text-center">
+          <div>
             <p className="text-[15px] font-semibold">フライトを予約</p>
             <Steps at={1} />
           </div>
-          <div className="pointer-events-auto flex gap-2">
-            <button onClick={shuffle} aria-label="おまかせ" className="fl-btn fl-glass h-11 w-11">
-              <Shuffle size={17} />
-            </button>
-            <button onClick={() => setSearch('dest')} aria-label="空港を探す" className="fl-btn fl-glass h-11 w-11">
-              <Search size={17} />
-            </button>
-          </div>
+          <button onClick={() => setSearch('dest')} aria-label="空港を探す" className="btn-icon fl-btn fl-glass pointer-events-auto">
+            <Search />
+          </button>
         </div>
-        <button onClick={() => setSearch('origin')} className="fl-glass pointer-events-auto mt-3 flex h-9 items-center gap-2 rounded-full pl-3 pr-2.5 text-[13px]">
-          <span className="text-white/55">出発</span>
-          <span className="fl-num font-bold">{origin.code}</span>
-          <span className="font-semibold">{origin.name}</span>
-          <ChevronDown size={14} className="text-white/60" />
-        </button>
+        <div className="mt-3 flex items-center justify-between px-5">
+          <button onClick={() => setSearch('origin')} className="btn-pill fl-glass pointer-events-auto rounded-full pl-3 pr-2.5 font-normal">
+            <span className="text-white/55">出発</span>
+            <span className="fl-num font-bold">{origin.code}</span>
+            <span className="font-semibold">{origin.name}</span>
+            <ChevronDown size={14} className="text-white/60" />
+          </button>
+          <button onClick={shuffle} aria-label="おまかせ" className="btn-icon fl-btn fl-glass pointer-events-auto">
+            <Shuffle />
+          </button>
+        </div>
       </div>
 
       {/* 下：刻み・時間・ダイヤル・空港のカード・予約 */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#050608] via-[#050608]/95 to-transparent px-4 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-10" style={{ minHeight: PANEL_H }}>
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#050608] via-[#050608]/95 to-transparent px-5 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-10" style={{ minHeight: PANEL_H }}>
         <StepToggle step={draft.step} onChange={(s) => patch({ step: s, minutes: snapTo(draft.minutes, s), dest: null })} />
         <div className="mt-3 flex items-end justify-between px-1">
           <motion.p key={draft.minutes} initial={{ opacity: 0.5, y: 4 }} animate={{ opacity: 1, y: 0 }} className="fl-num text-[40px] font-bold leading-none tracking-tight">
@@ -117,7 +117,7 @@ export function RouteStep({ draft, routes, route, patch, onClose, onNext }: { dr
         </div>
         <Ruler step={draft.step} value={draft.minutes} onChange={(v) => patch({ minutes: v, dest: null })} />
         <Carousel routes={routes} selected={route.airport.code} onPick={pick} />
-        <button onClick={onNext} className="fl-cta mt-3 h-14 w-full text-[17px]">
+        <button onClick={onNext} className="btn-cta fl-cta mt-3">
           フライトを予約
         </button>
       </div>
@@ -180,7 +180,7 @@ function StepToggle({ step, onChange }: { step: TimeStep; onChange: (s: TimeStep
       {items.map(({ value, label, note, Icon }) => {
         const on = value === step;
         return (
-          <button key={value} onClick={() => onChange(value)} aria-pressed={on} className={`flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition-colors ${on ? 'bg-white text-[#050608]' : 'fl-tint text-white/80'}`}>
+          <button key={value} onClick={() => onChange(value)} aria-pressed={on} className={`btn-pill font-semibold transition-colors ${on ? 'bg-white text-[#050608]' : 'fl-tint text-white/80'}`}>
             <Icon size={15} strokeWidth={2.2} />
             {label}
             <span className={on ? 'text-black/45' : 'text-white/45'}>{note}</span>
