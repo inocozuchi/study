@@ -27,8 +27,7 @@ export const flightDesign: TimerDesign = {
   skeleton: '#050608',
   home: {
     chip: 'fl-chip',
-    scrim: 'linear-gradient(180deg, rgba(5,6,8,0.75) 0%, rgba(5,6,8,0.35) 70%, rgba(5,6,8,0) 100%)',
-    greeting: 'text-[#F5F6F8]',
+    greeting: 'text-[#F5F6F8] [text-shadow:0_1px_3px_rgba(0,0,0,0.8)]',
     tabbar: { bar: 'fl-tabbar', pill: 'fl-tabbar-pill', on: 'text-[#1A1206]', off: 'text-white/60' },
     Focus: FlightFocus,
     bloom: 'rgba(255,159,10,0.75)',

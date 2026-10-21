@@ -6,7 +6,6 @@ import type { Appearance } from '@/types';
  * 起動直後の白い光り・暗い光りを防ぐため、index.html でも同じ判定を先に行っている（キャッシュを読む）。
  */
 const CACHE_KEY = 'focus-trail:v1:appearance';
-const COLORS = { light: '#F2F3F7', dark: '#0E1015' } as const;
 
 let mode: Appearance = 'system';
 const media = typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)') : null;
@@ -24,9 +23,8 @@ function paint() {
   const root = document.documentElement;
   root.dataset.theme = theme;
   root.style.colorScheme = theme;
-  // 上の帯（時刻・電波の帯）は theme-color、下の帯（ホームバーのまわり）は html の地の色で塗られる
-  const top = edge?.top ?? COLORS[theme];
-  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', top));
+  // theme-color は使わない（iOS 26 のホーム画面アプリで時刻の帯を塗りつぶし、全画面にならなくなる）。
+  // 上の時刻の帯の裏はシーン（ホーム）か画面の地の色がそのまま見える。下の帯（ホームバーのまわり）は html の地の色
   document.querySelector('meta[name="color-scheme"]')?.setAttribute('content', theme);
   if (edge) root.style.setProperty('--edge', edge.bottom);
   else root.style.removeProperty('--edge');

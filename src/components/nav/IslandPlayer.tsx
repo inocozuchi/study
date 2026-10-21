@@ -40,7 +40,7 @@ export function IslandPlayer({ visible, onOpen }: { visible: boolean; onOpen: ()
             </span>
             <span className="flex flex-col items-start leading-tight">
               <span className="text-[11px] font-medium text-white/55">{rest ? '焚き火で休憩' : subject?.name ?? '集中'}</span>
-              <span className="tabular text-[17px] font-semibold tracking-tight">{fmtTimer(remainingMs ?? elapsedMs)}</span>
+              <span className="tabular text-[16px] font-semibold tracking-tight">{fmtTimer(remainingMs ?? elapsedMs)}</span>
             </span>
           </button>
           <motion.button

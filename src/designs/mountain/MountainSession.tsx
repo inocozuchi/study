@@ -79,7 +79,7 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
           <Music />
         </motion.button>
         <button onClick={() => !rest && !waiting && t.toggle()} className="pointer-events-auto text-center" aria-label={timer.running ? '一時停止' : '再開'}>
-          <span className="block font-digits text-[38px] font-semibold leading-none tracking-wider text-paper [text-shadow:0_2px_0_rgba(46,34,28,0.55),0_0_18px_rgba(0,0,0,0.25)]">{fmtTimer(shown)}</span>
+          <span className="block font-digits text-[35px] font-semibold leading-none tracking-wider text-paper [text-shadow:0_2px_0_rgba(46,34,28,0.55),0_0_18px_rgba(0,0,0,0.25)]">{fmtTimer(shown)}</span>
           <span className="mt-1 inline-block rounded-full bg-ink/35 px-2.5 py-0.5 font-maru text-[11px] font-bold  text-paper/90">{label}</span>
         </button>
         <motion.button
@@ -103,10 +103,10 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
                   <CrayonOutline shape="circle" color="#2E221C" width={1.6} />
                 </span>
                 <span className="min-w-0 flex-1 leading-tight">
-                  <span className="block font-maru text-[18px] font-bold">{rest ? '休息' : 'ひと息'}</span>
-                  <span className="block text-[13px] text-ink-soft">{new Date().toLocaleDateString('ja-JP')} · ここまで {fmtDuration(t.journeyFocusMs / MIN)}</span>
+                  <span className="block font-maru text-[17px] font-bold">{rest ? '休息' : 'ひと息'}</span>
+                  <span className="block text-[12.5px] text-ink-soft">{new Date().toLocaleDateString('ja-JP')} · ここまで {fmtDuration(t.journeyFocusMs / MIN)}</span>
                 </span>
-                <motion.button onClick={() => (rest ? t.skipBreak() : t.start())} className="rounded-full px-3 py-2 font-maru text-[16px] font-bold text-crayon-blue">
+                <motion.button onClick={() => (rest ? t.skipBreak() : t.start())} className="rounded-full px-3 py-2 font-maru text-[15px] font-bold text-crayon-blue">
                   出発
                 </motion.button>
               </div>
@@ -127,13 +127,13 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
                 }}
                 className="mt-paper flex h-14 flex-col items-center justify-center rounded-[18px] font-maru leading-tight text-ink shadow-float"
               >
-                <span className="flex items-center gap-1.5 text-[15px] font-bold">
+                <span className="flex items-center gap-1.5 text-[14px] font-bold">
                   <Coffee size={16} /> ひと休み
                 </span>
                 <span className="text-[11px] font-bold text-ink-soft">焚き火で休憩</span>
               </button>
               <HoldButton onDone={onEnd} className="mt-ink-btn h-14 flex-col rounded-[18px]">
-                <span className="flex items-center gap-1.5 font-maru text-[15px] font-bold">
+                <span className="flex items-center gap-1.5 font-maru text-[14px] font-bold">
                   <Flag size={16} /> 旅を終える
                 </span>
                 <span className="text-[11px] font-bold opacity-75">長押しでキャンプへ</span>
@@ -208,7 +208,7 @@ function HoldButton({ onDone, className = '', children }: { onDone: () => void; 
       onPointerLeave={stop}
       onPointerCancel={stop}
       onContextMenu={(e) => e.preventDefault()}
-      className={`relative flex items-center justify-center gap-1.5 overflow-hidden text-[14px] font-bold ${className}`}
+      className={`relative flex items-center justify-center gap-1.5 overflow-hidden text-[13px] font-bold ${className}`}
     >
       <span className="pointer-events-none absolute inset-y-0 left-0 bg-white/25" style={{ width: held ? '100%' : '0%', transition: held ? `width ${HOLD_MS}ms linear` : 'width 200ms ease-out' }} />
       <span className="relative flex flex-col items-center leading-tight">{children}</span>

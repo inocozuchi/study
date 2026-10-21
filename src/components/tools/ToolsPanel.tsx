@@ -121,7 +121,7 @@ function DiaryView() {
           <ChevronLeft size={16} />
         </button>
         <div className="text-center">
-          <p className="text-[17px] font-bold">{isToday ? '今日のノート' : 'ノート'}</p>
+          <p className="text-[16px] font-bold">{isToday ? '今日のノート' : 'ノート'}</p>
           <p className="text-[12px] text-fg-2">{fmtDateJa(parseDateKey(date))}</p>
         </div>
         <button aria-label="次の日" disabled={isToday} onClick={() => setDate(dateKey(addDays(parseDateKey(date), 1)))} className="hit grid h-8 w-8 place-items-center rounded-full bg-fill disabled:opacity-30">
@@ -142,7 +142,7 @@ function DiaryView() {
         value={text}
         onChange={(e) => onChange(e.target.value)}
         placeholder={'今日はどんな一日だった？\nできたこと、気づいたこと、明日の自分へ。'}
-        className="mt-3 min-h-[240px] w-full flex-1 resize-none rounded-2xl border border-line bg-fill p-4 text-[15px] leading-[32px] text-fg outline-none placeholder:text-fg-3 focus:bg-fill"
+        className="mt-3 min-h-[240px] w-full flex-1 resize-none rounded-2xl border border-line bg-fill p-4 text-[14px] leading-[32px] text-fg outline-none placeholder:text-fg-3 focus:bg-fill"
         style={{ backgroundImage: 'repeating-linear-gradient(180deg, transparent 0 31px, rgb(var(--c-line)) 31px 32px)', backgroundAttachment: 'local', backgroundPositionY: '15px' }}
       />
       <p className="mt-2 text-right text-[11px] text-fg-3">{saved ? (text ? '保存しました' : '') : '保存中…'} {text.length > 0 && `· ${text.length}文字`}</p>
@@ -165,7 +165,7 @@ function TodoView() {
   };
   return (
     <div>
-      <p className="text-[17px] font-bold">ToDo</p>
+      <p className="text-[16px] font-bold">ToDo</p>
       <p className="text-[12px] text-fg-2">のこり {open.length} 件 · 完了 {done.length} 件</p>
       <form
         className="mt-3 flex gap-2"
@@ -185,7 +185,7 @@ function TodoView() {
             <TodoRow key={t.id} text={t.text} done={false} onToggle={() => toggleTodo(t.id)} onDelete={() => deleteTodo(t.id)} />
           ))}
         </AnimatePresence>
-        {open.length === 0 && <li className="py-6 text-center text-[13px] text-fg-3">ぜんぶ終わり！</li>}
+        {open.length === 0 && <li className="py-6 text-center text-[12.5px] text-fg-3">ぜんぶ終わり！</li>}
       </ul>
       {done.length > 0 && (
         <>
@@ -211,7 +211,7 @@ function TodoRow({ text, done, onToggle, onDelete }: { text: string; done: boole
   return (
     <motion.li layout initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 30, height: 0 }} transition={springSoft} className="group flex items-center gap-3 rounded-2xl bg-fill px-3 py-2.5">
       <CheckCircle checked={done} onChange={onToggle} label={text} />
-      <span className={`relative min-w-0 flex-1 text-[14px] ${done ? 'text-fg-3' : ''}`}>
+      <span className={`relative min-w-0 flex-1 text-[13px] ${done ? 'text-fg-3' : ''}`}>
         {text}
         {done && (
           <motion.svg className="absolute left-0 top-1/2 h-2 w-full -translate-y-1/2 overflow-visible" viewBox="0 0 100 4" preserveAspectRatio="none">
@@ -273,7 +273,7 @@ function HabitView() {
     <div>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[17px] font-bold">習慣トラッカー</p>
+          <p className="text-[16px] font-bold">習慣トラッカー</p>
           <p className="text-[12px] text-fg-2">今日 {habits.filter((h) => h.log.includes(today)).length}/{habits.length} 達成</p>
         </div>
         {habits.length > 0 && (
@@ -293,7 +293,7 @@ function HabitView() {
                 <div className="flex items-center gap-3">
                   <span className="grid h-10 w-10 place-items-center rounded-2xl" style={{ background: `${h.color}22`, color: h.color }}><HabitIcon value={h.emoji} /></span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[15px] font-bold">{h.name}</p>
+                    <p className="truncate text-[14px] font-bold">{h.name}</p>
                     <p className="text-[11px] text-fg-2">{streak > 0 ? `${streak}日連続` : 'きょうから始めよう'} · 累計 {h.log.length}日</p>
                   </div>
                   {editing ? (
@@ -348,12 +348,12 @@ function HabitView() {
               ))}
             </div>
             <div className="flex gap-2">
-              <button type="button" onClick={() => setAdding(false)} className="flex-1 rounded-full bg-fill py-2.5 text-[14px] font-bold text-fg-2">やめる</button>
-              <button type="submit" disabled={!name.trim()} className="flex-1 rounded-full bg-accent py-2.5 text-[14px] font-semibold text-white disabled:opacity-40">追加</button>
+              <button type="button" onClick={() => setAdding(false)} className="flex-1 rounded-full bg-fill py-2.5 text-[13px] font-bold text-fg-2">やめる</button>
+              <button type="submit" disabled={!name.trim()} className="flex-1 rounded-full bg-accent py-2.5 text-[13px] font-semibold text-white disabled:opacity-40">追加</button>
             </div>
           </motion.form>
         ) : (
-          <motion.button key="add" onClick={() => setAdding(true)} className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-line py-3 text-[14px] font-semibold text-fg-2">
+          <motion.button key="add" onClick={() => setAdding(true)} className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-line py-3 text-[13px] font-semibold text-fg-2">
             <Plus size={16} /> 新しい習慣
           </motion.button>
         )}

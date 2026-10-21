@@ -4,3 +4,4 @@ dist
 .DS_Store
 *.tsbuildinfo
 __pycache__/
+tests/e2e/out/

@@ -33,7 +33,7 @@ export function IdCard({ info }: ProfileCardProps) {
       {/* 帯 */}
       <div className="mt-wash flex items-center justify-between px-4 pb-2 pt-3">
         <div className="leading-none text-[#FBF6EA] [text-shadow:0_1px_0_rgba(60,90,80,0.35)]">
-          <p className="text-[15px] font-bold tracking-wide">山岳登頂認定パスポート</p>
+          <p className="text-[14px] font-bold tracking-wide">山岳登頂認定パスポート</p>
           <p className="mt-1 text-[9px] font-bold tracking-[0.3em] opacity-85">SUMMIT PASSPORT</p>
         </div>
         <svg viewBox="0 0 40 28" className="h-7 w-10" aria-hidden>
@@ -54,16 +54,16 @@ export function IdCard({ info }: ProfileCardProps) {
         <dl className="min-w-0 flex-1 space-y-1.5">
           <div>
             <dt className="text-[9.5px] font-bold tracking-[0.18em] text-ink-soft">なまえ / NAME</dt>
-            <dd className="truncate text-[21px] font-bold leading-tight">{name}</dd>
+            <dd className="truncate text-[19px] font-bold leading-tight">{name}</dd>
           </div>
           <div className="flex gap-4">
             <div>
               <dt className="text-[9.5px] font-bold tracking-[0.12em] text-ink-soft">累計登山時間</dt>
-              <dd className="tabular font-digits text-[16px] font-bold">{fmtDuration(totalMinutes)}</dd>
+              <dd className="tabular font-digits text-[15px] font-bold">{fmtDuration(totalMinutes)}</dd>
             </div>
             <div>
               <dt className="text-[9.5px] font-bold tracking-[0.12em] text-ink-soft">現在の標高</dt>
-              <dd className="tabular font-digits text-[16px] font-bold text-[#B96F55]">{fmtMeters(altitude)}</dd>
+              <dd className="tabular font-digits text-[15px] font-bold text-[#B96F55]">{fmtMeters(altitude)}</dd>
             </div>
           </div>
         </dl>

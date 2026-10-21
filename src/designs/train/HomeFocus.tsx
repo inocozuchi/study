@@ -12,7 +12,7 @@ export function TrainFocus({ onClick }: { onClick: (e: MouseEvent<HTMLButtonElem
             <line key={i} x1="40" y1="11" x2="40" y2={i % 3 === 0 ? 16 : 14} stroke="#D4AF73" strokeOpacity={i % 3 === 0 ? 0.9 : 0.55} strokeWidth={i % 3 === 0 ? 1.6 : 1} transform={`rotate(${i * 30} 40 40)`} />
           ))}
         </svg>
-        <span className="relative text-[19px] font-bold tracking-[0.18em]">集中</span>
+        <span className="relative text-[18px] font-bold tracking-[0.18em]">集中</span>
       </button>
     </div>
   );

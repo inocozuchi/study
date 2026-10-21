@@ -96,7 +96,7 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
             <ChevronLeft />
           </button>
           <div>
-            <p className="text-[17px] font-bold tracking-[0.2em] text-[#F4EEDD]">{phase === 'issuing' ? '発券中' : phase === 'ready' ? '乗車券' : phase === 'bell' ? '発車いたします' : '改札'}</p>
+            <p className="text-[16px] font-bold tracking-[0.2em] text-[#F4EEDD]">{phase === 'issuing' ? '発券中' : phase === 'ready' ? '乗車券' : phase === 'bell' ? '発車いたします' : '改札'}</p>
             <Steps at={3} />
           </div>
           <span />
@@ -166,17 +166,17 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
           <div className="tr-brass mx-auto -mt-[7px] flex h-[16px] w-[86%] items-center justify-center rounded-[4px] px-2">
             <span className="h-[5px] w-full rounded-full bg-[#1a0f08] shadow-[inset_0_2px_3px_rgba(0,0,0,0.9)]" />
           </div>
-          <div className="mx-auto mt-5 w-fit rounded-[4px] border-2 border-[#B8955A] bg-[#F4EEDD] px-4 py-1 text-[18px] font-bold tracking-[0.5em] text-[#4A2E1C] shadow-[0_6px_12px_-6px_rgba(0,0,0,0.7)]" aria-label="改札口">
+          <div className="mx-auto mt-5 w-fit rounded-[4px] border-2 border-[#B8955A] bg-[#F4EEDD] px-4 py-1 text-[17px] font-bold tracking-[0.5em] text-[#4A2E1C] shadow-[0_6px_12px_-6px_rgba(0,0,0,0.7)]" aria-label="改札口">
             口札改
           </div>
           <div className="absolute inset-x-0 bottom-0 px-3 pb-[calc(env(safe-area-inset-bottom)+14px)]">
             <AnimatePresence mode="popLayout">
               {phase === 'ready' ? (
-                <motion.p key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mb-2 text-center text-[12.5px] text-[#F4EEDD]/60">
+                <motion.p key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mb-2 text-center text-[12px] text-[#F4EEDD]/60">
                   切符を下へスワイプしても通れます
                 </motion.p>
               ) : (
-                <motion.p key="bell" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mb-2 text-center text-[13px] font-bold tracking-[0.2em] text-[#D9C08A]">
+                <motion.p key="bell" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mb-2 text-center text-[12.5px] font-bold tracking-[0.2em] text-[#D9C08A]">
                   {phase === 'issuing' ? '発券しています…' : phase === 'bell' ? `${data.to}ゆき、まもなく発車いたします` : 'パチン'}
                 </motion.p>
               )}

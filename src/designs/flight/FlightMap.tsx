@@ -91,7 +91,7 @@ export function FlightMap({ cam, layer = 'dark', svg, children, onSize, classNam
 
   return (
     <MapCtx.Provider value={{ cam, w, h }}>
-      <div ref={ref} className={`absolute inset-0 isolate overflow-hidden bg-[#050608] ${className}`}>
+      <div ref={ref} data-map className={`absolute inset-0 isolate overflow-hidden bg-[#050608] ${className}`}>
         <motion.div className="pointer-events-none absolute left-0 top-0 origin-top-left" style={{ width: MAP.width, height: MAP.height, transform, willChange: 'transform' }}>
           {/* 地図の絵は別の合成レイヤーに（航路の線が動いても、大きな地図を描き直さない） */}
           <img src={layer === 'dark' ? './flight/map-dark.svg' : './flight/map-lines.svg'} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none" style={{ willChange: 'transform' }} />

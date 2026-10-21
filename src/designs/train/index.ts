@@ -28,8 +28,6 @@ export const trainDesign: TimerDesign = {
   skeleton: '#2A221D',
   home: {
     chip: 'tr-chip',
-    // 上の木目のパネル（窓枠の上）に溶ける焦げ茶。窓の中の景色・駅名標には文字を置かない
-    scrim: 'linear-gradient(180deg, rgba(30,18,10,0.55) 0%, rgba(30,18,10,0.25) 70%, rgba(30,18,10,0) 100%)',
     greeting: 'tr-mincho text-[#F4EEDD] [text-shadow:0_1px_2px_rgba(20,10,4,0.8)]',
     tabbar: { bar: 'tr-tabbar', pill: 'tr-tabbar-pill', on: 'text-[#F4EEDD]', off: 'text-[#F4EEDD]/55' },
     Focus: TrainFocus,

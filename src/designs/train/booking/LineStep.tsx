@@ -47,7 +47,7 @@ export function LineStep({ draft, stops, stop, patch, onClose, onNext }: { draft
           <X />
         </button>
         <div>
-          <p className="text-[17px] font-bold tracking-[0.2em] text-[#F4EEDD]">乗車券を買ふ</p>
+          <p className="text-[16px] font-bold tracking-[0.2em] text-[#F4EEDD]">乗車券を買ふ</p>
           <Steps at={1} />
         </div>
         <button onClick={() => setOptions(true)} aria-label="旅の支度（天気・時間帯・走行音）" className="btn-icon tr-brass">
@@ -56,7 +56,7 @@ export function LineStep({ draft, stops, stop, patch, onClose, onNext }: { draft
       </div>
 
       {/* 古地図 */}
-      <div className="tr-paper tr-frame relative mx-3.5 mt-3 min-h-[190px] flex-1 overflow-hidden rounded-[6px]">
+      <div data-map className="tr-paper tr-frame relative mx-3.5 mt-3 min-h-[130px] flex-1 overflow-hidden rounded-[6px]">
         <OldMap key={line.id} line={line} origin={draft.origin} dir={draft.dir} km={kmFor(draft.minutes, draft.cls)} minutes={draft.minutes} stops={stops} stop={stop} onPick={pick} />
         <div className="pointer-events-none absolute inset-x-3 top-3 flex flex-wrap items-center gap-1.5">
           <button onClick={() => setLines(true)} aria-label="路線と出発駅を選ぶ" className="pointer-events-auto flex items-center gap-1 rounded-[3px] border border-[#6B4A2B] bg-[#F4EEDD]/90 px-2 py-0.5 text-[12px] font-bold tracking-[0.15em] text-[#4A2E1C]">
@@ -74,7 +74,7 @@ export function LineStep({ draft, stops, stop, patch, onClose, onNext }: { draft
         {stop ? (
         <motion.div key={stop.station.name} initial={{ rotateX: -70, opacity: 0.4 }} animate={{ rotateX: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 18 }} className="tr-enamel overflow-hidden rounded-[6px] text-center" style={{ transformPerspective: 600 }}>
           <p className="pt-1.5 text-[12px] font-bold tracking-[0.3em] text-[#4A2E1C]">{stop.station.name}</p>
-          <p className="-mt-0.5 text-[30px] font-bold leading-tight tracking-[0.18em]">{stop.station.kana}</p>
+          <p className="-mt-0.5 text-[27px] font-bold leading-tight tracking-[0.18em]">{stop.station.kana}</p>
           <p className="pb-1 font-sans text-[11px] font-semibold tracking-[0.2em] text-[#6B7076]">{stop.station.roman}</p>
           <div className="flex items-center justify-between bg-[#7A2830] px-3 py-1 text-[12px] font-bold text-[#F4EEDD]">
             <span>← {prev.name}</span>
@@ -83,7 +83,7 @@ export function LineStep({ draft, stops, stop, patch, onClose, onNext }: { draft
           </div>
         </motion.div>
         ) : (
-          <p className="tr-enamel rounded-[6px] py-4 text-center text-[15px] font-bold tracking-[0.2em]">この先に駅がありません</p>
+          <p className="tr-enamel rounded-[6px] py-4 text-center text-[14px] font-bold tracking-[0.2em]">この先に駅がありません</p>
         )}
       </div>
 
@@ -91,9 +91,9 @@ export function LineStep({ draft, stops, stop, patch, onClose, onNext }: { draft
         <ClassPlates cls={draft.cls} onChange={(cls) => patch({ cls, dest: null })} />
         <StepPlates step={draft.step} onChange={(s) => patch({ step: s, minutes: snapTo(draft.minutes, s), dest: null })} />
         <p className="mt-2.5 flex items-baseline justify-between px-1 text-[#F4EEDD]">
-          <span className="text-[13px] tracking-[0.2em] text-[#D9C08A]">所要</span>
-          <span className="text-[30px] font-bold tabular-nums tracking-wider">{jhm(draft.minutes)}</span>
-          <span className="text-[13px] tabular-nums text-[#F4EEDD]/75">營業キロ {stop?.km ?? 0} 粁</span>
+          <span className="text-[12.5px] tracking-[0.2em] text-[#D9C08A]">所要</span>
+          <span className="text-[27px] font-bold tabular-nums tracking-wider">{jhm(draft.minutes)}</span>
+          <span className="text-[12.5px] tabular-nums text-[#F4EEDD]/75">營業キロ {stop?.km ?? 0} 粁</span>
         </p>
         <BrassRuler step={draft.step} value={draft.minutes} onChange={(v) => patch({ minutes: v, dest: null })} />
         <button onClick={onNext} disabled={!stop} className="btn-cta tr-cta tr-enji mt-3">
@@ -272,14 +272,14 @@ function LinePicker({ line, origin, onPick, onClose }: { line: TrainLine; origin
         transition={{ type: 'spring', stiffness: 380, damping: 30 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="text-center text-[17px] font-bold tracking-[0.3em] text-[#4A2E1C]">路線を選ぶ</p>
+        <p className="text-center text-[16px] font-bold tracking-[0.3em] text-[#4A2E1C]">路線を選ぶ</p>
         <div className="mt-3 space-y-1.5">
           {LINES.map((l) => {
             const on = l.id === line;
             return (
               <button key={l.id} onClick={() => onPick(l.id)} aria-pressed={on} className={`flex w-full items-center justify-between gap-2 rounded-[6px] px-3 py-2 text-left ${on ? 'tr-enji' : 'border border-[#6B4A2B]/35 text-[#2D241C]'}`}>
                 <span className="min-w-0">
-                  <span className="block truncate text-[15px] font-bold tracking-[0.1em]">{l.name}</span>
+                  <span className="block truncate text-[14px] font-bold tracking-[0.1em]">{l.name}</span>
                   <span className={`block text-[11.5px] ${on ? 'text-[#D9C08A]' : 'text-[#6B4A2B]'}`}>{l.span}</span>
                 </span>
                 <span className={`shrink-0 text-[12px] tabular-nums ${on ? 'text-[#F4EEDD]/80' : 'text-[#6B4A2B]'}`}>{Math.round(l.totalKm).toLocaleString()} 粁</span>
@@ -405,7 +405,7 @@ function TripOptions({ draft, patch, onClose }: { draft: TrainDraft; patch: (p: 
         transition={{ type: 'spring', stiffness: 380, damping: 30 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="text-center text-[17px] font-bold tracking-[0.3em] text-[#4A2E1C]">旅の支度</p>
+        <p className="text-center text-[16px] font-bold tracking-[0.3em] text-[#4A2E1C]">旅の支度</p>
         <p className="mt-4 text-[12px] font-bold tracking-[0.2em] text-[#6B4A2B]">天氣</p>
         <div className="mt-1.5 grid grid-cols-2 gap-2">
           {[
@@ -427,7 +427,7 @@ function TripOptions({ draft, patch, onClose }: { draft: TrainDraft; patch: (p: 
         </div>
         <div className="mt-4 flex items-center justify-between">
           <span>
-            <span className="block text-[15px] font-bold text-[#2D241C]">走行音</span>
+            <span className="block text-[14px] font-bold text-[#2D241C]">走行音</span>
             <span className="block font-sans text-[11.5px] text-[#6B4A2B]">public/sounds/train.* を鳴らす</span>
           </span>
           <button onClick={() => set({ trainSound: !o.trainSound })} aria-pressed={o.trainSound} aria-label="走行音" className={`relative h-8 w-14 rounded-full transition-colors ${o.trainSound ? 'bg-[#7A2830]' : 'bg-[#6B4A2B]/30'}`}>

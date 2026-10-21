@@ -38,10 +38,10 @@ export function RoutesScreen() {
     <div className="mx-auto max-w-xl px-5 pb-nav pt-safe">
       <header className="flex items-end justify-between pt-2">
         <div>
-          <p className="text-[13px] font-semibold text-fg-2">
+          <p className="text-[12.5px] font-semibold text-fg-2">
             {activeSubjects.length} {mode?.unit ?? 'ルート'} · {mode?.doneWord ?? '登頂'} {summited.length}
           </p>
-          <h1 className="text-[32px] font-bold leading-tight tracking-tight">{mode?.title ?? '山岳ルート'}</h1>
+          <h1 className="text-[29px] font-bold leading-tight tracking-tight">{mode?.title ?? '山岳ルート'}</h1>
         </div>
         <Pressable onClick={() => setEditing(null)} aria-label="ルートを追加" className="grid h-11 w-11 place-items-center rounded-full bg-accent text-white shadow-raised">
           <Plus size={22} strokeWidth={2.6} />
@@ -69,9 +69,9 @@ export function RoutesScreen() {
           {activeSubjects.length === 0 && (
             <GlassCard className="p-6 text-center">
               <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent-soft text-accent-ink">{mode ? <Route size={28} strokeWidth={1.9} /> : <Mountain size={28} strokeWidth={1.9} />}</span>
-              <p className="mt-2 text-[15px] font-semibold">まだ{mode?.unit ?? 'ルート'}がありません</p>
-              <p className="mt-1 text-[13px] text-fg-2">{mode ? '科目ごとに、集中した時間だけ道のりを進みます' : '勉強したい科目ごとに、登る山を決めましょう'}</p>
-              <button onClick={() => setEditing(null)} className="mt-4 rounded-full bg-accent px-5 py-2.5 text-[14px] font-bold text-white">最初のルートをひらく</button>
+              <p className="mt-2 text-[14px] font-semibold">まだ{mode?.unit ?? 'ルート'}がありません</p>
+              <p className="mt-1 text-[12.5px] text-fg-2">{mode ? '科目ごとに、集中した時間だけ道のりを進みます' : '勉強したい科目ごとに、登る山を決めましょう'}</p>
+              <button onClick={() => setEditing(null)} className="mt-4 rounded-full bg-accent px-5 py-2.5 text-[13px] font-bold text-white">最初のルートをひらく</button>
             </GlassCard>
           )}
         </div>
@@ -116,11 +116,11 @@ function RouteCard({ mode, subject, minutes, delay, onClick }: { mode?: DesignRo
           <div className="flex items-center gap-2.5">
             <SubjectBadge subject={subject} size={38} />
             <div className="leading-tight">
-              <p className="text-[17px] font-bold">{subject.name}</p>
+              <p className="text-[16px] font-bold">{subject.name}</p>
               <p className="text-[12px] text-white/75">{mode?.lineName ?? subject.mountainName}</p>
             </div>
           </div>
-          <p className="tabular text-[22px] font-bold tracking-tight">{Math.floor(prog * 100)}<span className="text-[13px] text-white/75">%</span></p>
+          <p className="tabular text-[20px] font-bold tracking-tight">{Math.floor(prog * 100)}<span className="text-[12.5px] text-white/75">%</span></p>
         </div>
       </div>
       <div className="px-4 py-3">
@@ -151,7 +151,7 @@ function RouteDetailSheet({ mode, subject, onClose, onEdit }: { mode?: DesignRou
       title={mode ? mode.title : live?.mountainName}
       subtitle={live && `${live.name} · 累計 ${fmtDuration(minutes)}`}
       action={live && (
-        <Pressable onClick={() => onEdit(live)} className="flex h-8 items-center gap-1 rounded-full bg-fill px-3 text-[13px] font-semibold">
+        <Pressable onClick={() => onEdit(live)} className="flex h-8 items-center gap-1 rounded-full bg-fill px-3 text-[12.5px] font-semibold">
           <Pencil size={13} /> 編集
         </Pressable>
       )}
@@ -177,13 +177,13 @@ function RouteDetailSheet({ mode, subject, onClose, onEdit }: { mode?: DesignRou
                 <li key={st.index} className="relative flex gap-3 pb-4 last:pb-0">
                   {i < STAGES.length - 1 && <span className="absolute left-[15px] top-8 h-[calc(100%-24px)] w-[2px] rounded-full" style={{ background: reached ? alpha(live.color, 0.6) : 'rgba(255,255,255,0.1)' }} />}
                   <span
-                    className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full text-[13px] font-bold"
+                    className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full text-[12.5px] font-bold"
                     style={{ background: reached ? live.color : 'rgba(255,255,255,0.08)', color: reached ? '#0C1224' : 'rgba(255,255,255,0.4)', boxShadow: current ? `0 0 0 4px ${alpha(live.color, 0.25)}` : 'none' }}
                   >
                     {reached && !current ? <Check size={15} strokeWidth={3} /> : i + 1}
                   </span>
                   <div className="min-w-0 pt-0.5">
-                    <p className={`text-[15px] font-semibold ${reached ? '' : 'text-fg-2'}`}>
+                    <p className={`text-[14px] font-semibold ${reached ? '' : 'text-fg-2'}`}>
                       {st.name}
                       {current && <span className="ml-2 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: alpha(live.color, 0.2), color: live.color }}>現在地</span>}
                     </p>
@@ -202,7 +202,7 @@ function RouteDetailSheet({ mode, subject, onClose, onEdit }: { mode?: DesignRou
               <p className="section-label mb-2 mt-5">最近の足あと</p>
               <div className="group-box divide-y divide-line rounded-2xl">
                 {recent.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between px-4 py-2.5 text-[13px]">
+                  <div key={s.id} className="flex items-center justify-between px-4 py-2.5 text-[12.5px]">
                     <span className="text-fg-2">{fmtDateJa(s.start, false)} {fmtTime(s.start)}{s.note ? ` · ${s.note}` : ''}</span>
                     <span className="tabular font-semibold">{fmtDuration(s.minutes)}</span>
                   </div>
@@ -250,14 +250,14 @@ function Journal({ summited }: { summited: Subject[] }) {
                 <motion.div initial={{ rotate: -20, scale: 0.7 }} animate={{ rotate: -6, scale: 1 }} transition={{ ...springSoft, delay: 0.1 + i * 0.05 }}>
                   <SummitStamp subject={s} size={112} date={s.summitedAt} />
                 </motion.div>
-                <p className="mt-2 text-[15px] font-bold">{s.mountainName}</p>
+                <p className="mt-2 text-[14px] font-bold">{s.mountainName}</p>
                 <p className="text-[12px] text-fg-2">{s.name}</p>
                 <p className="tabular mt-1.5 text-[11px] text-fg-2">{fmtDateJa(s.summitedAt!, false)} · {fmtDuration(minutesBySubject[s.id] ?? 0, true)}</p>
               </GlassCard>
             ))}
           </div>
         ) : (
-          <GlassCard className="p-5 text-center text-[13px] text-fg-2">最初の登頂で、ここに記念スタンプが押されます</GlassCard>
+          <GlassCard className="p-5 text-center text-[12.5px] text-fg-2">最初の登頂で、ここに記念スタンプが押されます</GlassCard>
         )}
       </section>
 
@@ -279,7 +279,7 @@ function Journal({ summited }: { summited: Subject[] }) {
                 <div className="flex items-center justify-between px-4 py-3">
                   <div>
                     <p className="text-[11px] font-semibold text-fg-2">No.{i + 1}</p>
-                    <p className="text-[15px] font-semibold">{unlocked ? st.name : '？？？'}</p>
+                    <p className="text-[14px] font-semibold">{unlocked ? st.name : '？？？'}</p>
                     <p className="mt-0.5 text-[12px] text-fg-2">{unlocked ? st.description : `いずれかのルートで ${Math.round(st.from * 100)}% まで登ると解放`}</p>
                   </div>
                 </div>
@@ -293,7 +293,7 @@ function Journal({ summited }: { summited: Subject[] }) {
 }
 
 function SectionTitle({ children }: { children: ReactNode }) {
-  return <h2 className="mb-3 text-[17px] font-bold tracking-tight">{children}</h2>;
+  return <h2 className="mb-3 text-[16px] font-bold tracking-tight">{children}</h2>;
 }
 
 /** 列車・航空の道のり：駅・空港の印を、通り過ぎたか・いまどこかで並べる */
@@ -314,7 +314,7 @@ function StopList({ mode, subject, prog }: { mode: DesignRoutes; subject: Subjec
                 {reached && !current && <Check size={13} strokeWidth={3} className="text-white" />}
               </span>
               <div className="min-w-0 flex-1">
-                <p className={`text-[15px] font-semibold ${reached ? '' : 'text-fg-2'}`}>
+                <p className={`text-[14px] font-semibold ${reached ? '' : 'text-fg-2'}`}>
                   {st.name}
                   {current && <span className="ml-2 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: alpha(subject.color, 0.2), color: subject.color }}>現在地</span>}
                 </p>
@@ -347,7 +347,7 @@ function LogBook({ mode }: { mode: DesignRoutes }) {
         ].map(([k, v]) => (
           <GlassCard key={k} className="px-3 py-3 text-center">
             <p className="text-[12px] text-fg-2">{k}</p>
-            <p className="tabular mt-0.5 text-[17px] font-bold">{v}</p>
+            <p className="tabular mt-0.5 text-[16px] font-bold">{v}</p>
           </GlassCard>
         ))}
       </div>
@@ -356,7 +356,7 @@ function LogBook({ mode }: { mode: DesignRoutes }) {
           {list.slice(0, 30).map((l) => (
             <div key={l.id} className="flex items-center gap-3 px-4 py-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[15px] font-semibold">
+                <p className="truncate text-[14px] font-semibold">
                   {l.fromName} → {l.toName}
                   {!l.arrived && <span className="ml-1.5 text-[12px] font-medium text-fg-2">（途中まで）</span>}
                 </p>
@@ -364,7 +364,7 @@ function LogBook({ mode }: { mode: DesignRoutes }) {
                   {fmtDateJa(l.endedAt, false)} · {l.seat} · {l.task}
                 </p>
               </div>
-              <div className="tabular text-right text-[13px]">
+              <div className="tabular text-right text-[12.5px]">
                 <p className="font-semibold">{l.km.toLocaleString()} km</p>
                 <p className="text-fg-2">{fmtDuration(l.minutes)}</p>
               </div>
@@ -372,7 +372,7 @@ function LogBook({ mode }: { mode: DesignRoutes }) {
           ))}
         </GlassCard>
       ) : (
-        <GlassCard className="p-5 text-center text-[13px] text-fg-2">予約した旅を終えると、ここに記録が残ります</GlassCard>
+        <GlassCard className="p-5 text-center text-[12.5px] text-fg-2">予約した旅を終えると、ここに記録が残ります</GlassCard>
       )}
       {arrived > 0 && <p className="text-center text-[12px] text-fg-2">予約どおりに{mode.doneWord === '到着' ? '到着' : '終着まで乗車'}：{arrived} 回</p>}
     </div>

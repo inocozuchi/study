@@ -76,7 +76,7 @@ export function PassStep({ draft, route, onBack, onBoard }: { draft: FlightDraft
             <ChevronLeft />
           </button>
           <div>
-            <p className="text-[15px] font-semibold">搭乗券</p>
+            <p className="text-[14px] font-semibold">搭乗券</p>
             <Steps at={3} />
           </div>
           <span />
@@ -88,7 +88,7 @@ export function PassStep({ draft, route, onBack, onBoard }: { draft: FlightDraft
               <span className="grid h-6 w-6 place-items-center rounded-full bg-[#FF9F0A] text-[#1A1206]">
                 <Plane size={13} strokeWidth={2.6} />
               </span>
-              <span className="text-[13px] font-semibold">機内モード</span>
+              <span className="text-[12.5px] font-semibold">機内モード</span>
               <span className="text-[12px] text-white/55">{phase === 'scanning' ? 'ご搭乗ありがとうございます' : '搭乗の準備ができました'}</span>
             </motion.div>
           )}
@@ -158,7 +158,7 @@ export function PassStep({ draft, route, onBack, onBoard }: { draft: FlightDraft
         </motion.div>
         <AnimatePresence>
           {phase === 'torn' && (
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ delay: 0.6 }} className="mt-14 text-center text-[12.5px] text-white/50">
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ delay: 0.6 }} className="mt-14 text-center text-[12px] text-white/50">
               半券を下へスワイプしても搭乗できます
             </motion.p>
           )}

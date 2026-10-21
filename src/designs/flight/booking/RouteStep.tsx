@@ -81,7 +81,7 @@ export function RouteStep({ draft, routes, route, patch, onClose, onNext }: { dr
             <X />
           </button>
           <div>
-            <p className="text-[15px] font-semibold">フライトを予約</p>
+            <p className="text-[14px] font-semibold">フライトを予約</p>
             <Steps at={1} />
           </div>
           <button onClick={() => setSearch('dest')} aria-label="空港を探す" className="btn-icon fl-btn fl-glass pointer-events-auto">
@@ -105,11 +105,11 @@ export function RouteStep({ draft, routes, route, patch, onClose, onNext }: { dr
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#050608] via-[#050608]/95 to-transparent px-5 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-10" style={{ minHeight: PANEL_H }}>
         <StepToggle step={draft.step} onChange={(s) => patch({ step: s, minutes: snapTo(draft.minutes, s), dest: null })} />
         <div className="mt-3 flex items-end justify-between px-1">
-          <motion.p key={draft.minutes} initial={{ opacity: 0.5, y: 4 }} animate={{ opacity: 1, y: 0 }} className="fl-num text-[40px] font-bold leading-none tracking-tight">
+          <motion.p key={draft.minutes} initial={{ opacity: 0.5, y: 4 }} animate={{ opacity: 1, y: 0 }} className="fl-num text-[37px] font-bold leading-none tracking-tight">
             {hm(draft.minutes).replace(/(\d+)([hm])/g, '$1 $2')}
           </motion.p>
-          <p className="fl-num pb-1 text-right text-[13px] leading-tight text-white/60">
-            <span className="block text-[15px] font-bold text-[#FF9F0A]">
+          <p className="fl-num pb-1 text-right text-[12.5px] leading-tight text-white/60">
+            <span className="block text-[14px] font-bold text-[#FF9F0A]">
               {route.airport.code} <span className="font-semibold text-white">{route.airport.name}</span>
             </span>
             {route.km.toLocaleString()} km
@@ -276,7 +276,7 @@ function Carousel({ routes, selected, onPick }: { routes: Route[]; selected: str
               </span>
             )}
             <span className={`fl-num inline-block rounded-[6px] px-1.5 py-[1px] text-[10.5px] font-bold ${on ? 'bg-black/8 bg-[#050608]/10' : 'bg-white/10'}`}>{r.airport.code}</span>
-            <span className="mt-1 block truncate text-[14px] font-bold">{r.airport.name}</span>
+            <span className="mt-1 block truncate text-[13px] font-bold">{r.airport.name}</span>
             <span className={`fl-num block text-[12px] font-semibold ${on ? 'text-black/55' : 'text-white/55'}`}>{hm(r.minutes)}</span>
           </button>
         );
@@ -303,8 +303,8 @@ function AirportSearch({ mode, routes, origin, onPick, onClose }: { mode: 'dest'
       >
         <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
           <Search size={16} className="text-white/50" />
-          <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'origin' ? '出発する空港' : '空港コード・都市名'} className="min-w-0 flex-1 bg-transparent text-[16px] text-white outline-none placeholder:text-white/35" />
-          <button onClick={onClose} className="text-[14px] font-semibold text-[#FF9F0A]">
+          <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'origin' ? '出発する空港' : '空港コード・都市名'} className="min-w-0 flex-1 bg-transparent text-[15px] text-white outline-none placeholder:text-white/35" />
+          <button onClick={onClose} className="text-[13px] font-semibold text-[#FF9F0A]">
             閉じる
           </button>
         </div>
@@ -312,11 +312,11 @@ function AirportSearch({ mode, routes, origin, onPick, onClose }: { mode: 'dest'
           {hits.map(({ a, sub }) => (
             <button key={a.code} onClick={() => onPick(a.code)} className="flex w-full items-center gap-3 px-4 py-2.5 text-left active:bg-white/5">
               <AirportPill code={a.code} state="idle" />
-              <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{a.name}</span>
-              <span className="fl-num text-[12.5px] text-white/50">{sub}</span>
+              <span className="min-w-0 flex-1 truncate text-[14px] font-semibold">{a.name}</span>
+              <span className="fl-num text-[12px] text-white/50">{sub}</span>
             </button>
           ))}
-          {!hits.length && <p className="px-4 py-6 text-center text-[13px] text-white/50">見つかりません</p>}
+          {!hits.length && <p className="px-4 py-6 text-center text-[12.5px] text-white/50">見つかりません</p>}
         </div>
       </motion.div>
     </motion.div>

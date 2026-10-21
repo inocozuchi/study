@@ -23,8 +23,8 @@ export function FlightResult({ result, onContinue }: DesignResultProps) {
     <div className="fl-root absolute inset-0 overflow-y-auto overscroll-contain bg-[#050608]/55">
       <div className="mx-auto w-[min(92vw,360px)] pb-[calc(env(safe-area-inset-bottom)+28px)] pt-[calc(var(--safe-top)+14px)]">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-center">
-          <p className="text-[13px] font-semibold text-[#FF9F0A]">{result.arrived ? 'ようこそ' : '途中の空港に着陸しました'}</p>
-          <p className="mt-0.5 text-[24px] font-bold tracking-tight">{b ? `${b.toName}に着陸しました` : '着陸しました'}</p>
+          <p className="text-[12.5px] font-semibold text-[#FF9F0A]">{result.arrived ? 'ようこそ' : '途中の空港に着陸しました'}</p>
+          <p className="mt-0.5 text-[22px] font-bold tracking-tight">{b ? `${b.toName}に着陸しました` : '着陸しました'}</p>
         </motion.div>
 
         {b && (
@@ -51,20 +51,20 @@ export function FlightResult({ result, onContinue }: DesignResultProps) {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="fl-glass mt-4 grid grid-cols-2 rounded-[22px] px-5 py-3.5">
           <div>
             <p className="text-[11.5px] text-white/50">今回のフライト</p>
-            <p className="fl-num text-[26px] font-bold leading-tight">
+            <p className="fl-num text-[24px] font-bold leading-tight">
               {(result.km ?? 0).toLocaleString()}
-              <span className="ml-1 text-[13px] text-white/50">km</span>
+              <span className="ml-1 text-[12.5px] text-white/50">km</span>
             </p>
           </div>
           <div>
             <p className="text-[11.5px] text-white/50">集中した時間</p>
-            <p className="fl-num text-[26px] font-bold leading-tight">{hm(focusMin)}</p>
+            <p className="fl-num text-[24px] font-bold leading-tight">{hm(focusMin)}</p>
           </div>
         </motion.div>
 
         <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.85 }} className="fl-glass mt-3 rounded-[22px] px-4 py-3">
           <div className="flex items-center justify-between">
-            <p className="flex items-center gap-1.5 text-[13px] font-semibold">
+            <p className="flex items-center gap-1.5 text-[12.5px] font-semibold">
               <BookOpenCheck size={15} className="text-[#FFD60A]" /> ログブック
             </p>
             <p className="fl-num text-[12px] text-white/55">累計 {totalKm.toLocaleString()} km · {flights.length} 便</p>
@@ -72,7 +72,7 @@ export function FlightResult({ result, onContinue }: DesignResultProps) {
           <ul className="mt-2 divide-y divide-white/8">
             {flights.slice(0, 4).map((l) => (
               <li key={l.id} className="flex items-center gap-3 py-2">
-                <span className="fl-num w-[92px] shrink-0 text-[14px] font-bold">
+                <span className="fl-num w-[92px] shrink-0 text-[13px] font-bold">
                   {l.from} <span className="text-white/40">→</span> {l.to}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-[12px] text-white/55">
@@ -88,7 +88,7 @@ export function FlightResult({ result, onContinue }: DesignResultProps) {
           </ul>
         </motion.section>
 
-        <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }} onClick={onContinue} className="fl-cta mt-5 h-14 w-full text-[17px]">
+        <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }} onClick={onContinue} className="fl-cta mt-5 h-14 w-full text-[16px]">
           到着ロビーへ
         </motion.button>
       </div>

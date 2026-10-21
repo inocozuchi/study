@@ -12,7 +12,7 @@ export function FlightFocus({ onClick }: { onClick: (e: MouseEvent<HTMLButtonEle
           <circle cx="40" cy="40" r={r} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="2" strokeDasharray={`${arc * 0.75} ${arc}`} strokeLinecap="round" />
           <circle className="fl-gauge-ring" cx="40" cy="40" r={r} fill="none" stroke="#FF9F0A" strokeWidth="2.2" strokeDasharray={`${arc * 0.5} ${arc}`} strokeLinecap="round" />
         </svg>
-        <span className="relative text-[18px] font-semibold tracking-[0.12em]">集中</span>
+        <span className="relative text-[17px] font-semibold tracking-[0.12em]">集中</span>
       </button>
     </div>
   );

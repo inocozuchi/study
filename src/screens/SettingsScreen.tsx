@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { usePresentDepth } from '@/lib/depth';
+import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bell, CalendarDays, ChevronLeft, ChevronRight, Clock, Coffee, Database, Leaf, Mountain, Music, PlusSquare, Repeat, Smartphone, Sun, Timer, Trash2,
@@ -51,8 +52,8 @@ function Row({ icon, title, detail, value, onClick, right, danger = false }: { i
         <span className={`grid w-[22px] shrink-0 place-items-center ${danger ? 'text-danger' : 'text-accent'}`}>{icon}</span>
       )}
       <span className="min-w-0 flex-1">
-        <span className={`block text-[15px] font-bold ${danger ? 'text-danger-ink' : ''}`}>{title}</span>
-        {sub != null && sub !== '' && <span className="mt-[3px] block text-[12.5px] leading-snug text-fg-2">{sub}</span>}
+        <span className={`block text-[14px] font-bold ${danger ? 'text-danger-ink' : ''}`}>{title}</span>
+        {sub != null && sub !== '' && <span className="mt-[3px] block text-[12px] leading-snug text-fg-2">{sub}</span>}
       </span>
       {right}
       {onClick && !right && <ChevronRight size={18} className="shrink-0 text-fg-2" />}
@@ -203,19 +204,21 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
   const probe = useLayoutProbe();
   // 下からせり上がり、後ろのホームは少し奥へ引っ込む（iOS のシート）
   usePresentDepth(open);
+  // 左端から右へスワイプで閉じる（iOS の「戻る」）
+  const swipe = useEdgeSwipeBack(onClose, open);
 
   return createPortal(
     <>
       <AnimatePresence>
         {open && (
           <motion.div
-            className="fixed inset-x-0 top-0 h-app z-40 overflow-y-auto bg-page text-fg" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={springSheet} style={{ willChange: 'transform' }}>
+            className="fixed inset-x-0 top-0 h-app z-40 overflow-y-auto bg-page text-fg" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={springSheet} style={{ willChange: 'transform', x: swipe.x }} {...swipe.bind}>
             {/* 時刻の帯の下は地の色で塗る（スクロールした項目が時刻に重ならない）。この画面と一緒に動く */}
             <div className="status-band z-10" data-area={OVERLAY_CHROME.statusArea} aria-hidden />
             <div className="mx-auto max-w-xl px-4 pb-[calc(env(safe-area-inset-bottom)+40px)] pt-safe">
               {/* 見出しの行：「戻る」はいつも左上の同じ位置 */}
               <div className="mt-2 flex items-center gap-1.5">
-                <button onClick={onClose} className="-ml-2 flex min-h-[40px] min-w-[76px] items-center gap-px rounded-card py-2 pl-1.5 pr-2.5 text-[15px] font-semibold text-accent-ink active:bg-accent-soft">
+                <button onClick={onClose} className="-ml-2 flex min-h-[40px] min-w-[76px] items-center gap-px rounded-card py-2 pl-1.5 pr-2.5 text-[14px] font-semibold text-accent-ink active:bg-accent-soft">
                   <ChevronLeft size={20} strokeWidth={2.2} /> 戻る
                 </button>
                 <h1 className="page-title">設定</h1>
@@ -315,15 +318,15 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
             setNameOpen(false);
           }}
         >
-          <input className="field text-[18px] font-semibold" value={name} onChange={(e) => setName(e.target.value)} maxLength={16} autoFocus placeholder="旅人" />
+          <input className="field text-[17px] font-semibold" value={name} onChange={(e) => setName(e.target.value)} maxLength={16} autoFocus placeholder="旅人" />
           <button type="submit" className="btn-primary w-full">保存</button>
         </form>
       </Sheet>
 
       <Modal open={confirm} onClose={() => setConfirm(false)}>
         <div className="p-6 text-center">
-          <p className="text-[19px] font-extrabold">すべての記録を消去しますか？</p>
-          <p className="mt-2 text-[13px] text-fg-2">科目・記録・予定・ノート・ToDo・習慣がすべて消えます。この操作は取り消せません。</p>
+          <p className="text-[18px] font-extrabold">すべての記録を消去しますか？</p>
+          <p className="mt-2 text-[12.5px] text-fg-2">科目・記録・予定・ノート・ToDo・習慣がすべて消えます。この操作は取り消せません。</p>
           <div className="mt-5 grid grid-cols-2 gap-2">
             <button onClick={() => setConfirm(false)} className="rounded-card bg-fill py-3 font-bold">やめる</button>
             <button

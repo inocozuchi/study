@@ -39,7 +39,7 @@ export function Segmented<T extends string>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(o.value)}
-            className={`relative z-10 flex-1 whitespace-nowrap rounded-chip font-bold transition-colors ${size === 'sm' ? 'px-1.5 py-1.5 text-[12px]' : 'px-3 py-2 text-[14px]'} ${active ? 'text-fg' : 'text-fg-2'}`}
+            className={`relative z-10 flex-1 whitespace-nowrap rounded-chip font-bold transition-colors ${size === 'sm' ? 'px-1.5 py-1.5 text-[12px]' : 'px-3 py-2 text-[13px]'} ${active ? 'text-fg' : 'text-fg-2'}`}
           >
             {o.label}
           </button>

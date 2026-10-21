@@ -5,6 +5,7 @@ import { easeIOS, springSheet } from '@/lib/motion';
 import { usePresentDepth } from '@/lib/depth';
 import { useApp } from '@/store/AppStore';
 import { useHoldScene } from '@/lib/sceneHold';
+import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack';
 import { classOf, defaultDir, lineById, nearestStop, onLine, stopsFrom, usableDir, type Dir, type Stop } from './line';
 import { LineStep } from './LineStep';
 import { CarStep } from './CarStep';
@@ -47,6 +48,9 @@ export const snapTo = (m: number, step: TimeStep) => {
 export function TrainBooking({ open, onClose, onStart }: DesignBookingProps) {
   const { settings } = useApp();
   const [page, setPage] = useState<1 | 2 | 3>(1);
+  // iOS の「左端から右へスワイプで戻る」：① では予約を閉じ、② では ① へ。③（改札・搭乗の儀式）は戻るボタンで
+  const swipe1 = useEdgeSwipeBack(onClose, open && page === 1);
+  const swipe2 = useEdgeSwipeBack(() => setPage(1), open && page === 2);
   const [draft, setDraft] = useState<TrainDraft>(() => fresh());
   useHoldScene(open);
   usePresentDepth(open);
@@ -119,13 +123,14 @@ export function TrainBooking({ open, onClose, onStart }: DesignBookingProps) {
           // 改札を通ったら、車窓へ吸い込まれるようにズームイン
           // （動く全画面に filter はかけない：iPhone で重い）
           exit={{ opacity: 0, scale: 1.7, transition: { duration: 0.9, ease: [0.5, 0, 0.75, 0] } }}
+          {...(page === 1 ? swipe1.bind : swipe2.bind)}
         >
-          <div className="absolute inset-0 isolate">
+          <motion.div className="absolute inset-0 isolate" style={{ x: swipe1.x }}>
             <LineStep draft={draft} stops={stops} stop={stop} patch={patch} onClose={onClose} onNext={() => setPage(2)} />
-          </div>
+          </motion.div>
           <AnimatePresence>
             {page >= 2 && (
-              <motion.div key="car" className="absolute inset-0 isolate z-10" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 240, damping: 32 }}>
+              <motion.div key="car" className="absolute inset-0 isolate z-10" style={{ x: swipe2.x }} initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 240, damping: 32 }}>
                 <CarStep draft={draft} stop={stop} patch={patch} onBack={() => setPage(1)} onNext={() => setPage(3)} />
               </motion.div>
             )}

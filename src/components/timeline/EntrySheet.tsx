@@ -128,7 +128,7 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
     onClose();
   };
 
-  const chip = (active: boolean) => `tabular shrink-0 rounded-full px-3 py-1.5 text-[13px] font-bold transition-colors ${active ? 'bg-accent text-white' : 'bg-fill text-fg-2 active:bg-accent-soft'}`;
+  const chip = (active: boolean) => `tabular shrink-0 rounded-full px-3 py-1.5 text-[12.5px] font-bold transition-colors ${active ? 'bg-accent text-white' : 'bg-fill text-fg-2 active:bg-accent-soft'}`;
   const setStart = (m: number) => setStartMin(Math.max(0, Math.min(DAY_MAX - 5, m)));
   const pomo = settings.pomodoroFocus;
 
@@ -139,7 +139,7 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
       title={editing ? (isPlan ? '予定を編集' : '記録を編集') : isPlan ? '予定を立てる' : 'あとから記録'}
       subtitle={isPlan ? '開始と長さを決めるだけ。終わりは自動で決まります' : '電車の中や紙の勉強も、旅の一部に'}
       action={
-        <Pressable onClick={save} disabled={!valid} className="hit flex h-8 items-center gap-1 rounded-full bg-accent px-3.5 text-[13px] font-bold text-white disabled:opacity-40">
+        <Pressable onClick={save} disabled={!valid} className="hit flex h-8 items-center gap-1 rounded-full bg-accent px-3.5 text-[12.5px] font-bold text-white disabled:opacity-40">
           <Check size={14} strokeWidth={3} /> 保存
         </Pressable>
       }
@@ -167,7 +167,7 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
                   key={sub.id}
                   onClick={() => setSubjectId(sub.id)}
                   aria-pressed={active}
-                  className="flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-bold transition-colors"
+                  className="flex items-center gap-1.5 rounded-full px-3 py-2 text-[12.5px] font-bold transition-colors"
                   style={{
                     background: active ? alpha(sub.color, 0.18) : 'rgb(var(--c-fill))',
                     color: active ? sub.color : 'rgb(var(--c-fg2))',
@@ -180,7 +180,7 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
               );
             })}
             {!creating && (
-              <button onClick={() => setSubjectId(NEW)} className="flex items-center gap-1 rounded-full border border-dashed border-line-strong px-3 py-2 text-[13px] font-bold text-accent-ink">
+              <button onClick={() => setSubjectId(NEW)} className="flex items-center gap-1 rounded-full border border-dashed border-line-strong px-3 py-2 text-[12.5px] font-bold text-accent-ink">
                 <Plus size={14} strokeWidth={2.6} /> 新しい科目
               </button>
             )}
@@ -210,7 +210,7 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
                 </button>
               );
             })}
-            <input type="date" className="field ml-auto w-[150px] shrink-0 px-2.5 py-1.5 text-[14px]" value={date} onChange={(ev) => ev.target.value && setDate(ev.target.value)} aria-label="日付を選ぶ" />
+            <input type="date" className="field ml-auto w-[150px] shrink-0 px-2.5 py-1.5 text-[13px]" value={date} onChange={(ev) => ev.target.value && setDate(ev.target.value)} aria-label="日付を選ぶ" />
           </div>
         </section>
 
@@ -221,7 +221,7 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
             <button aria-label="15分早く" onClick={() => setStart(startMin - 15)} className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-fill text-fg-2">
               <Minus size={18} />
             </button>
-            <input type="time" step={300} className="field flex-1 text-center text-[22px] font-extrabold tabular" value={timeToInput(startMin)} onChange={(ev) => ev.target.value && setStart(inputToMin(ev.target.value))} aria-label="開始時刻" />
+            <input type="time" step={300} className="field flex-1 text-center text-[20px] font-extrabold tabular" value={timeToInput(startMin)} onChange={(ev) => ev.target.value && setStart(inputToMin(ev.target.value))} aria-label="開始時刻" />
             <button aria-label="15分遅く" onClick={() => setStart(startMin + 15)} className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-fill text-fg-2">
               <Plus size={18} />
             </button>
@@ -252,7 +252,7 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
         <section>
           <div className="mb-2 flex items-baseline justify-between">
             <p className="section-label">長さ</p>
-            <p className="tabular text-[13px] font-bold text-fg-2">
+            <p className="tabular text-[12.5px] font-bold text-fg-2">
               {fmtClock(startMin)} → <span className="text-fg">{fmtClock(endMin)}</span>
             </p>
           </div>
@@ -260,7 +260,7 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
             <button aria-label="5分短く" onClick={() => setDuration((d) => Math.max(5, d - 5))} className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-fill text-fg-2">
               <Minus size={18} />
             </button>
-            <p className="tabular flex-1 text-center text-[22px] font-extrabold">{fmtDuration(duration)}</p>
+            <p className="tabular flex-1 text-center text-[20px] font-extrabold">{fmtDuration(duration)}</p>
             <button aria-label="5分長く" onClick={() => setDuration((d) => Math.min(DAY_MAX, d + 5))} className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-fill text-fg-2">
               <Plus size={18} />
             </button>
@@ -280,7 +280,7 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
               );
             })}
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-[12.5px]">
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px]">
             {future ? (
               <Warn>未来の時刻は記録できません（予定として追加できます）</Warn>
             ) : startMin + duration > DAY_MAX ? (
@@ -329,7 +329,7 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
         )}
 
         {editing && (
-          <button onClick={remove} className="flex w-full items-center justify-center gap-2 rounded-card bg-danger-soft py-3 text-[14px] font-bold text-danger-ink">
+          <button onClick={remove} className="flex w-full items-center justify-center gap-2 rounded-card bg-danger-soft py-3 text-[13px] font-bold text-danger-ink">
             <Trash2 size={16} /> {isPlan ? 'この予定を削除' : 'この記録を削除'}
           </button>
         )}

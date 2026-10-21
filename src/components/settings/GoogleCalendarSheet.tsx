@@ -32,12 +32,12 @@ export function GoogleCalendarSheet({ open, onClose }: { open: boolean; onClose:
       <div className="space-y-5 pb-6">
         <div className="card flex items-center justify-between px-4 py-3">
           <span>
-            <span className="block text-[15px] font-bold">{googleStatusLabel(google.status, connected)}</span>
-            {google.message && <span className="mt-0.5 block text-[12.5px] text-danger-ink">{google.message}</span>}
+            <span className="block text-[14px] font-bold">{googleStatusLabel(google.status, connected)}</span>
+            {google.message && <span className="mt-0.5 block text-[12px] text-danger-ink">{google.message}</span>}
             {google.fetchedAt && <span className="mt-0.5 block text-[12px] text-fg-2">最終更新 {new Date(google.fetchedAt).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>}
           </span>
           {connected && (
-            <button onClick={refresh} className="btn-secondary px-3 py-2 text-[13px]">
+            <button onClick={refresh} className="btn-secondary px-3 py-2 text-[12.5px]">
               更新
             </button>
           )}
@@ -47,7 +47,7 @@ export function GoogleCalendarSheet({ open, onClose }: { open: boolean; onClose:
           <label className="block">
             <span className="section-label mb-1.5 block px-1">OAuth クライアント ID</span>
             <input
-              className="field font-mono text-[13px]"
+              className="field font-mono text-[12.5px]"
               value={clientId}
               placeholder="xxxxxxxx.apps.googleusercontent.com"
               autoCapitalize="off"
@@ -84,7 +84,7 @@ export function GoogleCalendarSheet({ open, onClose }: { open: boolean; onClose:
                 return (
                   <div key={c.id} className="card flex items-center gap-3 px-4 py-3">
                     <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: c.color }} />
-                    <span className="min-w-0 flex-1 truncate text-[15px] font-bold">{c.name}</span>
+                    <span className="min-w-0 flex-1 truncate text-[14px] font-bold">{c.name}</span>
                     <Toggle
                       checked={shown}
                       label={c.name}
@@ -103,7 +103,7 @@ export function GoogleCalendarSheet({ open, onClose }: { open: boolean; onClose:
               disconnect();
               onClose();
             }}
-            className="w-full rounded-card bg-danger-soft py-3 text-[15px] font-bold text-danger-ink"
+            className="w-full rounded-card bg-danger-soft py-3 text-[14px] font-bold text-danger-ink"
           >
             接続を解除
           </button>
