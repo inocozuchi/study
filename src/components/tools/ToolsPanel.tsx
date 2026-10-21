@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { usePresentDepth } from '@/lib/depth';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Angry, BookOpen, ChevronDown, ChevronLeft, ChevronRight, Droplet, Flower2, Footprints, Frown, Headphones, Laugh, ListTodo, Meh, Moon, Mountain, NotebookPen, PenLine, Plus, Salad, Smile, Sparkles, Sprout, Trash2, X, type LucideIcon } from 'lucide-react';
 import { useNow } from '@/hooks/useNow';
@@ -19,6 +20,7 @@ export const TOOL_TABS: { key: ToolTab; label: string; icon: typeof NotebookPen 
 
 /** 記録・ToDo・習慣のマルチツール（左に縦タブ、右に中身） */
 export function ToolsPanel({ tab, onTab, onClose }: { tab: ToolTab | null; onTab: (t: ToolTab) => void; onClose: () => void }) {
+  usePresentDepth(!!tab);
   useEffect(() => {
     if (!tab) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -130,7 +132,7 @@ function DiaryView() {
         {MOODS.map((m) => {
           const active = entry?.mood === m.v;
           return (
-            <motion.button key={m.v} whileTap={{ scale: 0.8 }} transition={springBouncy} onClick={() => saveDiary(date, { mood: m.v, text })} aria-label={`気分：${m.label}`} className={`relative grid h-11 w-11 place-items-center rounded-full transition ${active ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}>
+            <motion.button key={m.v} transition={springBouncy} onClick={() => saveDiary(date, { mood: m.v, text })} aria-label={`気分：${m.label}`} className={`relative grid h-11 w-11 place-items-center rounded-full transition ${active ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}>
               <m.Icon size={22} strokeWidth={2} />
             </motion.button>
           );
@@ -173,7 +175,7 @@ function TodoView() {
         }}
       >
         <input className="field py-2.5" placeholder="やることを追加" value={text} onChange={(e) => setText(e.target.value)} maxLength={80} />
-        <motion.button whileTap={{ scale: 0.88 }} type="submit" disabled={!text.trim()} aria-label="追加" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent text-white disabled:opacity-40">
+        <motion.button type="submit" disabled={!text.trim()} aria-label="追加" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent text-white disabled:opacity-40">
           <Plus size={20} />
         </motion.button>
       </form>
@@ -351,7 +353,7 @@ function HabitView() {
             </div>
           </motion.form>
         ) : (
-          <motion.button key="add" whileTap={{ scale: 0.96 }} onClick={() => setAdding(true)} className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-line py-3 text-[14px] font-semibold text-fg-2">
+          <motion.button key="add" onClick={() => setAdding(true)} className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-line py-3 text-[14px] font-semibold text-fg-2">
             <Plus size={16} /> 新しい習慣
           </motion.button>
         )}

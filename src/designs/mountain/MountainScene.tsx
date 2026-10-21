@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+import { bakesSettled } from './scene/bakeTracker';
 import { useApp } from '@/store/AppStore';
 import { useTimer } from '@/store/TimerStore';
 import { routeProgress, stageFor } from '@/lib/altitude';
@@ -7,7 +9,13 @@ import { TrailStage, type TravelerMood } from './scene/TrailStage';
 import type { DesignSceneProps } from '../types';
 
 /** 登山デザインの背景：タイマーの状態をハイカーの気分（歩く・立つ・座る・眠る）に変換して描く */
-export function MountainScene({ hour, ended, paused }: DesignSceneProps) {
+export function MountainScene({ hour, ended, paused, onReady }: DesignSceneProps) {
+  // クレヨンの絵の焼き込みがそろってから見せる（2 回目からは Cache Storage の画像なのですぐ）
+  const readyRef = useRef(onReady);
+  readyRef.current = onReady;
+  useEffect(() => {
+    void bakesSettled().then(() => readyRef.current?.());
+  }, []);
   const { settings, subjectById, minutesBySubject } = useApp();
   const { timer, elapsedMs } = useTimer();
   const subject = subjectById(timer.subjectId ?? settings.selectedSubjectId);

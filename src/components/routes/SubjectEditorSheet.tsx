@@ -80,7 +80,6 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
             {SUBJECT_COLORS.map((c) => (
               <motion.button
                 key={c}
-                whileTap={{ scale: 0.85 }}
                 onClick={() => setColor(c)}
                 aria-label={`カラー ${c}`}
                 className="relative h-9 w-9 rounded-full"
@@ -101,7 +100,6 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
               return (
                 <motion.button
                   key={k}
-                  whileTap={{ scale: 0.88 }}
                   onClick={() => setIcon(k)}
                   aria-label={SUBJECT_ICONS[k].label}
                   className="grid aspect-square place-items-center rounded-2xl transition-colors"

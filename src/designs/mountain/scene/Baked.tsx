@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, type CSSProperties, type ReactElement } from 'react';
 import { CRAYON_FILTERS } from '../CrayonDefs';
+import { trackBake } from './bakeTracker';
 
 /**
  * クレヨンのフィルタがかかった静的な SVG を、一度だけ画像（PNG）に焼き込んで表示する。
@@ -168,10 +169,14 @@ export function Baked({
     const s = scale();
     const key = `/bake/${hash(markup)}-${repeat}@${s}.png`;
     let cancelled = false;
+    // 表示できた（または諦めた・取り消した）ときに終わる仕事として数える
+    let finish = () => {};
+    void trackBake(new Promise<void>((ok) => (finish = ok)));
 
     const show = (el: HTMLElement) => {
       el.style.display = 'block';
       requestAnimationFrame(() => (el.style.opacity = '1'));
+      finish();
     };
     const showBlob = (blob: Blob) => {
       const prev = out.src;
@@ -193,7 +198,7 @@ export function Baked({
           canvas.width = Math.round(width * repeat * s);
           canvas.height = Math.round(height * s);
           const ctx = canvas.getContext('2d');
-          if (!ctx) return;
+          if (!ctx) return finish();
           ctx.setTransform(s, 0, 0, s, 0, 0);
           for (let i = 0; i < repeat; i++) ctx.drawImage(img, i * width, 0, width, height);
           try {
@@ -218,9 +223,11 @@ export function Baked({
       })
       .catch(() => {
         /* 焼けなかったときは何も出さない（シーンの他の層はそのまま） */
+        finish();
       });
     return () => {
       cancelled = true;
+      finish();
     };
   }, [bakeKey, width, height, repeat]);
 

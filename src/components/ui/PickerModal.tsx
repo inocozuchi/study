@@ -36,7 +36,6 @@ export function PickerModal<T extends string | number>({
           return (
             <motion.button
               key={String(o.value)}
-              whileTap={{ scale: 0.99 }}
               onClick={() => {
                 onSelect(o.value);
                 onClose();

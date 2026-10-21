@@ -109,13 +109,13 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
             </p>
           </div>
           <div className="mt-4 flex items-center justify-center gap-8">
-            <motion.button whileTap={{ scale: 0.85 }} transition={springBouncy} onClick={() => step(-1)} aria-label="前の曲" className="text-fg">
+            <motion.button transition={springBouncy} onClick={() => step(-1)} aria-label="前の曲" className="text-fg">
               <SkipBack size={28} fill="currentColor" />
             </motion.button>
-            <motion.button whileTap={{ scale: 0.88 }} transition={springBouncy} onClick={() => setPlaying(!playing)} aria-label={playing ? '一時停止' : '再生'} className="grid h-16 w-16 place-items-center rounded-full bg-accent text-white">
+            <motion.button transition={springBouncy} onClick={() => setPlaying(!playing)} aria-label={playing ? '一時停止' : '再生'} className="grid h-16 w-16 place-items-center rounded-full bg-accent text-white">
               {playing ? <Pause size={28} fill="currentColor" strokeWidth={0} /> : <Play size={28} fill="currentColor" strokeWidth={0} className="translate-x-0.5" />}
             </motion.button>
-            <motion.button whileTap={{ scale: 0.85 }} transition={springBouncy} onClick={() => step(1)} aria-label="次の曲" className="text-fg">
+            <motion.button transition={springBouncy} onClick={() => step(1)} aria-label="次の曲" className="text-fg">
               <SkipForward size={28} fill="currentColor" />
             </motion.button>
           </div>

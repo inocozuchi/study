@@ -28,6 +28,7 @@ export const mountainDesign: TimerDesign = {
   SetupOptions: SeasonPicker,
   setupLabel: 'シーズン',
   // 上の帯は空のいちばん上の色、下の帯は手前の草原の影の色（夜は群青を重ねたぶん暗く）
+  skeleton: '#1C2433',
   edgeColors: (hour, settings) => {
     const look = SEASONS[settings.season];
     const sky = stageSky(hour, look.skyBlue);

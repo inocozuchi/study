@@ -114,7 +114,7 @@ export function TrainResult({ result, onContinue }: DesignResultProps) {
           )}
         </motion.div>
 
-        <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...springBouncy, delay: 1.1 }} whileTap={{ scale: 0.95 }} onClick={onContinue} className="tr-enji mt-6 h-12 rounded-[10px] px-10 text-[17px] font-bold tracking-[0.3em]">
+        <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...springBouncy, delay: 1.1 }} onClick={onContinue} className="tr-enji mt-6 h-12 rounded-[10px] px-10 text-[17px] font-bold tracking-[0.3em]">
           改札を出る
         </motion.button>
         {b && <p className="mt-2 text-[11px] text-[#F4EEDD]/50">{b.from}から {b.km} 粁の旅</p>}

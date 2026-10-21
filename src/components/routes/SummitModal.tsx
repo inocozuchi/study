@@ -38,7 +38,7 @@ export function SummitModal() {
             {summit.subject.name}で累計 <span className="font-semibold text-fg">{fmtDuration(summit.minutes)}</span>。<br />
             標高 {fmtMeters(summit.minutes * METERS_PER_MINUTE)} の雲海を越えました。
           </p>
-          <motion.button whileTap={{ scale: 0.96 }} onClick={dismissSummit} className="relative mt-6 w-full rounded-2xl bg-accent py-3.5 text-[15px] font-bold text-white">
+          <motion.button onClick={dismissSummit} className="relative mt-6 w-full rounded-2xl bg-accent py-3.5 text-[15px] font-bold text-white">
             旅の記録帳にしまう
           </motion.button>
         </div>

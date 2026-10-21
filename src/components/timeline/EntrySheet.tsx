@@ -165,7 +165,6 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
               return (
                 <motion.button
                   key={sub.id}
-                  whileTap={{ scale: 0.92 }}
                   onClick={() => setSubjectId(sub.id)}
                   aria-pressed={active}
                   className="flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-bold transition-colors"

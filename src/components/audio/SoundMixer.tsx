@@ -37,7 +37,6 @@ function MixerRow({ icon, title, level, live, onLevel, onToggle }: { icon: React
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <motion.button
-        whileTap={{ scale: 0.88 }}
         transition={spring}
         onClick={onToggle}
         role="switch"
@@ -115,7 +114,6 @@ export function SoundMixer() {
         <div className="group-box overflow-hidden rounded-2xl">
           <div className="flex items-center gap-3 px-4 py-3">
             <motion.button
-              whileTap={{ scale: 0.88 }}
               transition={spring}
               disabled={!track}
               onClick={() => {
@@ -182,7 +180,6 @@ export function SoundMixer() {
       </section>
 
       <motion.button
-        whileTap={{ scale: 0.97 }}
         transition={spring}
         disabled={!ambientOn}
         onClick={stopAll}

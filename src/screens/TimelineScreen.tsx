@@ -179,7 +179,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
               const mins = minutesByDay[k] ?? 0;
               const ring = Math.min(1, mins / 180);
               return (
-                <motion.button key={k} whileTap={{ scale: 0.9 }} onClick={() => setSelected(k)} className="relative flex flex-col items-center gap-1 rounded-card py-1.5">
+                <motion.button key={k} onClick={() => setSelected(k)} className="relative flex flex-col items-center gap-1 rounded-card py-1.5">
                   <span className={`relative text-[11px] font-bold ${active || today ? 'text-accent-ink' : 'text-fg-2'}`}>{weekdayJa(d)}</span>
                   <span className="relative grid h-8 w-8 place-items-center">
                     {/* その日に集中した時間（3 時間で一周） */}
@@ -395,7 +395,6 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
             )}
             {!pi.done && isToday && timer.phase !== 'focus' && pi.subject && (
               <motion.button
-                whileTap={{ scale: 0.97 }}
                 onClick={() => {
                   if (startPlanned(pi.subject!.id, pi.endMin - pi.startMin)) {
                     setPlanItem(null);
@@ -623,7 +622,6 @@ function Row({ item, live, past, nowMin, onClick }: { item: TimelineItem; live: 
   return (
     <motion.button
       layout
-      whileTap={{ scale: 0.98 }}
       transition={spring}
       onClick={onClick}
       className="group flex w-full items-stretch gap-3 text-left"
@@ -672,7 +670,7 @@ function Row({ item, live, past, nowMin, onClick }: { item: TimelineItem; live: 
 
 function AddOption({ icon, title, desc, onClick }: { icon: ReactNode; title: string; desc: string; onClick: () => void }) {
   return (
-    <motion.button whileTap={{ scale: 0.98 }} onClick={onClick} className="group-box flex items-center gap-3.5 p-4 text-left active:bg-accent-soft">
+    <motion.button onClick={onClick} className="group-box flex items-center gap-3.5 p-4 text-left active:bg-accent-soft">
       <span className="grid h-11 w-11 place-items-center rounded-chip bg-accent-soft text-accent-ink">{icon}</span>
       <span>
         <span className="block text-[15px] font-bold">{title}</span>

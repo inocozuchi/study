@@ -3,6 +3,7 @@ import { useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { springSheet } from '@/lib/motion';
+import { usePresentDepth } from '@/lib/depth';
 import { Pressable } from './Pressable';
 
 interface SheetProps {
@@ -19,6 +20,8 @@ interface SheetProps {
 /** iOS 風ボトムシート：下からスプリングで現れ、つまみをドラッグして閉じられる */
 export function Sheet({ open, onClose, title, subtitle, children, action, maxHeight = '88dvh' }: SheetProps) {
   const controls = useDragControls();
+  // 開いている間、後ろのアプリを少し奥へ引っ込める（iOS のシート）
+  usePresentDepth(open);
   // iOS Safari の vh はツールバーを含む大きい高さなので、見えている高さ（dvh）に直す
   const height = maxHeight.replace(/(\d)vh$/, '$1dvh');
 
@@ -51,7 +54,7 @@ export function Sheet({ open, onClose, title, subtitle, children, action, maxHei
             aria-modal
             className="relative flex w-full max-w-xl flex-col overflow-hidden rounded-t-sheet bg-surface pb-safe text-fg shadow-raised sm:mb-4 sm:rounded-sheet"
             // ステータスバーの下に潜らないよう、上に余白を残す
-            style={{ maxHeight: `min(${height}, calc(100% - 12px))` }}
+            style={{ maxHeight: `min(${height}, calc(100% - 12px))`, willChange: 'transform' }}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}

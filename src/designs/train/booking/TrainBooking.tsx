@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
+import { easeIOS, springSheet } from '@/lib/motion';
+import { usePresentDepth } from '@/lib/depth';
 import { useApp } from '@/store/AppStore';
 import { useHoldScene } from '@/lib/sceneHold';
 import { classOf, defaultDir, lineById, nearestStop, onLine, stopsFrom, usableDir, type Dir, type Stop } from './line';
@@ -46,6 +49,7 @@ export function TrainBooking({ open, onClose, onStart }: DesignBookingProps) {
   const [page, setPage] = useState<1 | 2 | 3>(1);
   const [draft, setDraft] = useState<TrainDraft>(() => fresh());
   useHoldScene(open);
+  usePresentDepth(open);
 
   function fresh(): TrainDraft {
     const step = settings.bookingStep ?? 'pomodoro';
@@ -101,14 +105,17 @@ export function TrainBooking({ open, onClose, onStart }: DesignBookingProps) {
     });
   };
 
-  return (
+  // body の直下に出す（後ろのアプリが奥へ引っ込む transform の影響を受けないように）
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
           key="train-booking"
           className="tr-wood fixed inset-x-0 top-0 z-[70] h-app overflow-hidden"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: 0.35 } }}
+          // 「集中」ボタンから広がるように、下から少し小さくふわっと現れる（バネ）
+          initial={{ opacity: 0, scale: 0.92, y: 40 }}
+          animate={{ opacity: 1, scale: 1, y: 0, transition: { ...springSheet, opacity: { duration: 0.3, ease: easeIOS } } }}
+          style={{ willChange: 'transform, opacity' }}
           // 改札を通ったら、車窓へ吸い込まれるようにズームイン
           // （動く全画面に filter はかけない：iPhone で重い）
           exit={{ opacity: 0, scale: 1.7, transition: { duration: 0.9, ease: [0.5, 0, 0.75, 0] } }}
@@ -132,6 +139,7 @@ export function TrainBooking({ open, onClose, onStart }: DesignBookingProps) {
           </AnimatePresence>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

@@ -16,6 +16,8 @@ export interface DesignSceneProps {
   ended: boolean;
   /** 他のタブで覆われている間は描画を止める */
   paused: boolean;
+  /** 見せるのに必要な画像のデコードが終わったら 1 回呼ぶ（それまでシーンは隠れている） */
+  onReady?: () => void;
 }
 
 export interface DesignSessionProps {
@@ -141,5 +143,7 @@ export interface TimerDesign {
   routes?: DesignRoutes;
   /** ホームで画面の外側の帯（上＝ステータスバー、下＝ホームバー）を塗る色。シーンの空と地面に合わせる */
   edgeColors?: (hour: number, settings: Settings) => { top: string; bottom: string };
+  /** シーンの画像を読み込んでいる間の地の色（落ち着いた暗い色。シーンはそのあとフェードインする） */
+  skeleton?: string;
 }
 

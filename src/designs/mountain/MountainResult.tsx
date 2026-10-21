@@ -59,7 +59,7 @@ export function MountainResult({ result, onContinue }: DesignResultProps) {
         </motion.p>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...springBouncy, delay: 2.1 }} className="mt-5 flex justify-end gap-3">
-          <motion.button whileTap={{ scale: 0.94 }} onClick={onContinue} className="mt-paper rounded-full px-8 font-maru text-[17px] font-bold text-crayon-blue shadow-float">
+          <motion.button onClick={onContinue} className="mt-paper rounded-full px-8 font-maru text-[17px] font-bold text-crayon-blue shadow-float">
             続ける
           </motion.button>
         </motion.div>

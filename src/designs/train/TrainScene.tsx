@@ -21,7 +21,7 @@ const toSign = (st: StopInfo): StationSign => ({
  * 駅に止まるのは、出発前（出発駅）・休憩（途中の駅）・旅の終わり（行き先）。一時停止は信号場なので駅には入らない。
  * 集中の 1 回が終わる少し前からブレーキをかけ、終わる瞬間に次の駅のホームの真ん中で止まる。
  */
-export function TrainScene({ hour, ended, paused }: DesignSceneProps) {
+export function TrainScene({ hour, ended, paused, onReady }: DesignSceneProps) {
   const { settings } = useApp();
   const t = useTimer();
   const { timer } = t;
@@ -58,6 +58,7 @@ export function TrainScene({ hour, ended, paused }: DesignSceneProps) {
       sound={settings.trainSound && journeying && !ended}
       station={station}
       approach={approach}
+      onReady={onReady}
     />
   );
 }

@@ -43,14 +43,14 @@ export function LineStep({ draft, stops, stop, patch, onClose, onNext }: { draft
     <div className="tr-mincho absolute inset-0 flex flex-col">
       {/* 見出し */}
       <div className="flex items-center justify-between px-4 pt-safe">
-        <button onClick={onClose} aria-label="閉じる" className="tr-brass mt-1 grid h-11 w-11 place-items-center rounded-full active:scale-95">
+        <button onClick={onClose} aria-label="閉じる" className="tr-brass mt-1 grid h-11 w-11 place-items-center rounded-full">
           <X size={19} />
         </button>
         <div className="mt-1 text-center">
           <p className="text-[17px] font-bold tracking-[0.2em] text-[#F4EEDD]">乗車券を買ふ</p>
           <Steps at={1} />
         </div>
-        <button onClick={() => setOptions(true)} aria-label="旅の支度（天気・時間帯・走行音）" className="tr-brass mt-1 grid h-11 w-11 place-items-center rounded-full active:scale-95">
+        <button onClick={() => setOptions(true)} aria-label="旅の支度（天気・時間帯・走行音）" className="tr-brass mt-1 grid h-11 w-11 place-items-center rounded-full">
           <Briefcase size={18} />
         </button>
       </div>
@@ -59,10 +59,10 @@ export function LineStep({ draft, stops, stop, patch, onClose, onNext }: { draft
       <div className="tr-paper tr-frame relative mx-3.5 mt-3 min-h-[190px] flex-1 overflow-hidden rounded-[6px]">
         <OldMap key={line.id} line={line} origin={draft.origin} dir={draft.dir} km={kmFor(draft.minutes, draft.cls)} minutes={draft.minutes} stops={stops} stop={stop} onPick={pick} />
         <div className="pointer-events-none absolute inset-x-3 top-3 flex flex-wrap items-center gap-1.5">
-          <button onClick={() => setLines(true)} aria-label="路線と出発駅を選ぶ" className="pointer-events-auto flex items-center gap-1 rounded-[3px] border border-[#6B4A2B] bg-[#F4EEDD]/90 px-2 py-0.5 text-[12px] font-bold tracking-[0.15em] text-[#4A2E1C] active:scale-95">
+          <button onClick={() => setLines(true)} aria-label="路線と出発駅を選ぶ" className="pointer-events-auto flex items-center gap-1 rounded-[3px] border border-[#6B4A2B] bg-[#F4EEDD]/90 px-2 py-0.5 text-[12px] font-bold tracking-[0.15em] text-[#4A2E1C]">
             {line.name} <ChevronDown size={12} />
           </button>
-          <button onClick={flip} aria-label="上り・下りを替える" className="pointer-events-auto flex items-center gap-1 rounded-[3px] bg-[#7A2830] px-2 py-0.5 text-[12px] font-bold text-[#F4EEDD] active:scale-95">
+          <button onClick={flip} aria-label="上り・下りを替える" className="pointer-events-auto flex items-center gap-1 rounded-[3px] bg-[#7A2830] px-2 py-0.5 text-[12px] font-bold text-[#F4EEDD]">
             {draft.origin}發 · {toward}方面 <ArrowLeftRight size={12} />
           </button>
         </div>
@@ -96,7 +96,7 @@ export function LineStep({ draft, stops, stop, patch, onClose, onNext }: { draft
           <span className="text-[13px] tabular-nums text-[#F4EEDD]/75">營業キロ {stop?.km ?? 0} 粁</span>
         </p>
         <BrassRuler step={draft.step} value={draft.minutes} onChange={(v) => patch({ minutes: v, dest: null })} />
-        <button onClick={onNext} disabled={!stop} className="tr-enji mt-3 h-14 w-full rounded-[12px] text-[18px] font-bold tracking-[0.3em] active:scale-[0.98]">
+        <button onClick={onNext} disabled={!stop} className="tr-enji mt-3 h-14 w-full rounded-[12px] text-[18px] font-bold tracking-[0.3em]">
           座席を指定する
         </button>
       </div>
@@ -360,7 +360,7 @@ function BrassRuler({ step, value, onChange }: { step: TimeStep; value: number; 
         if (e.key === 'ArrowLeft') onChange(Math.max(d.min, value - d.step));
       }}
     >
-      <motion.div className="absolute left-1/2 top-0" style={{ x: dial.x, width }}>
+      <motion.div className="absolute left-1/2 top-0" style={{ x: dial.x, width, willChange: 'transform' }}>
         <svg width={width + 2} height={40} className="absolute left-0 top-0 overflow-visible">
           {ticks.map((t) => (
             <line key={t.x} x1={t.x + 1} x2={t.x + 1} y1={0} y2={t.h} stroke="#3B2614" strokeOpacity={t.major ? 0.95 : 0.55} strokeWidth={t.major ? 1.6 : 1} />

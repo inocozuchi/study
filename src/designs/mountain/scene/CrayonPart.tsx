@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { bakeSvg } from './Baked';
+import { trackBake } from './bakeTracker';
 
 /**
  * キャラクター（ハイカー・犬）用のクレヨン × パステル × キャンバス地のフィルタ。
@@ -66,7 +67,7 @@ export function CrayonPart({ bakeKey = '', children }: { bakeKey?: string; child
     const inner = Array.from(el.childNodes, (n) => ser.serializeToString(n)).join('');
     const markup = `<svg xmlns="http://www.w3.org/2000/svg" width="${w * PX}" height="${h * PX}" viewBox="${x} ${y} ${w} ${h}"><defs>${CHAR_FILTER}</defs><g filter="url(#cc)">${inner}</g></svg>`;
     let cancelled = false;
-    void bakeSvg(markup, w * PX, h * PX).then((href) => {
+    void trackBake(bakeSvg(markup, w * PX, h * PX)).then((href) => {
       if (!cancelled && href) setImg({ key: bakeKey, href, x, y, w, h });
     });
     return () => {

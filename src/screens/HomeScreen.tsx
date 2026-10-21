@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, Clock3, Flame, IdCard, Music, Settings2 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
@@ -15,7 +15,7 @@ import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { streaks, summary } from '@/lib/stats';
 import { dateKey, fmtDuration } from '@/lib/time';
 import { useNow } from '@/hooks/useNow';
-import { springBouncy, springSoft } from '@/lib/motion';
+import { easeIOS, springBouncy, springSoft } from '@/lib/motion';
 
 interface Props {
   result: JourneyResult | null;
@@ -124,9 +124,13 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: {
 
 
   return (
+    <>
+    {/* 挨拶とバッジの後ろだけ、上からうすく暗くする（シーンの窓枠・駅名標と文字がぶつかって読みにくくならないように）。
+        画面の幅いっぱい・下は透明へ溶かすので、シーンとの境目は見えない */}
+    <div className="pointer-events-none absolute inset-x-0 top-0 h-[calc(var(--safe-top)+250px)] bg-[linear-gradient(180deg,rgba(8,10,16,0.62)_0%,rgba(8,10,16,0.4)_45%,rgba(8,10,16,0.14)_75%,rgba(8,10,16,0)_100%)]" aria-hidden />
     <div className="relative mx-auto h-full max-w-xl">
       {/* 上部 */}
-      <div className="flex items-center justify-between gap-2 px-5 pt-safe">
+      <div className="relative flex items-center justify-between gap-2 px-5 pt-safe">
         <Pressable onClick={onMusic} aria-label="サウンド" className={`fabric-denim stitch mt-1 grid h-11 w-11 shrink-0 place-items-center rounded-full ${settings.bgmPlaying || settings.ambientPlaying ? 'text-sun' : ''}`}>
           <Music size={18} />
         </Pressable>
@@ -181,31 +185,57 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: {
         <FocusButton onClick={onFocus} />
       </div>
     </div>
+    </>
   );
 }
 
-/** 大きな「集中」ボタン：白いグラデーションの円と、ゆっくり広がる光の輪 */
+/**
+ * 大きな「集中」ボタン：白いグラデーションの円。まわりの光の輪と淡い光が、静かに呼吸するように脈打つ（CSS のアニメーション）。
+ * 押すと光が画面いっぱいにふわっと広がり、その上へ予約の画面（または支度シート）がせり上がる。
+ */
 function FocusButton({ onClick }: { onClick: () => void }) {
+  const [bloom, setBloom] = useState<{ x: number; y: number; r: number; k: number } | null>(null);
+  const press = (e: MouseEvent<HTMLButtonElement>) => {
+    const b = e.currentTarget.getBoundingClientRect();
+    const x = b.left + b.width / 2;
+    const y = b.top + b.height / 2;
+    setBloom({ x, y, r: b.width / 2, k: Date.now() });
+    onClick();
+  };
   return (
-    <div className="relative grid h-[124px] w-[124px] place-items-center">
-      {[0, 1].map((i) => (
-        <motion.span
-          key={i}
-          className="absolute inset-0 rounded-full border border-white/50"
-          animate={{ scale: [1, 1.3], opacity: [0.6, 0] }}
-          transition={{ duration: 3.2, repeat: Infinity, delay: i * 1.6, ease: 'easeOut' }}
-        />
-      ))}
+    <div className="focus-breath relative grid h-[124px] w-[124px] place-items-center">
+      <span className="focus-glow pointer-events-none absolute -inset-6 rounded-full" aria-hidden />
+      <span className="focus-ring pointer-events-none absolute inset-0 rounded-full border border-white/55" aria-hidden />
+      <span className="focus-ring focus-ring-2 pointer-events-none absolute inset-0 rounded-full border border-white/55" aria-hidden />
       <motion.button
-        whileTap={{ scale: 0.92 }}
-        transition={springBouncy}
-        onClick={onClick}
+        onClick={press}
         aria-label="集中する"
         className="relative grid h-full w-full place-items-center rounded-full text-night-950"
         style={{ background: 'linear-gradient(160deg, #ffffff, #dfe9f7)', boxShadow: '0 18px 44px -12px rgba(142,197,255,0.65), inset 0 1px 0 rgba(255,255,255,0.9)' }}
       >
         <span className="text-[26px] font-bold tracking-[0.12em]">集中</span>
       </motion.button>
+      <AnimatePresence>
+        {bloom && (
+          <motion.span
+            key={bloom.k}
+            className="pointer-events-none fixed z-[60] rounded-full"
+            style={{
+              left: bloom.x - bloom.r,
+              top: bloom.y - bloom.r,
+              width: bloom.r * 2,
+              height: bloom.r * 2,
+              background: 'radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(223,233,247,0.85) 45%, rgba(142,197,255,0) 72%)',
+              willChange: 'transform, opacity',
+            }}
+            initial={{ scale: 1, opacity: 0.9 }}
+            // 画面の対角線まで届く大きさへ
+            animate={{ scale: (Math.hypot(innerWidth, innerHeight) / bloom.r) * 1.1, opacity: 0 }}
+            transition={{ duration: 0.75, ease: easeIOS }}
+            onAnimationComplete={() => setBloom(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

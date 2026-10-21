@@ -3,6 +3,14 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      // iOS のカーブ：初速が速く最後にスッと収まる（既定・ease-out）と、わずかに弾むバネ（spring）
+      transitionTimingFunction: {
+        DEFAULT: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        out: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        'in-out': 'cubic-bezier(0.22, 1, 0.36, 1)',
+        ios: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+      },
       colors: {
         // アプリ本体の配色（index.css の変数。ライト／ダークで入れ替わる）
         page: 'rgb(var(--c-page) / <alpha-value>)',

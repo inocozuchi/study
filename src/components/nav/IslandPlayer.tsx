@@ -44,7 +44,6 @@ export function IslandPlayer({ visible, onOpen }: { visible: boolean; onOpen: ()
             </span>
           </button>
           <motion.button
-            whileTap={{ scale: 0.88 }}
             onClick={toggle}
             aria-label={timer.running ? '一時停止' : '再開'}
             className="ml-1 grid h-9 w-9 place-items-center rounded-full"

@@ -4,6 +4,7 @@ import { Plane } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { useTimer } from '@/store/TimerStore';
 import { cabinSound } from '@/audio/cabinSound';
+import { decodeAll } from '@/lib/preload';
 import { AIRPORTS, CITIES, airportByCode, arc, project } from './airports';
 import { FlightMap, MapAnchor, MovingAnchor, fitCamera, moveCamera, useZoomLevel } from './FlightMap';
 import { AirportPill, OriginMarker, PlaneGlyph } from './parts';
@@ -18,7 +19,13 @@ import type { JourneyBooking } from '@/types';
  *  - 着陸（リザルト）：機体は到着地に
  * カメラは HUD（FlightSession）のボタン・指の操作で動く（view.ts で共有）。
  */
-export function FlightScene({ ended, paused }: DesignSceneProps) {
+export function FlightScene({ ended, paused, onReady }: DesignSceneProps) {
+  // 地図の絵（大きな SVG）のデコードが終わってから見せる
+  const readyRef = useRef(onReady);
+  readyRef.current = onReady;
+  useEffect(() => {
+    void decodeAll(['./flight/map-dark.svg', './flight/map-lines.svg']).then(() => readyRef.current?.());
+  }, []);
   const { settings } = useApp();
   const { timer, journeyProgress } = useTimer();
   const view = useFlightView();
