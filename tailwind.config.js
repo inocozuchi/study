@@ -40,6 +40,13 @@ export default {
         denim: { DEFAULT: '#24395A', deep: '#17253D', light: '#3B5683' },
         crayon: { blue: '#3E86C9', green: '#3E8C68', red: '#D9573B', yellow: '#F2B33D', pink: '#E68FA8', brown: '#4A3A34' },
       },
+      // 行間の設定に従う（--lh は .ui-text の中だけ設定の値。外では 1.4 で、Tailwind の既定と同じ値になる）
+      lineHeight: {
+        tight: 'calc(var(--lh, 1.4) * 0.893)',
+        snug: 'calc(var(--lh, 1.4) * 0.982)',
+        normal: 'calc(var(--lh, 1.4) * 1.071)',
+        relaxed: 'calc(var(--lh, 1.4) * 1.161)',
+      },
       fontFamily: {
         sans: ['var(--font-text)'],
         // 登山デザインの文字もフォント設定に従う
@@ -66,5 +73,8 @@ export default {
       animation: { shimmer: 'shimmer 3s linear infinite' },
     },
   },
-  plugins: [],
+  plugins: [
+    // 文字の大きさの設定に従う文字（アプリ本体の画面）：text-ui-[14px] → calc(14px * var(--ts))。--ts は .ui-text の中だけ設定の値
+    ({ matchUtilities }) => matchUtilities({ 'text-ui': (v) => ({ fontSize: `calc(${v} * var(--ts, 1))` }) }, { values: {}, type: 'length' }),
+  ],
 };

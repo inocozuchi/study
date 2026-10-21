@@ -241,7 +241,7 @@ function ElevationChart({ peak, gain, onPick }: { peak: (typeof PEAKS)[number]; 
       {/* 山の名前（押すとその山の時間に） */}
       <div className="absolute inset-x-0 bottom-0 grid" style={{ gridTemplateColumns: `repeat(${PEAKS.length}, 1fr)` }}>
         {PEAKS.map((p) => (
-          <button key={p.name} onClick={() => onPick(p)} className={`h-[42px] text-[10px] font-bold leading-tight ${p.name === peak.name ? 'text-[#FBF8F1]' : 'text-[#2C4A3E]/80'}`} aria-label={`${p.name} ${p.m} m`}>
+          <button key={p.name} onClick={() => onPick(p)} className={`h-[42px] min-w-0 overflow-hidden px-px text-[10px] font-bold leading-tight [overflow-wrap:anywhere] ${p.name === peak.name ? 'text-[#FBF8F1]' : 'text-[#2C4A3E]/80'}`} aria-label={`${p.name} ${p.m} m`}>
             <span className="block">{p.name}</span>
           </button>
         ))}

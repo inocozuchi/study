@@ -41,6 +41,10 @@ export const DEFAULT_SETTINGS: Settings = {
   tentStyle: 0,
   font: 'ud',
   appearance: 'system',
+  textScale: 1,
+  lineSpacing: 'normal',
+  language: 'ja',
+  dailyGoalMin: 120,
   googleClientId: '',
   googleHiddenCalendars: [],
 };

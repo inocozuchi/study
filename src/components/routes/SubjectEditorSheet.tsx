@@ -63,7 +63,7 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
       title={subject ? 'ルートを編集' : '新しいルート'}
       subtitle="科目ごとに、登る山をひとつ決めましょう"
       action={
-        <Pressable onClick={save} disabled={!valid} className="hit flex h-8 items-center gap-1 rounded-full bg-accent px-3.5 text-[12.5px] font-bold text-white">
+        <Pressable onClick={save} disabled={!valid} className="hit flex h-8 items-center gap-1 rounded-full bg-accent px-3.5 text-ui-[12.5px] font-bold text-white">
           <Check size={14} strokeWidth={3} /> 保存
         </Pressable>
       }
@@ -71,7 +71,7 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
       <div className="space-y-5 pb-4">
         <div className="flex items-center gap-3">
           <SubjectBadge subject={{ icon, color }} size={52} rounded="rounded-2xl" />
-          <input className="field text-[16px] font-semibold" placeholder="科目名（例：統計学）" value={name} onChange={(e) => setName(e.target.value)} autoFocus={!subject} />
+          <input className="field text-ui-[16px] font-semibold" placeholder="科目名（例：統計学）" value={name} onChange={(e) => setName(e.target.value)} autoFocus={!subject} />
         </div>
 
         <section>
@@ -120,7 +120,7 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
           </div>
           <div className="no-scrollbar -mx-5 mt-2 flex gap-2 overflow-x-auto px-5">
             {MOUNTAIN_SUGGESTIONS.slice(0, 10).map((m) => (
-              <button key={m} onClick={() => setMountainName(m)} className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-medium ${mountainName === m ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}>
+              <button key={m} onClick={() => setMountainName(m)} className={`shrink-0 rounded-full px-3 py-1.5 text-ui-[12px] font-medium ${mountainName === m ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}>
                 {m}
               </button>
             ))}
@@ -130,42 +130,42 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
         <section>
           <div className="mb-2 flex items-baseline justify-between">
             <p className="section-label">登頂までの目標</p>
-            <p className="tabular text-[12.5px] text-fg-2">標高 {fmtMeters(hours * 60 * METERS_PER_MINUTE)}</p>
+            <p className="tabular text-ui-[12.5px] text-fg-2">標高 {fmtMeters(hours * 60 * METERS_PER_MINUTE)}</p>
           </div>
           <div className="group-box flex items-center gap-3 rounded-2xl p-3">
             <input type="range" min={1} max={200} value={hours} onChange={(e) => setHours(Number(e.target.value))} className="flex-1 accent-white" aria-label="目標時間" />
-            <span className="tabular w-16 text-right text-[16px] font-bold">{hours}時間</span>
+            <span className="tabular w-16 text-right text-ui-[16px] font-bold">{hours}時間</span>
           </div>
           <div className="mt-2 flex gap-2">
             {HOURS.map((h) => (
-              <button key={h} onClick={() => setHours(h)} className={`flex-1 rounded-xl py-1.5 text-[12px] font-semibold ${hours === h ? 'bg-fill text-fg' : 'bg-fill text-fg-2'}`}>
+              <button key={h} onClick={() => setHours(h)} className={`flex-1 rounded-xl py-1.5 text-ui-[12px] font-semibold ${hours === h ? 'bg-fill text-fg' : 'bg-fill text-fg-2'}`}>
                 {h}h
               </button>
             ))}
           </div>
-          {subject && <p className="mt-2 text-[12px] text-fg-2">これまでに {Math.round(studied / 6) / 10} 時間登っています</p>}
+          {subject && <p className="mt-2 text-ui-[12px] text-fg-2">これまでに {Math.round(studied / 6) / 10} 時間登っています</p>}
         </section>
 
         {subject && (
           <div className="pt-2">
             {confirmDelete ? (
               <div className="group-box flex items-center justify-between gap-3 rounded-2xl p-3">
-                <p className="text-[12.5px] text-fg-2">記録もすべて削除されます</p>
+                <p className="text-ui-[12.5px] text-fg-2">記録もすべて削除されます</p>
                 <div className="flex gap-2">
-                  <button onClick={() => setConfirmDelete(false)} className="rounded-xl bg-fill px-3 py-2 text-[12.5px] font-semibold">やめる</button>
+                  <button onClick={() => setConfirmDelete(false)} className="rounded-xl bg-fill px-3 py-2 text-ui-[12.5px] font-semibold">やめる</button>
                   <button
                     onClick={() => {
                       deleteSubject(subject.id);
                       onClose();
                     }}
-                    className="rounded-xl bg-[#FF5A5F] px-3 py-2 text-[12.5px] font-bold"
+                    className="rounded-xl bg-[#FF5A5F] px-3 py-2 text-ui-[12.5px] font-bold"
                   >
                     削除
                   </button>
                 </div>
               </div>
             ) : (
-              <button onClick={() => setConfirmDelete(true)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#FF5A5F]/10 py-3 text-[13px] font-semibold text-[#FF8A8E]">
+              <button onClick={() => setConfirmDelete(true)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#FF5A5F]/10 py-3 text-ui-[13px] font-semibold text-[#FF8A8E]">
                 <Trash2 size={16} /> このルートを削除
               </button>
             )}

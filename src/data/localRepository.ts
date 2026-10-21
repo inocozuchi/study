@@ -160,6 +160,17 @@ export class LocalStorageRepository implements FocusRepository {
     else localStorage.removeItem(K.timer);
   }
 
+  async importAll(data: AppData) {
+    const next: AppData = {
+      ...emptyData(mergeSettings(data.settings ?? {})),
+      ...Object.fromEntries((['subjects', 'sessions', 'plans', 'diary', 'todos', 'habits', 'logs'] as const).map((k) => [k, Array.isArray(data[k]) ? data[k] : []])),
+    } as AppData;
+    this.persistAll(next);
+    this.saveActiveTimer(null);
+    write(K.freshStart, true);
+    return next;
+  }
+
   async clearAll() {
     const empty = emptyData(DEFAULT_SETTINGS);
     this.persistAll(empty);

@@ -21,8 +21,8 @@ function Cassette({ track, spinning }: { track: LibraryTrack; spinning: boolean 
       {/* ラベル */}
       <div className="absolute inset-x-[7%] top-[9%] h-[40%] rounded-lg bg-surface px-3 py-2">
         <div className="h-1.5 w-full rounded-full" style={{ background: c.label }} />
-        <p className="mt-1.5 truncate text-center text-[14px] font-bold text-night-950">{track.title}</p>
-        <p className="truncate text-center text-[11px] text-night-950/55">∞ {track.subtitle}</p>
+        <p className="mt-1.5 truncate text-center text-ui-[14px] font-bold text-night-950">{track.title}</p>
+        <p className="truncate text-center text-ui-[11px] text-night-950/55">∞ {track.subtitle}</p>
       </div>
       {/* テープ窓とリール */}
       <div className="absolute inset-x-[17%] bottom-[12%] flex h-[30%] items-center justify-between rounded-full bg-black/35 px-[5%] ring-1 ring-inset ring-line">
@@ -86,8 +86,8 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
           // 曲がまだないとき
           <div className="group-box rounded-3xl px-5 py-7 text-center">
             <Music2 size={30} className="mx-auto text-fg-2" />
-            <p className="mt-3 text-[15px] font-semibold">BGM はまだありません</p>
-            <p className="mt-1.5 text-[12.5px] leading-relaxed text-fg-2">
+            <p className="mt-3 text-ui-[15px] font-semibold">BGM はまだありません</p>
+            <p className="mt-1.5 text-ui-[12.5px] leading-relaxed text-fg-2">
               曲を追加すると、ここで再生できます。
               <br />
               曲の終わりで途切れずに繰り返します。
@@ -103,8 +103,8 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
             </motion.div>
           </AnimatePresence>
           <div className="mt-4 text-center">
-            <p className="text-[16px] font-semibold">{track.title}</p>
-            <p className="mt-0.5 text-[12.5px] text-fg-2">
+            <p className="text-ui-[16px] font-semibold">{track.title}</p>
+            <p className="mt-0.5 text-ui-[12.5px] text-fg-2">
               {status === 'loading' ? '読み込み中…' : status === 'error' ? '曲を読み込めませんでした' : track.detail}
             </p>
           </div>
@@ -135,8 +135,8 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
               <button key={tr.id} onClick={() => { ambient.unlock(); updateSettings({ bgmTrackId: tr.id, bgmPlaying: true }); }} className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-fill">
                 <span className="h-7 w-1.5 rounded-full" style={{ background: tr.colors.label }} />
                 <span className="min-w-0 flex-1">
-                  <span className={`block text-[14px] ${active ? 'font-semibold' : 'font-medium'}`}>{tr.title}</span>
-                  <span className="block text-[11px] text-fg-2">{tr.subtitle} · {tr.detail}</span>
+                  <span className={`block text-ui-[14px] ${active ? 'font-semibold' : 'font-medium'}`}>{tr.title}</span>
+                  <span className="block text-ui-[11px] text-fg-2">{tr.subtitle} · {tr.detail}</span>
                 </span>
                 {active && spinning && (
                   <span className="flex h-4 items-end gap-0.5">

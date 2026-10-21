@@ -185,11 +185,22 @@ export interface Settings {
   tentStyle: number;
   font: FontId;
   appearance: Appearance;
+  /** 文字の大きさ（アプリ本体の画面。0.9 / 1 / 1.1 / 1.2 / 1.3） */
+  textScale: number;
+  /** 行間 */
+  lineSpacing: LineSpacing;
+  /** 表示の言語 */
+  language: Language;
+  /** 1 日の目標（分）。ホームの「今日」に進み具合を出す。0 で出さない */
+  dailyGoalMin: number;
   /** Google カレンダー：OAuth クライアント ID（端末ごと。lib/googleCalendar の BUILTIN_CLIENT_ID があれば不要） */
   googleClientId: string;
   /** Google カレンダー：表示しないカレンダーの ID */
   googleHiddenCalendars: string[];
 }
+
+export type LineSpacing = 'tight' | 'normal' | 'relaxed';
+export type Language = 'ja' | 'en';
 
 export type TimerPhase = 'idle' | 'focus' | 'break';
 

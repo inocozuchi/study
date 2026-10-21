@@ -12,7 +12,7 @@ function TimeSelect({ value, onChange, from, to, label }: { value: number; onCha
   for (let h = Math.floor(from / 60); h <= Math.floor(to / 60); h++) hours.push(h);
   const h = Math.floor(value / 60);
   const m = value % 60;
-  const sel = 'field appearance-none py-2.5 text-center text-[17px] font-bold tabular';
+  const sel = 'field appearance-none py-2.5 text-center text-ui-[17px] font-bold tabular';
   return (
     <div className="flex items-center gap-1.5" aria-label={label}>
       <select className={sel} value={h} onChange={(e) => onChange(Math.min(to, Math.max(from, Number(e.target.value) * 60 + m)))} aria-label={`${label}（時）`}>
@@ -44,15 +44,15 @@ export function DayHoursSheet({ open, onClose }: { open: boolean; onClose: () =>
   const block = (icon: React.ReactNode, title: string, value: number, presets: number[], set: (v: number) => void, from: number, to: number) => (
     <section className="card p-4">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-2 text-[14px] font-bold">
+        <span className="flex items-center gap-2 text-ui-[14px] font-bold">
           <span className="grid h-8 w-8 place-items-center rounded-full bg-accent-soft text-accent-ink">{icon}</span>
           {title}
         </span>
-        <span className="tabular text-[22px] font-extrabold">{fmtClock(value)}</span>
+        <span className="tabular text-ui-[22px] font-extrabold">{fmtClock(value)}</span>
       </div>
       <div className="mt-3 grid grid-cols-4 gap-1.5">
         {presets.map((p) => (
-          <button key={p} onClick={() => set(p)} className={`tabular rounded-chip py-2 text-[12.5px] font-bold ${p === value ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}>
+          <button key={p} onClick={() => set(p)} className={`tabular rounded-chip py-2 text-ui-[12.5px] font-bold ${p === value ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}>
             {fmtClock(p)}
           </button>
         ))}
@@ -68,7 +68,7 @@ export function DayHoursSheet({ open, onClose }: { open: boolean; onClose: () =>
       <div className="space-y-3 pb-6">
         {block(<Sunrise size={17} />, '起床', wake, WAKE, setWake, 3 * 60, 12 * 60)}
         {block(<Moon size={17} />, '就寝', sleep, SLEEP, setSleep, 19 * 60, 28 * 60 - 5)}
-        <p className="px-1 text-[12px] leading-relaxed text-fg-2">タイムラインはこの時刻から始まり、この時刻で終わります。24 時を過ぎる時刻は「25:00」（翌 1 時）のように表示します。</p>
+        <p className="px-1 text-ui-[12px] leading-relaxed text-fg-2">タイムラインはこの時刻から始まり、この時刻で終わります。24 時を過ぎる時刻は「25:00」（翌 1 時）のように表示します。</p>
       </div>
     </Sheet>
   );

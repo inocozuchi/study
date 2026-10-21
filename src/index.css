@@ -89,11 +89,20 @@
     --safe-top: calc(max(env(safe-area-inset-top), 16px) + 12px);
     --tabbar-pb: max(calc(env(safe-area-inset-bottom) - 6px), 14px);
     --nav-space: calc(60px + var(--tabbar-pb));
+    /* 文字の大きさ・行間（設定。lib/display.ts が --user-ts / --user-lh を入れる）。
+       効くのは .ui-text の中だけ（アプリ本体の画面・シート）。旅のモードの絵（切符・計器・HUD）は寸法が決まっているので変えない */
+    --ts: 1;
+    --lh: 1.4;
+  }
+  .ui-text {
+    --ts: var(--user-ts, 1);
+    --lh: var(--user-lh, 1.4);
+    line-height: var(--lh);
   }
   body {
     @apply font-sans antialiased;
     /* 行間はやや詰める（文字を小さめ・行間を狭めに。ユーザーの指定） */
-    line-height: 1.4;
+    line-height: var(--lh, 1.4);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     -webkit-user-select: none;

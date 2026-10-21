@@ -44,14 +44,14 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
 
         {entry.available ? (
           current ? (
-            <p className="text-center text-[12px] font-semibold text-fg-2">いまの旅のモード</p>
+            <p className="text-center text-ui-[12px] font-semibold text-fg-2">いまの旅のモード</p>
           ) : (
             <button onClick={() => updateSettings({ timerDesign: entry.id as typeof settings.timerDesign })} className="btn-primary w-full">
               {entry.mode.name}モードで旅する
             </button>
           )
         ) : (
-          <p className="rounded-card bg-sunken px-4 py-3 text-center text-[12.5px] font-semibold text-fg-2">
+          <p className="rounded-card bg-sunken px-4 py-3 text-center text-ui-[12.5px] font-semibold text-fg-2">
             {entry.mode.name}モードは準備中です（Coming Soon）
           </p>
         )}
@@ -60,7 +60,7 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
           <label className="block">
             <span className="section-label mb-1.5 block px-1">ニックネーム</span>
             <input
-              className="field text-[15px] font-semibold"
+              className="field text-ui-[15px] font-semibold"
               value={settings.userName}
               maxLength={16}
               placeholder="旅人"
@@ -70,12 +70,12 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
           </label>
           <label className="block">
             <span className="section-label mb-1.5 block px-1">{GOAL_LABEL[entry.id]}</span>
-            <input className="field text-[15px] font-semibold" value={settings.goal} maxLength={14} placeholder="例：合格・TOEIC 800" onChange={(e) => updateSettings({ goal: e.target.value })} />
+            <input className="field text-ui-[15px] font-semibold" value={settings.goal} maxLength={14} placeholder="例：合格・TOEIC 800" onChange={(e) => updateSettings({ goal: e.target.value })} />
           </label>
           {entry.id === 'train' && (
             <label className="block">
               <span className="section-label mb-1.5 block px-1">出発駅</span>
-              <input className="field text-[15px] font-semibold" value={settings.departure} maxLength={10} placeholder="はじまり" onChange={(e) => updateSettings({ departure: e.target.value })} />
+              <input className="field text-ui-[15px] font-semibold" value={settings.departure} maxLength={10} placeholder="はじまり" onChange={(e) => updateSettings({ departure: e.target.value })} />
             </label>
           )}
         </section>

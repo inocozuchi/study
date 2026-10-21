@@ -156,7 +156,7 @@ export interface TimerDesign {
 export interface HomeSkin {
   /** 丸いボタン・モードのピル・ツールの縦タブ・記録のバッジの面 */
   chip: string;
-  /** 挨拶の文字 */
+  /** 挨拶の書体（面は chip。シーンの上に光彩・影で浮かせない＝ぼやけて見える） */
   greeting: string;
   /** ホームにいる間のタブバー：バー・選択のピル・選択中 / ほかのアイコンの色 */
   tabbar: { bar: string; pill: string; on: string; off: string };

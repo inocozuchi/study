@@ -44,6 +44,10 @@ interface AppContextValue extends AppData {
   deleteHabit: (id: string) => void;
 
   clearAll: () => Promise<void>;
+  /** バックアップ（JSON の文字列）。記録・科目・予定・設定・ノートなどすべて */
+  exportBackup: () => string;
+  /** バックアップから戻す。読めない形なら false */
+  importBackup: (json: string) => Promise<boolean>;
 
   summit: SummitEvent | null;
   dismissSummit: () => void;
@@ -247,6 +251,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setEpoch((e) => e + 1);
   }, []);
 
+  const exportBackup = useCallback(() => JSON.stringify({ app: 'focus-trail', version: 1, exportedAt: Date.now(), data }, null, 1), [data]);
+  const importBackup = useCallback(async (json: string) => {
+    try {
+      const parsed = JSON.parse(json);
+      const d = parsed?.app === 'focus-trail' ? parsed.data : parsed;
+      if (!d || typeof d !== 'object' || !Array.isArray(d.sessions) || !Array.isArray(d.subjects)) return false;
+      setData(await repository.importAll(d as AppData));
+      setEpoch((e) => e + 1);
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
   const activeSubjects = useMemo(() => data.subjects.filter((s) => !s.archived), [data.subjects]);
 
   const value: AppContextValue = {
@@ -274,6 +292,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     deleteHabit,
     addLog,
     clearAll,
+    exportBackup,
+    importBackup,
     summit,
     dismissSummit: () => setSummit(null),
   };

@@ -18,7 +18,7 @@
  * 画面の写真は tests/e2e/out/ に残る（git には入れない）。
  */
 import { spawn } from 'node:child_process';
-import { mkdirSync, rmSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 
@@ -30,6 +30,9 @@ const DEVICES = [
   { name: 'iPhoneSE', width: 375, height: 667, top: 20, bottom: 0 },
 ];
 const MODES = ['mountain', 'train', 'flight'];
+/** 英語の画面では aria-label も英語になるので、日本語の名前を辞書で引き直す */
+const EN = JSON.parse(readFileSync(new URL('../../src/i18n/en.json', import.meta.url), 'utf8')).plain;
+const L = (page, jp) => (page.lang === 'en' ? EN[jp] ?? jp : jp);
 
 const issues = [];
 const warnings = [];
@@ -70,6 +73,8 @@ async function open(browser, device, settings = {}, extra = {}) {
       const s = JSON.parse(localStorage.getItem(k) || '{}');
       localStorage.setItem(k, JSON.stringify({ ...s, userName: '旅人', breathing: false, bgmOnFocus: false, sky: 'day', ...settings }));
       localStorage.removeItem('focus-trail:v1:timer');
+      localStorage.setItem('focus-trail:v1:language', settings.language ?? 'ja');
+      if (extra.plans) localStorage.setItem('focus-trail:v1:plans', JSON.stringify(extra.plans));
       sessionStorage.setItem('focus-trail:tab', extra.tab ?? 'trail');
     },
     [settings, extra],
@@ -77,6 +82,7 @@ async function open(browser, device, settings = {}, extra = {}) {
   await page.reload({ waitUntil: 'networkidle' });
   await sleep(2600);
   page.device = device;
+  page.lang = settings.language ?? 'ja';
   return { ctx, page };
 }
 
@@ -241,11 +247,11 @@ async function checkFullBleed(page, where) {
 
 /** 「集中」ボタンとタブバーが重ならない */
 async function checkFocusVsTabbar(page, where) {
-  const r = await page.evaluate(() => {
-    const f = document.querySelector('[aria-label="集中する"]')?.getBoundingClientRect();
-    const n = document.querySelector('nav[aria-label="メインナビゲーション"]')?.getBoundingClientRect();
+  const r = await page.evaluate(([focus, nav]) => {
+    const f = document.querySelector(`[aria-label="${focus}"]`)?.getBoundingClientRect();
+    const n = document.querySelector(`nav[aria-label="${nav}"]`)?.getBoundingClientRect();
     return f && n ? { fb: f.bottom, nt: n.top, nb: n.bottom, h: innerHeight } : null;
-  });
+  }, [L(page, '集中する'), L(page, 'メインナビゲーション')]);
   if (!r) return fail(where, '「集中」ボタンかタブバーが見つかりません');
   if (r.fb > r.nt - 6) fail(where, `「集中」ボタン（下端 ${Math.round(r.fb)}）がタブバー（上端 ${Math.round(r.nt)}）に重なっています`);
   if (r.nb > r.h + 0.5) fail(where, 'タブバーが画面の下にはみ出しています');
@@ -276,6 +282,260 @@ async function edgeSwipe(page) {
 const visible = (page, text) => page.evaluate((t) => [...document.querySelectorAll('p, span, h1, button')].some((el) => el.textContent.trim() === t && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().left >= 0 && el.getBoundingClientRect().left < innerWidth), text);
 
 // ───────────────────────── 通しの操作 ─────────────────────────
+
+/** 英語の画面に残った日本語（見えている文字だけ） */
+async function checkEnglish(page, where) {
+  const left = await page.evaluate(() => {
+    const JP = /[\u3040-\u30ff\u3400-\u9fff]/;
+    const out = new Set();
+    const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = tw.nextNode(); n; n = tw.nextNode()) {
+      const t = n.nodeValue.trim();
+      if (!t || !JP.test(t)) continue;
+      const el = n.parentElement;
+      if (!el || el.closest('[data-no-translate], script, style, title')) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 1 || r.height < 1 || r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) continue;
+      if (getComputedStyle(el).visibility === 'hidden') continue;
+      let o = 1;
+      for (let x = el; x && x !== document.body; x = x.parentElement) o *= Number(getComputedStyle(x).opacity);
+      if (o < 0.05) continue;
+      out.add(t.slice(0, 40));
+    }
+    return [...out];
+  });
+  for (const t of left) fail(where, `英語の画面に日本語が残っています：「${t}」`);
+}
+
+const tabTo = async (page, label) => {
+  await page.click(`nav[aria-label="メインナビゲーション"] [aria-label="${label}"], nav[aria-label="Main navigation"] [aria-label="${label}"]`);
+  await sleep(1000);
+  const mains = await page.evaluate(() => document.querySelectorAll('[data-main-scroll]').length);
+  if (mains > 1) fail(`${page.device.name}/タブの切り替え`, `${label} に切り替えても前のタブの画面が残っています（${mains} 枚）`);
+};
+const closeSheet = async (page) => {
+  await page.keyboard.press('Escape');
+  await sleep(650);
+};
+const todayKey = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+const nowMin = () => new Date().getHours() * 60 + new Date().getMinutes();
+
+/**
+ * iPhone 16 で、あらゆる操作の組み合わせ：タイムラインに予定を立てる → ホームの「次の予定」から出発 → 再読み込みしても旅が続く、
+ * ルートを足す、設定の項目をすべて開く・スイッチ、文字の大きさ・行間、ダーク、英語、バックアップの書き出し・戻し、タブをもう一度押して上へ。
+ */
+async function patterns(browser, device) {
+  const w = (s) => `${device.name}/操作/${s}`;
+  // ── タイムライン：予定を立てる ──
+  let { ctx, page } = await open(browser, device, { timerDesign: 'train' }, { tab: 'timeline' });
+  try {
+    await shot(page, 'p-timeline');
+    await checkScreen(page, w('タイムライン'));
+    await page.click('[aria-label="追加"]');
+    await sleep(700);
+    await checkScreen(page, w('追加メニュー'), { allowCovered: true });
+    await page.click('button:has-text("予定を立てる")');
+    await sleep(900);
+    await shot(page, 'p-entry');
+    await checkScreen(page, w('予定の入力'), { allowCovered: true, allowOffscreen: true });
+    await page.click('[role="dialog"] button:has-text("保存")');
+    await sleep(900);
+    const planned = await page.evaluate(() => JSON.parse(localStorage.getItem('focus-trail:v1:plans') || '[]').length);
+    if (!planned) fail(w('予定の入力'), '保存しても予定が増えません');
+    // 月の表示・週の移動
+    await page.click('button:has-text("月") >> nth=0');
+    await sleep(700);
+    await shot(page, 'p-month');
+    await checkScreen(page, w('月のカレンダー'));
+    await page.click('button:has-text("週") >> nth=0');
+    await sleep(600);
+    await page.click('[aria-label="次の週"]');
+    await sleep(400);
+    await page.click('[aria-label="前の週"]');
+    await sleep(400);
+    // タブをもう一度押すと上へ
+    await page.evaluate(() => document.querySelector('main')?.scrollTo(0, 400));
+    await sleep(200);
+    await tabTo(page, 'タイムライン');
+    const top = await page.evaluate(() => document.querySelector('main')?.scrollTop ?? 0);
+    if (top > 5) fail(w('タブをもう一度'), `いま開いているタブを押しても上へ戻りません（${top}px）`);
+
+    // ── ルート：ルートを足す ──
+    await tabTo(page, 'ルート');
+    await shot(page, 'p-routes');
+    await checkScreen(page, w('ルート'), { allowOffscreen: true });
+    await page.click('[aria-label="ルートを追加"]');
+    await sleep(800);
+    await page.fill('[role="dialog"] input[placeholder^="科目名"]', '統計学');
+    await page.click('[role="dialog"] button:has-text("保存")');
+    await sleep(900);
+    const subjects = await page.evaluate(() => JSON.parse(localStorage.getItem('focus-trail:v1:subjects') || '[]').map((s) => s.name));
+    if (!subjects.includes('統計学')) fail(w('ルートを追加'), 'ルートを保存しても科目が増えません');
+
+    // ── インサイト ──
+    await tabTo(page, 'インサイト');
+    await shot(page, 'p-insights');
+    await checkScreen(page, w('インサイト'), { allowOffscreen: true });
+
+    // ── 設定：開く項目をすべて開いて閉じる ──
+    await tabTo(page, '設定');
+    await shot(page, 'p-settings');
+    await checkScreen(page, w('設定'), { allowOffscreen: true });
+    const rows = await page.$$eval('[data-main-scroll] button.card', (bs) => bs.map((b) => b.querySelector('span span')?.textContent?.trim()).filter(Boolean));
+    for (const title of rows) {
+      if (/消去|バックアップ|ホーム画面に追加|Google/.test(title)) continue;
+      const el = page.locator('main button.card', { hasText: title }).first();
+      // 下に浮いたタブバーの後ろに入らないよう、画面の真ん中へ
+      await el.evaluate((e) => e.scrollIntoView({ block: 'center' }));
+      await sleep(250);
+      await el.click({ timeout: 5000 }).catch((e) => fail(w(`設定 ${title}`), `押せません：${String(e.message).split('\n')[0]}`));
+      await sleep(750);
+      const opened = await page.$('[role="dialog"]');
+      if (!opened) fail(w(`設定 ${title}`), '押しても何も開きません');
+      else {
+        await checkScreen(page, w(`設定 ${title}`), { allowCovered: true, allowOffscreen: true });
+        await closeSheet(page);
+      }
+    }
+    // スイッチ（押して戻す）
+    const toggles = await page.$$('main [role="switch"]');
+    for (const t of toggles) {
+      await t.evaluate((e) => e.scrollIntoView({ block: 'center' }));
+      await sleep(200);
+      const before = await t.getAttribute('aria-checked');
+      await t.click();
+      await sleep(150);
+      if ((await t.getAttribute('aria-checked')) === before) fail(w('設定のスイッチ'), `スイッチが切り替わりません（${await t.getAttribute('aria-label')}）`);
+      await t.click();
+      await sleep(150);
+    }
+
+    // ── バックアップ：書き出し → 戻す ──
+    const dl = page.waitForEvent('download', { timeout: 5000 });
+    const exp = page.locator('main button.card', { hasText: 'バックアップを書き出す' });
+    await exp.evaluate((e) => e.scrollIntoView({ block: 'center' }));
+    await exp.click();
+    const file = await (await dl).path();
+    await page.setInputFiles('input[type="file"]', file);
+    await sleep(900);
+    if (!(await visible(page, 'バックアップから戻しました'))) fail(w('バックアップ'), '書き出したバックアップから戻せません');
+  } catch (e) {
+    fail(w('タイムライン〜設定'), String(e.message || e).split('\n')[0]);
+    await shot(page, 'p-error-1').catch(() => {});
+  } finally {
+    await ctx.close();
+  }
+
+  // ── ホームの「次の予定」から出発（3 モード）→ 再読み込みしても続く → 長押しで終える ──
+  for (const mode of MODES) {
+    ({ ctx, page } = await open(browser, device, { timerDesign: mode }, { plans: [{ id: 'p1', subjectId: 's1', date: todayKey(), startMin: Math.max(0, nowMin() - 5), endMin: Math.min(1439, nowMin() + 40) }] }));
+    try {
+      const chip = page.locator('[aria-label^="次の予定で出発"]');
+      if (!(await chip.count())) {
+        fail(w(`次の予定 ${mode}`), 'ホームに次の予定が出ません');
+        continue;
+      }
+      await chip.click();
+      await sleep(2200);
+      await shot(page, `p-plan-${mode}`);
+      await checkScreen(page, w(`予定から出発 ${mode}`));
+      await page.reload();
+      await sleep(3200);
+      const end = { train: '旅を終える', flight: '長押しで着陸', mountain: '旅を終える' }[mode];
+      if (!(await page.locator(`button:has-text("${end}")`).filter({ visible: true }).count())) fail(w(`再読み込み ${mode}`), '再読み込みすると旅が続きません');
+      await press(page, `button:has-text("${end}")`, 1500);
+      await sleep(3200);
+      await shot(page, `p-plan-result-${mode}`);
+      await checkScreen(page, w(`予定の旅のリザルト ${mode}`), { allowOffscreen: true });
+    } catch (e) {
+      fail(w(`次の予定 ${mode}`), String(e.message || e).split('\n')[0]);
+      await shot(page, `p-error-plan-${mode}`).catch(() => {});
+    } finally {
+      await ctx.close();
+    }
+  }
+
+  // ── 文字の大きさ 130%・行間 広い／ダーク：アプリ本体の画面とシート ──
+  for (const [name, st] of [['大きな文字', { textScale: 1.3, lineSpacing: 'relaxed' }], ['ダーク', { appearance: 'dark' }], ['小さな文字', { textScale: 0.9, lineSpacing: 'tight' }]]) {
+    ({ ctx, page } = await open(browser, device, { timerDesign: 'mountain', ...st }, { tab: 'timeline' }));
+    try {
+      for (const tab of ['タイムライン', 'ルート', 'インサイト', '設定']) {
+        await tabTo(page, tab);
+        await shot(page, `p-${name}-${tab}`);
+        await checkScreen(page, w(`${name} ${tab}`), { allowOffscreen: true });
+      }
+      await tabTo(page, 'タイムライン');
+      await page.click('[aria-label="追加"]');
+      await sleep(700);
+      await page.click('button:has-text("予定を立てる")');
+      await sleep(900);
+      await shot(page, `p-${name}-entry`);
+      await checkScreen(page, w(`${name} 予定の入力`), { allowCovered: true, allowOffscreen: true });
+      await closeSheet(page);
+      await tabTo(page, 'ホーム');
+      await checkScreen(page, w(`${name} ホーム`));
+      await checkFocusVsTabbar(page, w(`${name} ホーム`));
+      for (const t of ['ノート', 'ToDo', '習慣']) {
+        await page.click(`nav[aria-label="ツール"] [aria-label="${t}"]`);
+        await sleep(700);
+        await checkScreen(page, w(`${name} ツール ${t}`), { allowCovered: true });
+        await closeSheet(page);
+      }
+    } catch (e) {
+      fail(w(name), String(e.message || e).split('\n')[0]);
+      await shot(page, `p-error-${name}`).catch(() => {});
+    } finally {
+      await ctx.close();
+    }
+  }
+
+  // ── 英語：3 モードのホームと予約、タブ、シート ──
+  for (const mode of MODES) {
+    ({ ctx, page } = await open(browser, device, { timerDesign: mode, language: 'en', userName: 'Alex', sky: 'night' }));
+    try {
+      await sleep(600);
+      await shot(page, `p-en-home-${mode}`);
+      await checkEnglish(page, w(`英語 ホーム ${mode}`));
+      await checkScreen(page, w(`英語 ホーム ${mode}`));
+      await checkFocusVsTabbar(page, w(`英語 ホーム ${mode}`));
+      await page.click('[aria-label="Focus"], [aria-label="集中する"]', { force: true });
+      await sleep(1500);
+      await shot(page, `p-en-booking-${mode}`);
+      await checkEnglish(page, w(`英語 予約 ${mode}`));
+      await checkScreen(page, w(`英語 予約 ${mode}`));
+      await closeSheet(page);
+      await page.click('[aria-label="Close"], [aria-label="閉じる"]').catch(() => {});
+      await sleep(900);
+      if (mode === 'train') {
+        for (const tab of ['Timeline', 'Routes', 'Insights', 'Settings']) {
+          await tabTo(page, tab);
+          await shot(page, `p-en-${tab}`);
+          await checkEnglish(page, w(`英語 ${tab}`));
+          await checkScreen(page, w(`英語 ${tab}`), { allowOffscreen: true });
+          await page.evaluate(() => document.querySelector('main')?.scrollTo(0, 1e6));
+          await sleep(300);
+          await checkEnglish(page, w(`英語 ${tab}（下）`));
+        }
+        await tabTo(page, 'Home');
+        for (const t of ['Notes', 'To-Do', 'Habits']) {
+          const b = page.locator(`nav[aria-label="Tools"] button`).nth(['Notes', 'To-Do', 'Habits'].indexOf(t));
+          await b.click();
+          await sleep(700);
+          await checkEnglish(page, w(`英語 ツール ${t}`));
+          await closeSheet(page);
+        }
+      }
+    } catch (e) {
+      fail(w(`英語 ${mode}`), String(e.message || e).split('\n')[0]);
+      await shot(page, `p-error-en-${mode}`).catch(() => {});
+    } finally {
+      await ctx.close();
+    }
+  }
+}
 
 async function journey(browser, device, mode) {
   const w = (s) => `${device.name}/${mode}/${s}`;
@@ -449,15 +709,8 @@ async function sheetsAndTabs(browser, device) {
       await page.keyboard.press('Escape');
       await sleep(600);
     }
-    // 設定 → 左端からのスワイプで閉じる
-    await page.click('[aria-label="設定"]');
-    await sleep(900);
-    await shot(page, 'settings');
-    await checkScreen(page, w('設定'), { allowOffscreen: true });
-    await edgeSwipe(page);
-    if (await visible(page, '設定')) fail(w('設定'), '左端からのスワイプで設定が閉じません');
-    // 記録のタブ
-    for (const tab of ['タイムライン', 'ルート', 'インサイト']) {
+    // 記録のタブ・設定（タブバーの 5 つ目）
+    for (const tab of ['タイムライン', 'ルート', 'インサイト', '設定']) {
       await page.click(`[aria-label="${tab}"]`);
       await sleep(1100);
       await shot(page, `tab-${tab}`);
@@ -487,6 +740,8 @@ try {
   for (const d of DEVICES.filter((x) => !process.env.E2E_DEVICE || x.name === process.env.E2E_DEVICE)) {
     for (const m of MODES) if (!only || only.includes(m)) await journey(browser, d, m);
     if (!only || only.includes('sheets')) await sheetsAndTabs(browser, d);
+    // あらゆる操作の組み合わせは iPhone 16 で（いちばん使う端末）
+    if (d.name === 'iPhone16' && (!only || only.includes('patterns'))) await patterns(browser, d);
   }
 } finally {
   await browser.close();

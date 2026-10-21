@@ -42,14 +42,14 @@ function MixerRow({ icon, title, level, live, onLevel, onToggle }: { icon: React
         role="switch"
         aria-checked={on}
         aria-label={`${title}を${on ? '止める' : '鳴らす'}`}
-        className={`grid h-11 w-11 shrink-0 place-items-center rounded-card text-[18px] transition-colors ${on ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}
+        className={`grid h-11 w-11 shrink-0 place-items-center rounded-card text-ui-[18px] transition-colors ${on ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}
       >
         {icon}
       </motion.button>
       <div className="min-w-0 flex-1">
         <div className="mb-1.5 flex items-baseline justify-between gap-2">
-          <span className="truncate text-[13px] font-bold">{title}</span>
-          <span className="tabular shrink-0 text-[12px] text-fg-2">{set ? `${Math.round(level * 100)}%` : 'オフ'}</span>
+          <span className="truncate text-ui-[13px] font-bold">{title}</span>
+          <span className="tabular shrink-0 text-ui-[12px] text-fg-2">{set ? `${Math.round(level * 100)}%` : 'オフ'}</span>
         </div>
         <div className={live ? '' : 'opacity-50'}>
           <VolumeSlider value={level} onChange={onLevel} label={`${title}の音量`} />
@@ -98,7 +98,7 @@ export function SoundMixer() {
     <div className="mb-2 flex items-center justify-between px-1">
       <p className="section-label">{title}</p>
       {ambientOn && (
-        <button onClick={toggleAmbient} className="hit flex items-center gap-1 text-[12.5px] font-semibold text-accent-ink">
+        <button onClick={toggleAmbient} className="hit flex items-center gap-1 text-ui-[12.5px] font-semibold text-accent-ink">
           {live ? <Pause size={13} fill="currentColor" strokeWidth={0} /> : <Play size={13} fill="currentColor" strokeWidth={0} />}
           {live ? '一時停止' : '再生'}
         </button>
@@ -127,8 +127,8 @@ export function SoundMixer() {
             </motion.button>
             <div className="min-w-0 flex-1">
               <div className="mb-1.5 flex items-baseline justify-between gap-2">
-                <span className="truncate text-[13px] font-bold">{track?.title ?? '曲がまだありません'}</span>
-                <span className="tabular shrink-0 text-[12px] text-fg-2">{Math.round(settings.bgmVolume * 100)}%</span>
+                <span className="truncate text-ui-[13px] font-bold">{track?.title ?? '曲がまだありません'}</span>
+                <span className="tabular shrink-0 text-ui-[12px] text-fg-2">{Math.round(settings.bgmVolume * 100)}%</span>
               </div>
               <VolumeSlider value={settings.bgmVolume} onChange={(v) => updateSettings({ bgmVolume: v })} label="BGM の音量" disabled={!track} />
             </div>
@@ -154,7 +154,7 @@ export function SoundMixer() {
           {sounds.length === 0 && (
             <div className="flex items-center gap-3 px-4 py-3.5 text-fg-2">
               <FolderOpen size={20} className="shrink-0" />
-              <p className="text-[12.5px] leading-snug">追加した環境音はまだありません。音のファイルを追加すると、ここに並びます。</p>
+              <p className="text-ui-[12.5px] leading-snug">追加した環境音はまだありません。音のファイルを追加すると、ここに並びます。</p>
             </div>
           )}
         </div>
@@ -176,19 +176,19 @@ export function SoundMixer() {
             />
           ))}
         </div>
-        <p className="mt-1.5 px-1 text-[12px] text-fg-2">ブラウザの中で合成している音です。</p>
+        <p className="mt-1.5 px-1 text-ui-[12px] text-fg-2">ブラウザの中で合成している音です。</p>
       </section>
 
       <motion.button
         transition={spring}
         disabled={!ambientOn}
         onClick={stopAll}
-        className="btn-secondary w-full text-[13px]"
+        className="btn-secondary w-full text-ui-[13px]"
       >
         <VolumeX size={17} /> 環境音をすべて止める
       </motion.button>
       {!track && (
-        <p className="flex items-center justify-center gap-1.5 text-[12px] text-fg-2">
+        <p className="flex items-center justify-center gap-1.5 text-ui-[12px] text-fg-2">
           <Music2 size={13} /> BGM は曲のファイルを追加すると選べます
         </p>
       )}

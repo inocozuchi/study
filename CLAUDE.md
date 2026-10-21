@@ -53,6 +53,8 @@ src/
   audio/cabinSound.ts   航空の機内の音（茶色のノイズを低域で。合成・継ぎ目なしのループ）
   lib/                  純粋関数：time / altitude（標高・ステージ）/ stats / scene（空の配色・旅の時間）/ id
   lib/fonts.ts          フォント設定（FONTS。選んだ書体を Google Fonts から読み込み、CSS 変数で全体に反映）
+  lib/i18n.ts           言語（英語のときは画面の文字を src/i18n/en.json で置き換える。下記「言語」）
+  lib/display.ts        文字の大きさ・行間（--user-ts / --user-lh。下記「文字の大きさ・行間」）
   hooks/                useNow, useWakeLock など
   lib/theme.ts          外観（ライト / ダーク / 端末）を <html data-theme> に。下の帯の色（--edge）。**theme-color は使わない**（iOS 26 のホーム画面アプリで時刻の帯が塗られ、全画面にならない）
   lib/sceneHold.ts      全画面の画面（設定など）がシーンを覆っている間、シーンの描画を止める（出きってから 550ms 後に隠す）
@@ -109,7 +111,8 @@ src/
     audio/              CassettePlayer（サウンドのシート：BGM / ミキサー）+ SoundMixer（音ごとの音量）
     tools/              ToolsPanel（ノート / ToDo / 習慣、縦のサイドタブ）
     …                   画面ごとの部品（timeline/ routes/ insights/ trail/）
-  screens/              HomeScreen / TimelineScreen / RoutesScreen / InsightsScreen / SettingsScreen
+  screens/              HomeScreen / TimelineScreen / RoutesScreen / InsightsScreen / SettingsScreen（タブ。設定もタブバーの 5 つ目）
+  i18n/en.json          英語の辞書（scripts/i18n-missing.py で足りない文言、scripts/i18n-add.py で足す）
 public/
   manifest.webmanifest, sw.js, icons/（icon.svg が元絵）, splash/（iOS 起動画像）
   bgm/      BGM のフォルダ（tracks.json は任意。README.md に書き方）
@@ -168,9 +171,11 @@ interface TimerDesign {
 ## ホームの流れ（どのデザインでも共通）
 
 `HomeScreen` が 1 つの画面の中で状態を切り替える（ホームタブのみ。没入中はタブバーを隠す）。
-1. **ホーム**：ヘッダー（`.screen-header`）に「サウンド」「旅のモード（登山 ▾）」「旅のパス」「設定」（すべて 42px）、その下に 1 行の挨拶、右端にツールの縦タブ、
-   タブバーのすぐ上の真ん中に「集中」（直径 80px）、その左右に今日の記録・連続日数のバッジ。
-   **ゾーニング**：シーンは時刻の帯・ダイナミックアイランドの裏まで全画面。上に暗い帯やグラデーションを敷かない（挨拶は文字の影だけ）。シーンの主役（列車の窓の中・駅名標、テーブルの小物、ハイカー）に文字を重ねない。
+1. **ホーム**：ヘッダー（`.screen-header`）に「サウンド」「旅のモード（登山 ▾）」「旅のパス」（すべて 42px。設定はタブバーのいちばん右）、
+   その下に挨拶のピルと「次の予定」のピル（今日のまだ終わっていない予定。押すとその予定で出発）、右端にツールの縦タブ、
+   タブバーのすぐ上の真ん中に「集中」（直径 80px）、その左右に今日の記録（1 日の目標 `dailyGoalMin` までの輪）・連続日数のバッジ（押すとインサイト）。
+   **ゾーニング**：シーンは時刻の帯・ダイナミックアイランドの裏まで全画面。上に暗い帯やグラデーションを敷かない。
+   シーンの上の文字は必ず着せ替えの面（`home.chip`）に載せる。光彩・ぼかしの影で浮かせない（白い光彩の付いた暗い文字は、夜の空でぼやけて見えた）。シーンの主役（列車の窓の中・駅名標、テーブルの小物、ハイカー）に文字を重ねない。
    **着せ替え**（`design.home`。色と質感だけ。寸法はアプリ共通）：
    - 登山：水彩紙のすりガラス（生成り 75%・フォレストグリーン #2C4A3E・細い実線の縁）、タブバーは生成りアイボリーにセージのピル、「集中」は方位磁針
    - 列車：ダークマホガニーに真鍮の 1px の縁・生成りの文字、タブバーは焦げ茶 × 真鍮に臙脂のピル、「集中」は真鍮の二重リングの懐中時計
@@ -236,7 +241,7 @@ interface TimerDesign {
 - 休憩で止まる駅は「ここまでに集中した分」で通り過ぎた実際の駅。終着は行き先（途中で終えたら途中下車の駅）。
 
 ## 旅のモードと旅のパス
-- モードはホームの上の「登山 ▾」か、設定 → 旅のモードで切り替える（`Settings.timerDesign`）。記録・科目はモード共通。
+- モードはホームの上の「登山 ▾」か、設定のタブ → 旅のモードで切り替える（`Settings.timerDesign`）。記録・科目はモード共通。
 - **旅のパス**（ホームの ID カードのボタン）：モードごとのカード + 共通の **ニックネーム**（`userName`）と **目標**（`goal`）。
   - 登山：登山者 ID カード（累計の登山時間・現在の標高＝累計分 × 10 m）。ハイカーの服（`hikerLook`）とテント（`tentStyle`）を選べる
   - 列車：予約と同じ生成りの**硬券**（`HardTicket` を木の台に載せる）。〇〇様・**出発駅**（`departure`）→ **行き先**（＝目標）・累計・乗った営業キロ。
@@ -274,6 +279,24 @@ interface TimerDesign {
   休憩に入ると 40 秒かけて夜（21.6 時）になる。フリー（時間なし）は `pomodoroFocus` を 1 日分の長さとみなす。
   ホーム（旅の外）は今の時刻。計算は `lib/scene.ts` の `journeyHour` / `hourFor`、値は `App.tsx` の SceneLayer からデザインへ渡す。
 - `clock`＝今の時刻、`dawn` / `day` / `sunset` / `night`＝固定。設定画面と支度シート（登山の SetupOptions）で選べる。
+
+## 言語（Settings.language）
+- 日本語 / English。文言はコードに日本語で書く（日本語が元）。英語のときは `lib/i18n.ts` が画面に出た文字を辞書 `src/i18n/en.json` で置き換える
+  （MutationObserver で文字のノード・aria-label・placeholder・title を見張る。React が書き直したら訳し直す。自分で書いた訳は二度と訳さない＝止まらなくならない）。
+- 辞書：`plain`（文字そのまま）と `tpl`（値の入る文 `{0}日連続` など）。固定の部分に日本語のない型は使わない。固定の日本語が 1 文字の型は値がすべて訳せるときだけ。
+  ほかに数字と単位の形（`PATTERNS`）、区切り（· → 〜 、括弧）で分けて全部訳せるときはつなぐ。駅名・路線名は `line.ts` のローマ字から作る。
+- 時間・日付の書式（`fmtDuration` / `fmtDateJa` / `weekdayJa` / `weekdaysMonFirst` / `locale()`）は言語を見て自分で英語にする。
+- **文言を足したら** `python3 scripts/i18n-missing.py` で辞書にない文言を出し、訳を `scripts/i18n-add.py` で足す。`npm run e2e` は英語の画面に残った日本語を不具合として出す。
+- 英語の辞書は英語を選んだときだけ読み込む（`import('@/i18n/en.json')`）。起動直後は `main.tsx` が前回の言語を当てる。
+
+## 文字の大きさ・行間（Settings.textScale / lineSpacing）
+- 効くのは `.ui-text` の中だけ（ホーム以外のタブの main・Sheet・Modal・ToolsPanel）。旅のモードの絵（切符・計器・HUD・予約）は寸法が決まっているので変えない。
+- アプリ本体（`components/` `screens/`。HomeScreen と LayoutProbe は除く）の文字は `text-ui-[14px]`（= `calc(14px * var(--ts))`。tailwind.config.js のプラグイン）。新しく書くときもこれを使う。
+- 行間は `--lh`（狭い 1.25 / ふつう 1.4 / 広い 1.62）。Tailwind の `leading-tight/snug/normal/relaxed` は `--lh` に比例する（.ui-text の外では元の値と同じ）。`lib/display.ts` が値を入れる。
+
+## 便利な機能
+- 1 日の目標（`dailyGoalMin`。ホームの「今日」の輪）、ホームの「次の予定」から出発、タブをもう一度押して上へ、
+  バックアップの書き出し・戻す（設定 → データ。`exportBackup` / `importBackup` → repository の `importAll`）。
 
 ## フォント（Settings.font）
 - 既定は **BIZ UDPゴシック**（見やすさ優先）。ほかにシステム / Noto Sans JP / M PLUS Rounded / Zen 丸ゴシック / Klee / しっぽり明朝。
@@ -379,12 +402,13 @@ interface TimerDesign {
   `html { min-height: min(100lvh, calc(100% + env(safe-area-inset-top))) }` として文書を画面の高さまで伸ばす。この規則は消さない。
 - **画面ごとの枠は `lib/chrome.ts` の `chromeFor`**（App.tsx はこれを読むだけ）：
   `fullscreen`（シーンを全画面に敷くか）/ `statusArea`（時刻の帯の下：`scene` 何も敷かない・`solid` 地の色・`scrim` うすい暗がり。`.status-band`）/ `bottomNav`（タブバー）。
-  設定（全画面の重ね）は `OVERLAY_CHROME` で自分の `.status-band` を持つ。ぼかし（backdrop-filter）はどの画面にも使わない。
+  ぼかし（backdrop-filter）はどの画面にも使わない。
 - タブバーの下の余白は `--tabbar-pb`、タブバーが占める高さは `--nav-space`（index.css）。スクロールする画面の最後は `.pb-nav`、ホームの「集中」は `--nav-space` から。
 - 時刻の文字の色（`apple-mobile-web-app-status-bar-style`）は起動時に一度だけ読まれ、画面ごとには変えられない（iOS の制約）。
 - **表示の診断**：設定 → データ →「表示の診断」（または `?layout-probe`）。高さ・安全域・100dvh/lvh/svh・枠/シーン/時刻の帯/タブバーの位置を表示（`components/debug/LayoutProbe.tsx`）。
 - アプリの枠は `.app-frame`（`fixed` + `100dvh`）。全画面の重ね（シート・モーダル・設定）は `fixed inset-x-0 top-0 h-app`（`fixed inset-0` は使わない）。
 - タブバーはアプリの枠（stage）の下端に `absolute` で置く（ホームの「集中」と同じ基準。fixed にしない）。
+- タブは 5 つ：ホーム / タイムライン / ルート / インサイト / 設定（いちばん右）。いま開いているタブをもう一度押すと、いちばん上へスクロール（`[data-main-scroll]`）。
 - タブバーは**画面の下に浮いたカプセル**（左右と下に余白。iPhone の角で欠けない）。**アイコンだけ**で文字は出さない（名前は aria-label）。
   集中・休憩・リザルトの間は下へ隠す（シーンが最下部まで見える）。
 - 上部のぼかしはどこにも置かない。
@@ -415,7 +439,8 @@ interface TimerDesign {
   列車は車内・空・中景・フェンス・電柱・駅の画像を `decodeAll`、航空は地図の SVG、登山はクレヨンの焼き込み（`bakeTracker`）が終わるまで待つ。読めないときも 3 秒で見せる。
   列車の景色の組を切り替えるときも、新しい組の画像のデコードが終わってから重ねる。窓の中の地の色は暗い色（水色の四角を見せない）。
 - ホームの挨拶には文字の影だけ（後ろに暗いグラデーションを敷かない）。今日の記録・連続のバッジは「集中」ボタンの上に置く（列車の窓枠・駅名標と重ならない）。
-- タブの切り替えは 250ms のクロスフェード + 下から 6px。シーンも 250ms で溶かしてから隠す。
+- タブの切り替えは前の画面をすぐ外し、新しい画面だけ 250ms でフェード + 下から 6px（iOS と同じ）。前の画面の退場は待たない
+  （退場の中の AnimatePresence が止まって前の画面が残り続けた。タブの main を AnimatePresence で包まない）。シーンは 250ms で溶かしてから隠す。
 - アイコンを変えたら `scripts/generate-assets.mjs` を実行し、`index.html` の #boot の SVG も同じ図柄に揃える。
 
 ## 音のループ原則（BGM・環境音）
@@ -437,7 +462,10 @@ interface TimerDesign {
 - **PR の前には必ず通しの試験 `npm run e2e` を実行し、不具合 0 件にする**（ユーザーの指定）。
   初回は `npm i --no-save playwright-core@1.56.1`（Chromium は入っている）。`npm run build` のあとに実行する（dist を vite preview で開く）。
   iPhone 16（安全域 上 59 / 下 34）と iPhone SE（上 20）で、3 モードのホーム → 予約 → 座席 → 発券 → 集中 → 休憩 → 発車 → 長押しで終了 → リザルト、
-  機窓のシェード、シート（旅のモード・旅のパス・サウンド・ツール・設定）、タブ、左端スワイプで戻る、を操作し、
+  機窓のシェード、シート（旅のモード・旅のパス・サウンド・ツール）、5 つのタブ、左端スワイプで戻る、を操作し、
+  iPhone 16 ではさらに（`patterns`）：予定を立てる・月の表示・週の移動・タブをもう一度押す、ルートを足す、設定の項目をすべて開く・スイッチ、
+  バックアップの書き出しと戻す、ホームの「次の予定」から 3 モードで出発 → 再読み込みしても旅が続く → 長押しで終える、
+  文字 130%・行間 広い / 文字 90%・行間 狭い / ダークで全タブとシート、英語で 3 モードのホーム・予約・全タブ・ツール（日本語が残っていないか）、
   エラー・横のはみ出し・押せないボタン（重なり・画面の外・時刻の帯の中）・ヘッダーの寸法と位置・全画面・「集中」とタブバーの重なり・スクロールの最後が隠れないか を確かめる。
   写真は `tests/e2e/out/`（見づらいところがないか目でも見る）。一部だけは `E2E_ONLY=train,sheets` / `E2E_DEVICE=iPhoneSE`。
   新しい画面・操作を足したら `tests/e2e/run.mjs` にも足す。

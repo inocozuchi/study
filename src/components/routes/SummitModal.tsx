@@ -32,13 +32,13 @@ export function SummitModal() {
           <motion.div className="relative mx-auto w-fit" initial={{ scale: 0.3, rotate: -25, opacity: 0 }} animate={{ scale: 1, rotate: -8, opacity: 1 }} transition={{ ...springBouncy, delay: 0.15 }}>
             <SummitStamp subject={summit.subject} size={140} date={summit.subject.summitedAt} />
           </motion.div>
-          <p className="relative mt-4 text-[12px] font-semibold uppercase tracking-[0.2em] text-accent-ink">Summit reached</p>
-          <h2 className="relative mt-1 text-[22px] font-bold tracking-tight">{summit.subject.mountainName} 登頂！</h2>
-          <p className="relative mt-2 text-[13px] leading-relaxed text-fg-2">
+          <p className="relative mt-4 text-ui-[12px] font-semibold uppercase tracking-[0.2em] text-accent-ink">Summit reached</p>
+          <h2 className="relative mt-1 text-ui-[22px] font-bold tracking-tight">{summit.subject.mountainName} 登頂！</h2>
+          <p className="relative mt-2 text-ui-[13px] leading-relaxed text-fg-2">
             {summit.subject.name}で累計 <span className="font-semibold text-fg">{fmtDuration(summit.minutes)}</span>。<br />
             標高 {fmtMeters(summit.minutes * METERS_PER_MINUTE)} の雲海を越えました。
           </p>
-          <motion.button onClick={dismissSummit} className="relative mt-6 w-full rounded-2xl bg-accent py-3.5 text-[14px] font-bold text-white">
+          <motion.button onClick={dismissSummit} className="relative mt-6 w-full rounded-2xl bg-accent py-3.5 text-ui-[14px] font-bold text-white">
             旅の記録帳にしまう
           </motion.button>
         </div>

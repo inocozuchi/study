@@ -32,6 +32,9 @@ export interface FocusRepository {
   loadActiveTimer(): ActiveTimer | null;
   saveActiveTimer(timer: ActiveTimer | null): void;
 
+  /** バックアップから戻す（いまのデータはすべて置き換える）。戻したデータを返す */
+  importAll(data: AppData): Promise<AppData>;
+
   /** 全データ消去（空の状態から始める） */
   clearAll(): Promise<AppData>;
 }

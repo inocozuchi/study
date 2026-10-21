@@ -18,8 +18,8 @@ function isIOS() {
 function Step({ n, children }: { n: number; children: ReactNode }) {
   return (
     <li className="flex gap-3">
-      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-fill text-[12px] font-bold">{n}</span>
-      <span className="min-w-0 flex-1 pt-0.5 text-[13px] leading-relaxed text-fg">{children}</span>
+      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-fill text-ui-[12px] font-bold">{n}</span>
+      <span className="min-w-0 flex-1 pt-0.5 text-ui-[13px] leading-relaxed text-fg">{children}</span>
     </li>
   );
 }
@@ -33,7 +33,7 @@ export function InstallSheet({ open, onClose }: { open: boolean; onClose: () => 
     <Sheet open={open} onClose={onClose} title="ホーム画面に追加" subtitle="アプリのように全画面で開けます">
       <div className="space-y-5 pb-5">
         {standalone && (
-          <div className="flex items-center gap-2 rounded-2xl bg-moss/15 px-4 py-3 text-[13px] font-medium text-moss">
+          <div className="flex items-center gap-2 rounded-2xl bg-moss/15 px-4 py-3 text-ui-[13px] font-medium text-moss">
             <Check size={16} strokeWidth={3} /> すでにホーム画面のアプリとして開いています
           </div>
         )}
@@ -52,7 +52,7 @@ export function InstallSheet({ open, onClose }: { open: boolean; onClose: () => 
               <b className="font-semibold text-fg">Web アプリとして開く</b> がオンになっているのを確かめて、右上の <b className="font-semibold text-fg">追加</b> をタップします。
             </Step>
           </ol>
-          <p className="mt-2 px-1 text-[12px] leading-relaxed text-fg-2">ホーム画面に「Focus Trail」のアイコンができます。次からはそこから開いてください。</p>
+          <p className="mt-2 px-1 text-ui-[12px] leading-relaxed text-fg-2">ホーム画面に「Focus Trail」のアイコンができます。次からはそこから開いてください。</p>
         </section>
 
         <section className={!ios || !standalone ? '' : 'opacity-60'}>
@@ -65,7 +65,7 @@ export function InstallSheet({ open, onClose }: { open: boolean; onClose: () => 
           </ol>
         </section>
 
-        <section className="rounded-card bg-accent-soft p-4 text-[12.5px] leading-relaxed text-fg-2">
+        <section className="rounded-card bg-accent-soft p-4 text-ui-[12.5px] leading-relaxed text-fg-2">
           <p className="font-bold text-accent-ink">記録はホーム画面のアプリごとに保存されます</p>
           <p className="mt-1">
             Safari で使った記録と、ホーム画面から開いたアプリの記録は<b className="font-semibold text-fg">別々に保存</b>されます（iPhone の仕様）。追加したら、これからはホーム画面のアイコンから使ってください。
