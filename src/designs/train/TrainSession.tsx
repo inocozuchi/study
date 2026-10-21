@@ -19,10 +19,10 @@ const ROLL: Record<TrainClass, string> = { local: '#2E3A52', rapid: '#3E5A3A', k
 export function RollSign({ cls, goal, className = '' }: { cls: TrainClass; goal: string; className?: string }) {
   return (
     <span className={`tr-roll inline-flex items-stretch overflow-hidden rounded-[6px] text-[#1F2328] ${className}`}>
-      <span className="grid place-items-center px-2.5 text-[15px] font-extrabold tracking-[0.2em] text-[#F4EEDD]" style={{ background: ROLL[cls] }}>
+      <span className="grid place-items-center px-2.5 text-[14px] font-extrabold tracking-[0.2em] text-[#F4EEDD]" style={{ background: ROLL[cls] }}>
         {CLASSES[cls].label}
       </span>
-      <span className="max-w-[56vw] truncate px-3 py-1 text-[17px] font-extrabold tracking-[0.12em]">{goal}<span className="ml-0.5 text-[13px]">行</span></span>
+      <span className="max-w-[56vw] truncate px-3 py-1 text-[16px] font-extrabold tracking-[0.12em]">{goal}<span className="ml-0.5 text-[12.5px]">行</span></span>
     </span>
   );
 }
@@ -99,7 +99,7 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
         <div className="flex flex-col items-center">
           <RollSign cls={cls} goal={destinationOf(timer, settings)} />
           <button onClick={() => !rest && !waiting && t.toggle()} className="pointer-events-auto mt-3 text-center" aria-label={timer.running ? '一時停止' : '再開'}>
-            <span className="tabular block font-digits text-[40px] font-semibold leading-none tracking-wider text-[#F4EEDD] [text-shadow:0_2px_0_rgba(0,0,0,0.45),0_0_18px_rgba(0,0,0,0.3)]">{fmtTimer(shown)}</span>
+            <span className="tabular block font-digits text-[37px] font-semibold leading-none tracking-wider text-[#F4EEDD] [text-shadow:0_2px_0_rgba(0,0,0,0.45),0_0_18px_rgba(0,0,0,0.3)]">{fmtTimer(shown)}</span>
             <span className="mt-1.5 inline-block rounded-full bg-black/35 px-2.5 py-0.5 text-[11px] font-bold text-[#F4EEDD]/90">{label}</span>
           </button>
         </div>
@@ -120,10 +120,10 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
             <motion.div key="rest" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} transition={springBouncy} className="pointer-events-auto mx-auto max-w-md">
               <div className="tr-card flex items-center overflow-hidden rounded-[10px]">
                 <span className="min-w-0 flex-1 px-4 py-2.5 leading-tight">
-                  <span className="block text-[19px] font-extrabold tracking-[0.12em]">{stop.name}</span>
+                  <span className="block text-[18px] font-extrabold tracking-[0.12em]">{stop.name}</span>
                   <span className="mt-0.5 block text-[12px] font-semibold text-[#6B7076]">停車中 · ここまで {fmtDuration(t.journeyFocusMs / MIN)}</span>
                 </span>
-                <motion.button onClick={() => (rest ? t.skipBreak() : t.start())} className="self-stretch bg-[#7A2830] px-5 text-[16px] font-extrabold tracking-[0.1em] text-[#F4EEDD]">
+                <motion.button onClick={() => (rest ? t.skipBreak() : t.start())} className="self-stretch bg-[#7A2830] px-5 text-[15px] font-extrabold tracking-[0.1em] text-[#F4EEDD]">
                   発車
                 </motion.button>
               </div>
@@ -144,13 +144,13 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
                 }}
                 className="tr-card flex h-14 flex-col items-center justify-center rounded-[10px] leading-tight"
               >
-                <span className="flex items-center gap-1.5 text-[15px] font-extrabold tracking-[0.06em]">
+                <span className="flex items-center gap-1.5 text-[14px] font-extrabold tracking-[0.06em]">
                   <Coffee size={16} /> 途中駅で休憩
                 </span>
                 <span className="text-[11px] font-semibold text-[#6B7076]">次の駅に停車</span>
               </button>
               <HoldButton onDone={onEnd} className="h-14 flex-col rounded-[10px] bg-[#7A2830] text-[#F4EEDD]">
-                <span className="flex items-center gap-1.5 text-[15px] font-extrabold tracking-[0.06em]">
+                <span className="flex items-center gap-1.5 text-[14px] font-extrabold tracking-[0.06em]">
                   <Flag size={16} /> 旅を終える
                 </span>
                 <span className="text-[11px] font-semibold text-[#F4EEDD]/70">長押しで下車</span>
@@ -215,7 +215,7 @@ function HoldButton({ onDone, className = '', children }: { onDone: () => void; 
       onPointerLeave={stop}
       onPointerCancel={stop}
       onContextMenu={(e) => e.preventDefault()}
-      className={`relative flex items-center justify-center gap-1.5 overflow-hidden text-[14px] font-bold ${className}`}
+      className={`relative flex items-center justify-center gap-1.5 overflow-hidden text-[13px] font-bold ${className}`}
     >
       <span className="pointer-events-none absolute inset-y-0 left-0 bg-[#F4EEDD]/25" style={{ width: held ? '100%' : '0%', transition: held ? `width ${HOLD_MS}ms linear` : 'width 200ms ease-out' }} />
       <span className="relative flex flex-col items-center leading-tight">{children}</span>

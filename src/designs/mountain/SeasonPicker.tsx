@@ -50,7 +50,7 @@ export function SeasonPicker({ draft, onChange }: DesignSetupProps) {
               transition={springBouncy}
               onClick={() => onChange({ sky: o.value })}
               aria-pressed={active}
-              className={`rounded-full px-4 py-2 text-[13px] font-bold transition-colors ${active ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}
+              className={`rounded-full px-4 py-2 text-[12.5px] font-bold transition-colors ${active ? 'bg-accent text-white' : 'bg-fill text-fg-2'}`}
             >
               {o.label}
             </motion.button>

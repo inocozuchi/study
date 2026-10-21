@@ -17,7 +17,7 @@ export function MountainFocus({ onClick }: { onClick: (e: MouseEvent<HTMLButtonE
             <path d="M40 56 L44 40 L36 40 Z" fill="#2C4A3E" />
           </g>
         </svg>
-        <span className="relative text-[18px] font-bold tracking-[0.12em]">集中</span>
+        <span className="relative text-[17px] font-bold tracking-[0.12em]">集中</span>
       </button>
     </div>
   );

@@ -5,6 +5,7 @@ import { easeIOS, springSheet } from '@/lib/motion';
 import { usePresentDepth } from '@/lib/depth';
 import { useApp } from '@/store/AppStore';
 import { useHoldScene } from '@/lib/sceneHold';
+import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack';
 import { airportByCode, nearestRoute, routesFrom, type Route } from '../airports';
 import { RouteStep } from './RouteStep';
 import { SeatStep } from './SeatStep';
@@ -41,6 +42,9 @@ export const snapTo = (m: number, step: TimeStep) => {
 export function FlightBooking({ open, onClose, onStart }: DesignBookingProps) {
   const { settings } = useApp();
   const [page, setPage] = useState<1 | 2 | 3>(1);
+  // iOS の「左端から右へスワイプで戻る」：① では予約を閉じ、② では ① へ。③（改札・搭乗の儀式）は戻るボタンで
+  const swipe1 = useEdgeSwipeBack(onClose, open && page === 1);
+  const swipe2 = useEdgeSwipeBack(() => setPage(1), open && page === 2);
   const [draft, setDraft] = useState<FlightDraft>(() => fresh());
   useHoldScene(open);
   usePresentDepth(open);
@@ -85,13 +89,14 @@ export function FlightBooking({ open, onClose, onStart }: DesignBookingProps) {
           style={{ willChange: 'transform, opacity' }}
           // 搭乗したら、搭乗券ごと少し大きくなりながら溶けて、下の地図（フライト中の画面）が現れる
           exit={{ opacity: 0, scale: 1.06, transition: { duration: 0.7, ease: [0.4, 0, 0.2, 1] } }}
+          {...(page === 1 ? swipe1.bind : swipe2.bind)}
         >
-          <div className="absolute inset-0 isolate">
+          <motion.div className="absolute inset-0 isolate" style={{ x: swipe1.x }}>
             <RouteStep draft={draft} routes={routes} route={route} patch={patch} onClose={onClose} onNext={() => setPage(2)} />
-          </div>
+          </motion.div>
           <AnimatePresence>
             {page >= 2 && (
-              <motion.div key="seat" className="absolute inset-0 isolate z-10" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 260, damping: 32 }}>
+              <motion.div key="seat" className="absolute inset-0 isolate z-10" style={{ x: swipe2.x }} initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 260, damping: 32 }}>
                 <SeatStep draft={draft} route={route} patch={patch} onBack={() => setPage(1)} onNext={() => setPage(3)} />
               </motion.div>
             )}

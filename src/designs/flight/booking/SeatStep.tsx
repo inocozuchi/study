@@ -65,7 +65,7 @@ export function SeatStep({ draft, route, patch, onBack, onNext }: { draft: Fligh
             <ChevronLeft />
           </button>
           <div>
-            <p className="text-[15px] font-semibold">座席を指定</p>
+            <p className="text-[14px] font-semibold">座席を指定</p>
             <Steps at={2} />
           </div>
           <span />
@@ -118,7 +118,7 @@ export function SeatStep({ draft, route, patch, onBack, onNext }: { draft: Fligh
         <div>
           <span className="block min-w-0 px-1 pb-2">
             <span className="block text-[11.5px] text-white/50">{draft.seat ? '席とタスク' : '空いている席を選んでください'}</span>
-            <span className="fl-num flex items-center gap-1.5 truncate text-[16px] font-bold">
+            <span className="fl-num flex items-center gap-1.5 truncate text-[15px] font-bold">
               {draft.seat ? (
                 <>
                   {draft.seat}
@@ -188,7 +188,7 @@ function TaskPopover({ seat, top, x, options, current, onPick }: { seat: string;
       onClick={(e) => e.stopPropagation()}
     >
       <p className="fl-num text-[12px] font-semibold text-[#FF9F0A]">席: {seat}</p>
-      <p className="mt-0.5 text-[16px] font-bold">何に集中しますか？</p>
+      <p className="mt-0.5 text-[15px] font-bold">何に集中しますか？</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {options.map((t) => {
           const tint = t.color ?? TASK_TINT[t.name] ?? '#8E8E93';
@@ -197,7 +197,7 @@ function TaskPopover({ seat, top, x, options, current, onPick }: { seat: string;
             <button
               key={t.name}
               onClick={() => onPick(t)}
-              className="flex h-9 items-center gap-1.5 rounded-full px-3 text-[13.5px] font-semibold transition-transform"
+              className="flex h-9 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-semibold transition-transform"
               style={{ background: on ? tint : `${tint}2E`, color: on ? '#0B0C0F' : '#F5F6F8', boxShadow: `inset 0 0 0 1px ${tint}66, inset 0 1px 0 rgba(255,255,255,0.18)` }}
             >
               <TaskGlyph icon={t.icon} size={15} />
@@ -214,13 +214,13 @@ function TaskPopover({ seat, top, x, options, current, onPick }: { seat: string;
               if (n) onPick({ name: n, icon: 'book' });
             }}
           >
-            <input autoFocus value={name} onChange={(e) => setName(e.target.value)} maxLength={20} placeholder="例：英単語、論文、資格" className="h-9 min-w-0 flex-1 rounded-full bg-white/10 px-3 text-[15px] text-white outline-none placeholder:text-white/35" />
-            <button type="submit" className="h-9 rounded-full bg-white px-3.5 text-[13.5px] font-bold text-[#050608]">
+            <input autoFocus value={name} onChange={(e) => setName(e.target.value)} maxLength={20} placeholder="例：英単語、論文、資格" className="h-9 min-w-0 flex-1 rounded-full bg-white/10 px-3 text-[14px] text-white outline-none placeholder:text-white/35" />
+            <button type="submit" className="h-9 rounded-full bg-white px-3.5 text-[12.5px] font-bold text-[#050608]">
               追加
             </button>
           </form>
         ) : (
-          <button onClick={() => setAdding(true)} className="flex h-9 items-center gap-1 rounded-full border border-dashed border-white/30 px-3 text-[13.5px] font-semibold text-white/75">
+          <button onClick={() => setAdding(true)} className="flex h-9 items-center gap-1 rounded-full border border-dashed border-white/30 px-3 text-[12.5px] font-semibold text-white/75">
             <Plus size={15} /> 追加
           </button>
         )}

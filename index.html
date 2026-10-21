@@ -9,7 +9,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <title>Focus Trail</title>
     <meta name="description" content="集中は山を登る旅。休憩は焚き火のそばで。学習・集中記録アプリ Focus Trail" />
-    <meta name="theme-color" content="#F2F3F7" />
+    <!-- theme-color は置かない：iOS 26 のホーム画面アプリでは theme-color があると時刻の帯をその色で塗り、
+         black-translucent でも画面が時刻の帯の下から始まる（上に色の帯ができる）。シーンを時刻・ダイナミックアイランドの裏まで描くため -->
     <meta name="color-scheme" content="light" />
     <!-- 外観（ライト／ダーク）を最初に決める。本体の読み込みを待つと、暗い設定でも一瞬白く光る -->
     <script>
@@ -20,8 +21,6 @@
         var root = document.documentElement;
         root.setAttribute('data-theme', dark ? 'dark' : 'light');
         root.style.colorScheme = dark ? 'dark' : 'light';
-        var m = document.querySelector('meta[name="theme-color"]');
-        if (m) m.setAttribute('content', dark ? '#0E1015' : '#F2F3F7');
       })();
     </script>
 

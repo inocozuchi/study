@@ -47,7 +47,7 @@ export const LightLayer = memo(function LightLayer({ L, refs }: { L: StageLayout
       {/* よそ見の警告 */}
       <div
         ref={(el) => { refs.current.alert = el; }}
-        className="absolute grid h-8 w-8 -translate-x-1/2 place-items-center rounded-full bg-sun text-[18px] font-black text-night-950 shadow-glass"
+        className="absolute grid h-8 w-8 -translate-x-1/2 place-items-center rounded-full bg-sun text-[17px] font-black text-night-950 shadow-glass"
         style={{ left: L.hx + 4 * k, top: L.gy - 140 * k, opacity: 0, transform: 'scale(0.4)' }}
       >
         !

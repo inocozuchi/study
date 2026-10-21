@@ -56,8 +56,8 @@ export function PassCard({ data, stub, landed = false, compact = false }: { data
 
           <div className="mt-4 flex items-center justify-between">
             <div>
-              <p className={`fl-num font-bold leading-none tracking-tight ${compact ? 'text-[34px]' : 'text-[42px]'}`}>{data.from.code}</p>
-              <p className="mt-1 text-[13px] text-white/65">{data.from.name}</p>
+              <p className={`fl-num font-bold leading-none tracking-tight ${compact ? 'text-[31px]' : 'text-[39px]'}`}>{data.from.code}</p>
+              <p className="mt-1 text-[12.5px] text-white/65">{data.from.name}</p>
             </div>
             <div className="flex flex-1 flex-col items-center px-2">
               <span className="flex w-full items-center gap-1.5 text-white/45">
@@ -65,11 +65,11 @@ export function PassCard({ data, stub, landed = false, compact = false }: { data
                 <Plane size={16} strokeWidth={2.2} className="text-[#FF9F0A]" />
                 <span className="h-px flex-1 border-t border-dashed border-white/30" />
               </span>
-              <span className="fl-num mt-1 text-[12.5px] font-semibold text-white/75">{hm(data.minutes)}</span>
+              <span className="fl-num mt-1 text-[12px] font-semibold text-white/75">{hm(data.minutes)}</span>
             </div>
             <div className="text-right">
-              <p className={`fl-num font-bold leading-none tracking-tight ${compact ? 'text-[34px]' : 'text-[42px]'}`}>{data.to.code}</p>
-              <p className="mt-1 text-[13px] text-white/65">{data.to.name}</p>
+              <p className={`fl-num font-bold leading-none tracking-tight ${compact ? 'text-[31px]' : 'text-[39px]'}`}>{data.to.code}</p>
+              <p className="mt-1 text-[12.5px] text-white/65">{data.to.name}</p>
             </div>
           </div>
 
@@ -82,7 +82,7 @@ export function PassCard({ data, stub, landed = false, compact = false }: { data
             ].map(([k, v]) => (
               <div key={k}>
                 <dt className="text-[11.5px] text-white/50">{k}</dt>
-                <dd className="fl-num text-[19px] font-bold leading-tight">{v}</dd>
+                <dd className="fl-num text-[18px] font-bold leading-tight">{v}</dd>
               </div>
             ))}
           </dl>
@@ -95,7 +95,7 @@ export function PassCard({ data, stub, landed = false, compact = false }: { data
             transition={{ type: 'spring', stiffness: 260, damping: 16, delay: 0.5 }}
             className="absolute right-4 top-[46%] rounded-[10px] border-2 border-[#30D158] px-2.5 py-1 text-center text-[#30D158]"
           >
-            <span className="block text-[15px] font-black leading-none tracking-[0.12em]">LANDED</span>
+            <span className="block text-[14px] font-black leading-none tracking-[0.12em]">LANDED</span>
             <span className="block text-[10px] font-bold">着陸済み</span>
           </motion.span>
         )}

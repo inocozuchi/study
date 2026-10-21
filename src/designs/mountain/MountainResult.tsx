@@ -43,7 +43,7 @@ export function MountainResult({ result, onContinue }: DesignResultProps) {
     <div className="absolute inset-0 flex flex-col px-7 pt-safe">
       <div className="mt-[14vh]">
         {lines.map((l, i) => (
-          <motion.div key={i} initial={{ opacity: 0, y: 8, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} transition={{ ...springSoft, delay: l.delay, filter: { duration: 0.5, delay: l.delay } }} className="relative py-2 font-maru text-[24px] font-bold leading-snug text-paper [text-shadow:0_2px_0_rgba(23,37,61,0.5)]">
+          <motion.div key={i} initial={{ opacity: 0, y: 8, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} transition={{ ...springSoft, delay: l.delay, filter: { duration: 0.5, delay: l.delay } }} className="relative py-2 font-maru text-[22px] font-bold leading-snug text-paper [text-shadow:0_2px_0_rgba(23,37,61,0.5)]">
             {l.node}
             {/* 罫線（クレヨンで引いた線） */}
             <motion.svg className="absolute -bottom-0.5 left-0 h-2 w-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 4" initial={{ pathLength: 0 }}>
@@ -52,14 +52,14 @@ export function MountainResult({ result, onContinue }: DesignResultProps) {
           </motion.div>
         ))}
 
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 0.75 }} transition={{ delay: 2 }} className="mt-3 font-maru text-[13px] text-paper">
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 0.75 }} transition={{ delay: 2 }} className="mt-3 font-maru text-[12.5px] text-paper">
           獲得標高 +{fmtMeters((result.focusMs / MIN) * METERS_PER_MINUTE)}
           {result.cycles > 0 ? ` · ${result.cycles} 回の登り` : ''}
           {subject ? ` · ${subject.mountainName}へ` : ''}
         </motion.p>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...springBouncy, delay: 2.1 }} className="mt-5 flex justify-end gap-3">
-          <motion.button onClick={onContinue} className="mt-paper rounded-full px-8 font-maru text-[17px] font-bold text-crayon-blue shadow-float">
+          <motion.button onClick={onContinue} className="mt-paper rounded-full px-8 font-maru text-[16px] font-bold text-crayon-blue shadow-float">
             続ける
           </motion.button>
         </motion.div>

@@ -11,8 +11,9 @@
 /* すりガラス：半透明の白 + 強いぼかし + 上の縁の光沢。重いので、数を絞って大きな面だけに使う */
 .fl-glass {
   background: rgba(255, 255, 255, 0.07);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter: blur(24px) saturate(180%);
+  /* ぼかしは軽めに（動く地図の上で毎フレーム計算されるので、半径を小さく・彩度の計算もしない） */
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-top-color: rgba(255, 255, 255, 0.2);
   box-shadow: 0 12px 32px -14px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -96,19 +97,15 @@
 }
 .fl-blink { animation: fl-blink 1.6s linear infinite; }
 
-/* ───────── ホームの着せ替え（iOS Liquid Glass のダーク） ───────── */
+/* ───────── ホームの着せ替え（iOS Liquid Glass のダーク）。動くシーンの上なので backdrop-filter は使わない（ガラスの色と縁・光沢で表す） ───────── */
 .fl-chip {
-  background: rgba(255, 255, 255, 0.08);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  backdrop-filter: blur(24px) saturate(160%);
+  background: rgba(28, 30, 36, 0.82);
   border: 1px solid rgba(255, 255, 255, 0.16);
   color: #f5f6f8;
   box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.7);
 }
 .fl-tabbar {
-  background: rgba(18, 20, 26, 0.85);
-  -webkit-backdrop-filter: blur(28px) saturate(160%);
-  backdrop-filter: blur(28px) saturate(160%);
+  background: rgba(18, 20, 26, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 14px 32px -14px rgba(0, 0, 0, 0.85);
 }
@@ -116,9 +113,7 @@
 
 /* 「集中」ボタン：フロストガラスの円と、静かに脈打つアンバーの計器リング */
 .fl-gauge {
-  background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06) 70%);
-  -webkit-backdrop-filter: blur(20px) saturate(170%);
-  backdrop-filter: blur(20px) saturate(170%);
+  background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.24), rgba(40, 44, 52, 0.85) 70%);
   border: 1px solid rgba(255, 255, 255, 0.22);
   color: #f5f6f8;
   box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.25);
@@ -132,3 +127,10 @@
 }
 @keyframes fl-gauge-glow { 0%, 100% { opacity: 0.3; transform: scale(0.94); } 50% { opacity: 0.85; transform: scale(1.05); } }
 @media (prefers-reduced-motion: reduce) { .fl-gauge-ring, .fl-gauge-glow { animation: none; } }
+
+/* 機窓ビューの間：明るい内装の上でも文字が読めるよう、ガラスを暗く（ぼかしはそのまま） */
+.fl-on-window .fl-glass {
+  background: rgba(14, 16, 20, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.fl-on-window p.text-white\/70 { color: rgba(255, 255, 255, 0.9); }

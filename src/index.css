@@ -92,6 +92,8 @@
   }
   body {
     @apply font-sans antialiased;
+    /* 行間はやや詰める（文字を小さめ・行間を狭めに。ユーザーの指定） */
+    line-height: 1.4;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     -webkit-user-select: none;
@@ -166,9 +168,11 @@
     grid-template-columns: 42px minmax(0, 1fr) 42px;
     align-items: center;
     column-gap: 8px;
+    /* margin-top だと親の上端と相殺（margin の相殺）して、親ごと下へずれる（ホームの「集中」がタブバーに重なった原因）。
+       上の余白は padding で持ち、高さ 44 は中身の高さ（content-box） */
+    box-sizing: content-box;
     height: 44px;
-    margin-top: var(--safe-top);
-    padding: 0 20px;
+    padding: var(--safe-top) 20px 0;
   }
   .screen-header > :nth-child(2) { text-align: center; min-width: 0; }
   .cta-dock { padding: 0 20px calc(env(safe-area-inset-bottom) + 14px); }
@@ -233,6 +237,5 @@ html.layout-probe [data-probe='status'] { outline-color: rgba(255, 200, 0, 0.95)
 /* シーンのフェードイン（画像のデコードがそろってから）。iOS のしっとりした減速カーブ */
 .scene-fade {
   transition: opacity 380ms cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: opacity;
 }
 

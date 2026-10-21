@@ -156,8 +156,6 @@ export interface TimerDesign {
 export interface HomeSkin {
   /** 丸いボタン・モードのピル・ツールの縦タブ・記録のバッジの面 */
   chip: string;
-  /** 上のセーフゾーン（ヘッダーと挨拶の後ろ）の CSS background。シーンの絵と文字を分ける */
-  scrim: string;
   /** 挨拶の文字 */
   greeting: string;
   /** ホームにいる間のタブバー：バー・選択のピル・選択中 / ほかのアイコンの色 */

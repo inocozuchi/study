@@ -127,10 +127,9 @@
 
 /* ───────── ホームの着せ替え（水彩 × ナチュラル：水彩紙のすりガラスとフォレストグリーン） ───────── */
 .mt-chip {
-  background-color: rgba(245, 242, 235, 0.75);
+  /* 動くシーンの上なので backdrop-filter は使わない（iPhone で毎フレーム計算になる）。少し濃い生成りで読みやすく */
+  background-color: rgba(245, 242, 235, 0.88);
   background-image: var(--paper-tooth);
-  -webkit-backdrop-filter: blur(12px) saturate(140%);
-  backdrop-filter: blur(12px) saturate(140%);
   border: 1px solid rgba(44, 74, 62, 0.22);
   color: #2c4a3e;
   box-shadow: 0 6px 16px -8px rgba(40, 60, 50, 0.45);

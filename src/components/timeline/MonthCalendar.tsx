@@ -28,7 +28,7 @@ export function MonthCalendar({ month, selected, today, marks, onSelect, onMonth
         <button aria-label="前の月" onClick={() => onMonth(-1)} className="hit grid h-9 w-9 place-items-center rounded-full text-accent-ink active:bg-accent-soft">
           <ChevronLeft size={20} strokeWidth={2.4} />
         </button>
-        <motion.p key={label} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="text-[16px] font-extrabold tabular">
+        <motion.p key={label} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="text-[15px] font-extrabold tabular">
           {label}
         </motion.p>
         <button aria-label="次の月" onClick={() => onMonth(1)} className="hit grid h-9 w-9 place-items-center rounded-full text-accent-ink active:bg-accent-soft">
@@ -59,7 +59,7 @@ export function MonthCalendar({ month, selected, today, marks, onSelect, onMonth
               className="flex flex-col items-center gap-[3px] py-1"
             >
               <span
-                className={`tabular grid h-8 w-8 place-items-center rounded-full text-[14px] transition-colors ${
+                className={`tabular grid h-8 w-8 place-items-center rounded-full text-[13px] transition-colors ${
                   isSel ? 'bg-accent font-extrabold text-white' : isToday ? 'font-extrabold text-accent-ink ring-[1.5px] ring-inset ring-accent' : inMonth ? 'font-semibold text-fg' : 'font-medium text-fg-3'
                 }`}
               >

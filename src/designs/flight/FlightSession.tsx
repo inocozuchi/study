@@ -14,7 +14,7 @@ import type { DesignSessionProps } from '../types';
 const HOLD_MS = 1100;
 
 /** 大きな数字と小さな単位（1h 22m / 22m 08s） */
-function Duration({ ms, big = 'text-[34px]' }: { ms: number; big?: string }) {
+function Duration({ ms, big = 'text-[31px]' }: { ms: number; big?: string }) {
   const s = Math.max(0, Math.ceil(ms / 1000));
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
@@ -24,7 +24,7 @@ function Duration({ ms, big = 'text-[34px]' }: { ms: number; big?: string }) {
       {parts.map(([v, u]) => (
         <span key={u} className="flex items-baseline">
           <span className={`${big} font-bold leading-none tracking-tight`}>{v}</span>
-          <span className="ml-0.5 text-[14px] font-semibold text-white/45">{u}</span>
+          <span className="ml-0.5 text-[13px] font-semibold text-white/45">{u}</span>
         </span>
       ))}
     </span>
@@ -132,15 +132,15 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
   const status = rest ? '休憩中 · 巡航高度で待機' : waiting ? '待機中' : running ? `${b?.from ?? ''} → ${b?.to ?? ''} · 巡航中` : '一時停止中';
 
   return (
-    <div className="fl-root absolute inset-0 touch-none select-none" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onContextMenu={(e) => e.preventDefault()}>
+    <div className={`fl-root absolute inset-0 touch-none select-none ${view.window ? "fl-on-window" : ""}`} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onContextMenu={(e) => e.preventDefault()}>
       {/* 大きな時計（表示の切り替え） */}
       <AnimatePresence>
         {view.clock && (
           <motion.div className="pointer-events-none absolute inset-0 grid place-items-center bg-[#050608]/70" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className="text-center">
-              <p className="text-[13px] font-semibold text-white/55">{rest ? '休憩の残り' : '到着まで'}</p>
-              <p className="fl-num mt-1 text-[76px] font-bold leading-none tracking-tight">{fmtTimer(rest ? t.remainingMs ?? 0 : remaining)}</p>
-              {b && <p className="fl-num mt-2 text-[15px] text-white/60">{b.from} → {b.to} · {km?.toLocaleString()} km</p>}
+              <p className="text-[12.5px] font-semibold text-white/55">{rest ? '休憩の残り' : '到着まで'}</p>
+              <p className="fl-num mt-1 text-[70px] font-bold leading-none tracking-tight">{fmtTimer(rest ? t.remainingMs ?? 0 : remaining)}</p>
+              {b && <p className="fl-num mt-2 text-[14px] text-white/60">{b.from} → {b.to} · {km?.toLocaleString()} km</p>}
             </div>
           </motion.div>
         )}
@@ -197,7 +197,7 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
                     navigator.vibrate?.(10);
                     t.finishFocus();
                   }}
-                  className="fl-glass flex h-12 items-center justify-center gap-1.5 rounded-full text-[14px] font-semibold"
+                  className="fl-glass flex h-12 items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold"
                 >
                   <Coffee size={16} /> 休憩する
                 </button>
@@ -216,15 +216,15 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
               <Duration ms={rest ? t.remainingMs ?? 0 : remaining} />
             </div>
             {rest || waiting ? (
-              <button onClick={() => (rest ? t.skipBreak() : t.start())} className="fl-cta h-11 px-5 text-[15px]">
+              <button onClick={() => (rest ? t.skipBreak() : t.start())} className="fl-cta h-11 px-5 text-[14px]">
                 離陸
               </button>
             ) : (
               <div className="text-right">
                 <p className="text-[11.5px] text-white/50">残り距離</p>
                 <p className="fl-num flex items-baseline justify-end">
-                  <span className="text-[34px] font-bold leading-none tracking-tight">{km?.toLocaleString() ?? '—'}</span>
-                  <span className="ml-1 text-[14px] font-semibold text-white/45">km</span>
+                  <span className="text-[31px] font-bold leading-none tracking-tight">{km?.toLocaleString() ?? '—'}</span>
+                  <span className="ml-1 text-[13px] font-semibold text-white/45">km</span>
                 </p>
               </div>
             )}
@@ -267,7 +267,7 @@ function ViewSwitch({ window: on, onChange }: { window: boolean; onChange: (w: b
     >
       <motion.span className="absolute bottom-1 left-1 top-1 rounded-full bg-white/20" style={{ width: 'calc(50% - 4px)' }} initial={false} animate={{ x: on ? '100%' : '0%' }} />
       {items.map(({ w, label, Icon }) => (
-        <button key={label} role="tab" aria-selected={on === w} onClick={() => onChange(w)} className={`relative z-10 flex flex-1 items-center justify-center gap-1 text-[12.5px] font-semibold ${on === w ? 'text-[#FFD60A]' : 'text-white/70'}`}>
+        <button key={label} role="tab" aria-selected={on === w} onClick={() => onChange(w)} className={`relative z-10 flex flex-1 items-center justify-center gap-1 text-[12px] font-semibold ${on === w ? 'text-[#FFD60A]' : 'text-white/70'}`}>
           <Icon size={15} />
           {label}
         </button>
@@ -301,7 +301,7 @@ function HoldButton({ onDone, className = '', children }: { onDone: () => void; 
       onPointerLeave={stop}
       onPointerCancel={stop}
       onContextMenu={(e) => e.preventDefault()}
-      className={`fl-glass relative flex items-center justify-center gap-1.5 overflow-hidden text-[14px] font-semibold text-[#FFD60A] ${className}`}
+      className={`fl-glass relative flex items-center justify-center gap-1.5 overflow-hidden text-[13px] font-semibold text-[#FFD60A] ${className}`}
     >
       <span className="pointer-events-none absolute inset-y-0 left-0 bg-[#FF9F0A]/35" style={{ width: held ? '100%' : '0%', transition: held ? `width ${HOLD_MS}ms linear` : 'width 200ms ease-out' }} />
       <span className="relative flex items-center gap-1.5">{children}</span>

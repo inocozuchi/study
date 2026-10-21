@@ -5,6 +5,7 @@ import { Clock3, Timer, X } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { useHoldScene } from '@/lib/sceneHold';
 import { usePresentDepth } from '@/lib/depth';
+import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack';
 import { easeIOS, springSheet } from '@/lib/motion';
 import { taskOptions } from '@/lib/tasks';
 import { SUBJECT_ICONS } from '@/lib/subjects';
@@ -57,6 +58,8 @@ export function MountainBooking({ open, onClose, onStart }: DesignBookingProps) 
   const { settings, activeSubjects } = useApp();
   useHoldScene(open);
   usePresentDepth(open);
+  // 左端から右へスワイプで閉じる（iOS の「戻る」）
+  const swipe = useEdgeSwipeBack(onClose, open);
   const options = useMemo(() => taskOptions(activeSubjects), [activeSubjects]);
   const fresh = () => {
     const step = settings.bookingStep ?? 'pomodoro';
@@ -99,14 +102,15 @@ export function MountainBooking({ open, onClose, onStart }: DesignBookingProps) 
           initial={{ opacity: 0, scale: 0.92, y: 40 }}
           animate={{ opacity: 1, scale: 1, y: 0, transition: { ...springSheet, opacity: { duration: 0.3, ease: easeIOS } } }}
           exit={{ opacity: 0, y: 30, transition: { duration: 0.35, ease: easeIOS } }}
-          style={{ willChange: 'transform, opacity' }}
+          style={{ willChange: 'transform, opacity', x: swipe.x }}
+          {...swipe.bind}
         >
           <div className="screen-header">
             <button onClick={onClose} aria-label="閉じる" className="btn-icon mt-chip">
               <X />
             </button>
             <div>
-              <p className="text-[17px] font-bold tracking-[0.14em]">登山届</p>
+              <p className="text-[16px] font-bold tracking-[0.14em]">登山届</p>
               <p className="text-[10px] font-bold tracking-[0.3em] opacity-60">山岳ルート計画</p>
             </div>
             <span />
@@ -120,13 +124,13 @@ export function MountainBooking({ open, onClose, onStart }: DesignBookingProps) 
             <div className="mt-3 flex items-end justify-between px-1">
               <div>
                 <p className="text-[11px] font-bold tracking-[0.2em] opacity-60">めざす山</p>
-                <motion.p key={peak.name} initial={{ opacity: 0.4, y: 4 }} animate={{ opacity: 1, y: 0 }} className="text-[26px] font-bold leading-tight">
+                <motion.p key={peak.name} initial={{ opacity: 0.4, y: 4 }} animate={{ opacity: 1, y: 0 }} className="text-[24px] font-bold leading-tight">
                   {peak.name}
-                  <span className="ml-1.5 text-[13px] font-bold opacity-60">{peak.m.toLocaleString()} m</span>
+                  <span className="ml-1.5 text-[12.5px] font-bold opacity-60">{peak.m.toLocaleString()} m</span>
                 </motion.p>
               </div>
               <div className="text-right">
-                <p className="tabular text-[22px] font-bold leading-tight">{jhm(draft.minutes)}</p>
+                <p className="tabular text-[20px] font-bold leading-tight">{jhm(draft.minutes)}</p>
                 <p className="tabular text-[12px] font-bold text-[#B5603F]">獲得標高 {gain.toLocaleString()} m</p>
               </div>
             </div>

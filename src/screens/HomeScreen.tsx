@@ -129,11 +129,6 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: {
 
   return (
     <div className="relative mx-auto h-full max-w-xl">
-      {/*
-        上のセーフゾーン：ヘッダーと挨拶の後ろだけ、モードの色でうすく塗る（シーンの主役＝窓の中・駅名標・ハイカーと文字を分ける）。
-        挨拶は 1 行。列車では窓枠の上の木目のパネルの高さに収まる
-      */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[calc(var(--safe-top)+104px)]" style={{ background: skin.scrim }} aria-hidden />
 
       {/* ヘッダー：左にサウンド、真ん中に旅のモード、右に旅のパスと設定（すべて 42px） */}
       <div className="screen-header relative [grid-template-columns:92px_minmax(0,1fr)_92px]">
@@ -142,7 +137,7 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: {
         </Pressable>
         {/* 旅のモード（登山 / 列車 / 航空） */}
         <div className="flex justify-center">
-          <Pressable onClick={onMode} aria-label={`旅のモード：${mode?.mode.name}`} className={`flex h-[42px] items-center gap-1.5 rounded-full pl-3.5 pr-3 text-[14px] font-bold ${skin.chip}`}>
+          <Pressable onClick={onMode} aria-label={`旅のモード：${mode?.mode.name}`} className={`flex h-[42px] items-center gap-1.5 rounded-full pl-3.5 pr-3 text-[13px] font-bold ${skin.chip}`}>
             {mode && <mode.Icon size={18} strokeWidth={2.1} />}
             {mode?.mode.name}
             <ChevronDown size={15} strokeWidth={2.6} className="opacity-70" />
@@ -159,8 +154,8 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: {
       </div>
 
       {/* 挨拶（1 行。ヘッダーの左端にそろえる） */}
-      <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={springSoft} className={`relative mt-2.5 truncate px-5 text-[19px] font-bold leading-tight tracking-tight ${skin.greeting}`}>
-        やあ！{settings.userName}、<span className="text-[15px] font-semibold opacity-90">前へ進む準備はいい？</span>
+      <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={springSoft} className={`relative mt-2.5 truncate px-5 text-[18px] font-bold leading-tight tracking-tight ${skin.greeting}`}>
+        やあ！{settings.userName}、<span className="text-[14px] font-semibold opacity-90">前へ進む準備はいい？</span>
       </motion.h1>
 
       {/* サイドのツールタブ（窓の外・景色の端に） */}

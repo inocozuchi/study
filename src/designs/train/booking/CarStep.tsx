@@ -63,7 +63,7 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
             <ChevronLeft />
           </button>
           <div>
-            <p className="text-[17px] font-bold tracking-[0.2em] text-[#F4EEDD]">座席を指定</p>
+            <p className="text-[16px] font-bold tracking-[0.2em] text-[#F4EEDD]">座席を指定</p>
             <Steps at={2} />
           </div>
           <span />
@@ -82,7 +82,7 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
             const on = isObservation(draft.cls) === c.obs;
             return (
               <button key={c.name} onClick={() => setCar(c.obs)} aria-pressed={on} className={`rounded-[8px] px-3 py-2 text-left ${on ? 'tr-enji' : 'border border-[#B8955A]/40 bg-black/25 text-[#F4EEDD]/80'}`}>
-                <span className="block text-[15px] font-bold tracking-[0.15em]">{c.name}</span>
+                <span className="block text-[14px] font-bold tracking-[0.15em]">{c.name}</span>
                 <span className={`block text-[11px] ${on ? 'text-[#D9C08A]' : 'text-[#F4EEDD]/50'}`}>{c.note}</span>
               </button>
             );
@@ -123,7 +123,7 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
         <div>
           <span className="block min-w-0 px-1 pb-2 text-[#F4EEDD]">
             <span className="block text-[11px] text-[#D9C08A]">{draft.seat ? '座席と集中すること' : '空いている席を選んでください'}</span>
-            <span className="flex items-center gap-1.5 truncate text-[15px] font-bold">
+            <span className="flex items-center gap-1.5 truncate text-[14px] font-bold">
               {draft.seat ?? '—'}
               {draft.task && (
                 <>
@@ -256,8 +256,8 @@ function TagPopover({ seat, top, x, options, current, onPick }: { seat: string; 
       transition={{ type: 'spring', stiffness: 420, damping: 30 }}
       onClick={(e) => e.stopPropagation()}
     >
-      <p className="text-[13px] font-bold tracking-[0.15em] text-[#7A2830]">{seat}</p>
-      <p className="mt-0.5 text-[17px] font-bold tracking-[0.1em]">何に集中しますか？</p>
+      <p className="text-[12.5px] font-bold tracking-[0.15em] text-[#7A2830]">{seat}</p>
+      <p className="mt-0.5 text-[16px] font-bold tracking-[0.1em]">何に集中しますか？</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {options.map((t) => {
           const on = current === t.name;
@@ -279,13 +279,13 @@ function TagPopover({ seat, top, x, options, current, onPick }: { seat: string; 
               if (n) onPick({ name: n, icon: 'book' });
             }}
           >
-            <input autoFocus value={name} onChange={(e) => setName(e.target.value)} maxLength={20} placeholder="例：英単語、論文、資格" className="h-9 min-w-0 flex-1 rounded-[4px] bg-white/70 px-3 font-sans text-[15px] text-[#2D241C] outline-none shadow-[inset_0_0_0_1px_rgba(107,74,43,0.5)]" />
+            <input autoFocus value={name} onChange={(e) => setName(e.target.value)} maxLength={20} placeholder="例：英単語、論文、資格" className="h-9 min-w-0 flex-1 rounded-[4px] bg-white/70 px-3 font-sans text-[14px] text-[#2D241C] outline-none shadow-[inset_0_0_0_1px_rgba(107,74,43,0.5)]" />
             <button type="submit" className="btn-pill tr-enji">
               追加
             </button>
           </form>
         ) : (
-          <button onClick={() => setAdding(true)} className="btn-pill border border-[#6B4A2B]/60 text-[14px] font-bold text-[#6B4A2B]">
+          <button onClick={() => setAdding(true)} className="btn-pill border border-[#6B4A2B]/60 text-[13px] font-bold text-[#6B4A2B]">
             <Plus size={14} /> 追加
           </button>
         )}

@@ -57,6 +57,22 @@ def window_frame():
     print('window', {'x': round(x0 / w, 4), 'y': round(y0 / h, 4), 'w': round((x1 - x0) / w, 4), 'h': round((y1 - y0) / h, 4)})
 
 
+def shade_mask():
+    """機窓のシェードの形（白＝見える）：窓ガラスの穴（少し広げる）+ 上の引き上げたシェードの帯（角の丸い四角）。
+    WindowView はこの 1 枚で切り抜いたシェードを上下に動かす（絵の帯ごと覆うので 1 枚に見える）"""
+    fr = Image.open(OUT / 'window-frame.webp')
+    w, h = fr.size
+    hole = Image.fromarray(((np.asarray(fr)[:, :, 3] < 250) * 255).astype(np.uint8), 'L').filter(ImageFilter.MaxFilter(5))
+    band = Image.new('L', (w, h), 0)
+    ImageDraw.Draw(band).rounded_rectangle((0.326 * w, 0.286 * h, 0.674 * w, 0.356 * h), radius=int(0.05 * w), fill=255)
+    m = Image.fromarray(np.maximum(np.asarray(hole), np.asarray(band)), 'L').filter(ImageFilter.GaussianBlur(0.8))
+    rgba = Image.new('RGBA', (w, h), (255, 255, 255, 0))
+    rgba.putalpha(m)
+    rgba = rgba.resize((w // 2, h // 2), Image.LANCZOS)
+    rgba.save(OUT / 'shade-mask.png', optimize=True)
+    print(f'{(OUT / "shade-mask.png").relative_to(ROOT)}  {rgba.size}  {(OUT / "shade-mask.png").stat().st_size // 1024} KB')
+
+
 def wing():
     img = Image.open(SRC / 'wing.jpeg').convert('RGB')
     w, h = img.size
@@ -100,6 +116,7 @@ def sky(name: str):
 
 def main():
     window_frame()
+    shade_mask()
     wing()
     for s in ['day', 'sunset', 'night']:
         sky(s)

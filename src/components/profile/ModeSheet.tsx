@@ -25,11 +25,11 @@ export function ModeSheet({ open, onClose }: { open: boolean; onClose: () => voi
             >
               <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-card ${active ? 'bg-accent text-white' : 'bg-sunken text-fg-2'}`}><m.Icon size={26} strokeWidth={1.8} /></span>
               <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2 text-[16px] font-bold">
+                <span className="flex items-center gap-2 text-[15px] font-bold">
                   {m.mode.name}
                   {!m.available && <span className="rounded-full bg-fill px-2 py-0.5 text-[10.5px] font-bold tracking-wide text-fg-2">Coming Soon</span>}
                 </span>
-                <span className="mt-0.5 block text-[12.5px] leading-snug text-fg-2">{m.mode.tagline}</span>
+                <span className="mt-0.5 block text-[12px] leading-snug text-fg-2">{m.mode.tagline}</span>
               </span>
               {active && (
                 <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent text-white">

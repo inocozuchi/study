@@ -187,7 +187,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
                       <circle cx="16" cy="16" r="14" fill="none" stroke="rgb(var(--c-line))" strokeWidth="2.5" />
                       {ring > 0 && <circle cx="16" cy="16" r="14" fill="none" stroke="rgb(var(--c-accent))" strokeWidth="2.5" strokeLinecap="round" strokeDasharray={88} strokeDashoffset={88 * (1 - ring)} />}
                     </svg>
-                    <span className={`tabular relative text-[14px] font-extrabold ${active ? 'text-accent-ink' : today ? 'text-fg' : 'text-fg-2'}`}>{d.getDate()}</span>
+                    <span className={`tabular relative text-[13px] font-extrabold ${active ? 'text-accent-ink' : today ? 'text-fg' : 'text-fg-2'}`}>{d.getDate()}</span>
                   </span>
                   {marks[k]?.events && <span className="absolute bottom-0 h-[4px] w-[4px] rounded-full bg-fg-3" />}
                 </motion.button>
@@ -204,11 +204,11 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
       {(google.status === 'needs-auth' || google.status === 'error') && (
         <div className="card mt-3 flex items-center gap-3 px-4 py-3">
           <CalendarDays size={20} className="shrink-0 text-accent" />
-          <p className="min-w-0 flex-1 text-[13px] leading-snug text-fg-2">
+          <p className="min-w-0 flex-1 text-[12.5px] leading-snug text-fg-2">
             {google.status === 'needs-auth' ? 'Google カレンダーの接続が切れました（1 時間ごとに切れます）。表示しているのは前に読んだ予定です。' : google.message}
           </p>
           {google.status === 'needs-auth' && resolveClientId(settings.googleClientId) && (
-            <button onClick={() => startConnect(resolveClientId(settings.googleClientId))} className="flex shrink-0 items-center gap-1 rounded-full bg-accent-soft px-3 py-1.5 text-[13px] font-bold text-accent-ink">
+            <button onClick={() => startConnect(resolveClientId(settings.googleClientId))} className="flex shrink-0 items-center gap-1 rounded-full bg-accent-soft px-3 py-1.5 text-[12.5px] font-bold text-accent-ink">
               <RefreshCw size={13} strokeWidth={2.6} /> 再接続
             </button>
           )}
@@ -241,7 +241,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-[12px] font-bold text-fg-2">次の予定 · {fmtClock(next.startMin)} から</span>
-              <span className="block truncate text-[15px] font-bold">{next.title}</span>
+              <span className="block truncate text-[14px] font-bold">{next.title}</span>
             </span>
             <span className="tabular rounded-full bg-accent-soft px-2.5 py-1 text-[12px] font-bold text-accent-ink">あと{fmtDuration(next.startMin - (nowMin ?? 0), true)}</span>
           </motion.button>
@@ -266,7 +266,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
         {dayPlans.length >= 2 && (
           <div className="mb-3 flex justify-end">
             {!reorder && (
-              <button onClick={() => setReorder(true)} className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[12.5px] font-bold text-accent-ink shadow-card">
+              <button onClick={() => setReorder(true)} className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[12px] font-bold text-accent-ink shadow-card">
                 <ArrowUpDown size={14} strokeWidth={2.4} /> 予定を並べ替え
               </button>
             )}
@@ -288,7 +288,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
         {items.length === 0 && (
           <>
             <Gap minutes={0} height={28} fromColor={EVENT_COLOR} toColor={EVENT_COLOR} />
-            <div className="ml-[60px] rounded-card border border-dashed border-line-strong p-4 text-[13px] leading-relaxed text-fg-2">
+            <div className="ml-[60px] rounded-card border border-dashed border-line-strong p-4 text-[12.5px] leading-relaxed text-fg-2">
               この日の予定や記録はまだありません。<br />右上の ＋ から予定を立てたり、あとから記録を追加できます。
             </div>
           </>
@@ -383,13 +383,13 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
                 {pi.subject && <SubjectIcon subject={pi.subject} />}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-bold">{pi.subject?.name}</p>
+                <p className="text-[14px] font-bold">{pi.subject?.name}</p>
                 <p className="text-[12px] text-fg-2">{pi.subject?.mountainName}</p>
               </div>
               {pi.done && <span className="flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-[12px] font-bold text-accent-ink"><Check size={13} strokeWidth={3} /> 達成</span>}
             </div>
             {pi.actual && (
-              <p className="px-1 text-[13px] text-fg-2">
+              <p className="px-1 text-[12.5px] text-fg-2">
                 実績 {fmtClock(pi.actual.startMin)} – {fmtClock(pi.actual.endMin)}（{fmtDuration(pi.actual.minutes)}）{pi.note ? ` · ${pi.note}` : ''}
               </p>
             )}
@@ -413,7 +413,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
                   setPlanItem(null);
                   setDraft({ kind: 'plan', date: p.plan!.date, startMin: p.startMin, endMin: p.endMin, plan: p.plan });
                 }}
-                className="btn-secondary text-[14px]"
+                className="btn-secondary text-[13px]"
               >
                 <Pencil size={15} /> 予定を編集
               </button>
@@ -429,7 +429,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
                     setDraft({ kind: 'record', date: selected, startMin: start, endMin: end, plan: undefined });
                   }
                 }}
-                className="btn-secondary text-[14px]"
+                className="btn-secondary text-[13px]"
               >
                 <NotebookPen size={15} /> {pi.session ? '実績を編集' : '実績を記録'}
               </button>
@@ -447,7 +447,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
       >
         {ev && (
           <div className="space-y-3 pb-4">
-            <div className="group-box space-y-2 p-3.5 text-[13px] text-fg-2">
+            <div className="group-box space-y-2 p-3.5 text-[12.5px] text-fg-2">
               <p className="flex items-center gap-2"><CalendarDays size={15} className="shrink-0" /> Google カレンダー「{ev.calendarName}」の予定</p>
               {ev.location && <p className="flex items-center gap-2"><MapPin size={15} className="shrink-0" /> <span className="truncate">{ev.location}</span></p>}
             </div>
@@ -466,7 +466,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
               </button>
             )}
             {ev.url && (
-              <a href={ev.url} target="_blank" rel="noreferrer" className="btn-secondary w-full text-[14px]">
+              <a href={ev.url} target="_blank" rel="noreferrer" className="btn-secondary w-full text-[13px]">
                 <ExternalLink size={15} /> Google カレンダーで開く
               </a>
             )}
@@ -483,7 +483,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="px-3 text-center">
       <p className="text-[12px] font-bold text-fg-2">{label}</p>
-      <p className="tabular mt-0.5 text-[19px] font-extrabold tracking-tight">{value}</p>
+      <p className="tabular mt-0.5 text-[18px] font-extrabold tracking-tight">{value}</p>
     </div>
   );
 }
@@ -496,8 +496,8 @@ function Anchor({ icon, time, label, onClick }: { icon: ReactNode; time: string;
         {icon}
       </span>
       <span className="min-w-0 flex-1 leading-tight">
-        <span className="tabular block text-[15px] font-extrabold">{time}</span>
-        <span className="block text-[12.5px] font-medium text-fg-2">{label}</span>
+        <span className="tabular block text-[14px] font-extrabold">{time}</span>
+        <span className="block text-[12px] font-medium text-fg-2">{label}</span>
       </span>
       <span className="mr-1 flex items-center gap-1 rounded-full bg-fill px-2.5 py-1 text-[11.5px] font-bold text-fg-2">
         <Pencil size={12} /> 変更
@@ -528,7 +528,7 @@ function ReorderPlans({ plans, subjectById, onCancel, onSave }: { plans: PlanBlo
 
   return (
     <div>
-      <p className="mb-2 px-1 text-[12.5px] text-fg-2">右のつまみをドラッグして順番を入れ替えます。時刻は自動で詰め直します。</p>
+      <p className="mb-2 px-1 text-[12px] text-fg-2">右のつまみをドラッグして順番を入れ替えます。時刻は自動で詰め直します。</p>
       <Reorder.Group axis="y" values={order} onReorder={setOrder} className="space-y-2">
         {laid.map((p) => (
           <ReorderRow key={p.id} plan={p} subject={subjectById(p.subjectId)} />
@@ -562,7 +562,7 @@ function ReorderRow({ plan, subject }: { plan: PlanBlock; subject?: Subject }) {
         <span className="tabular block text-[12px] font-bold text-fg-2">
           {fmtClock(plan.startMin)} – {fmtClock(plan.endMin)} · {fmtDuration(plan.endMin - plan.startMin)}
         </span>
-        <span className="block truncate text-[15px] font-bold">{plan.title || subject?.name || '予定'}</span>
+        <span className="block truncate text-[14px] font-bold">{plan.title || subject?.name || '予定'}</span>
       </span>
       <span
         onPointerDown={(e) => controls.start(e)}
@@ -647,7 +647,7 @@ function Row({ item, live, past, nowMin, onClick }: { item: TimelineItem; live: 
             {fmtClock(item.startMin)} – {fmtClock(item.endMin)} · {fmtDuration(dur)}
             {item.kind === 'session' && item.session?.source === 'manual' && <span className="ml-1.5 rounded bg-fill px-1 py-px text-[11px]">手動</span>}
           </span>
-          <span className={`mt-0.5 block truncate text-[16px] font-bold ${missed ? 'text-fg-2 line-through decoration-fg-3' : ''}`}>{item.title}</span>
+          <span className={`mt-0.5 block truncate text-[15px] font-bold ${missed ? 'text-fg-2 line-through decoration-fg-3' : ''}`}>{item.title}</span>
           <span className="mt-0.5 block truncate text-[12px] text-fg-2">
             {isEvent ? `Google · ${item.event?.calendarName}` : item.subject?.name}
             {item.kind === 'plan' && item.actual ? ` · 実績 ${fmtDuration(item.actual.minutes)}` : ''}
@@ -673,7 +673,7 @@ function AddOption({ icon, title, desc, onClick }: { icon: ReactNode; title: str
     <motion.button onClick={onClick} className="group-box flex items-center gap-3.5 p-4 text-left active:bg-accent-soft">
       <span className="grid h-11 w-11 place-items-center rounded-chip bg-accent-soft text-accent-ink">{icon}</span>
       <span>
-        <span className="block text-[15px] font-bold">{title}</span>
+        <span className="block text-[14px] font-bold">{title}</span>
         <span className="mt-0.5 block text-[12px] text-fg-2">{desc}</span>
       </span>
     </motion.button>
