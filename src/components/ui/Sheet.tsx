@@ -39,7 +39,7 @@ export function Sheet({ open, onClose, title, subtitle, children, action, maxHei
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-x-0 top-0 h-app z-50 flex items-end justify-center">
+        <div className="ui-text fixed inset-x-0 top-0 h-app z-50 flex items-end justify-center">
           <motion.div
             className="absolute inset-0"
             style={{ background: 'var(--scrim)' }}
@@ -72,8 +72,8 @@ export function Sheet({ open, onClose, title, subtitle, children, action, maxHei
             {(title || action) && (
               <div className="flex shrink-0 items-start justify-between gap-3 px-5 pb-3 pt-1" onPointerDown={(e) => controls.start(e)}>
                 <div className="min-w-0">
-                  {title && <h2 className="text-[19px] font-extrabold tracking-[-0.01em]">{title}</h2>}
-                  {subtitle && <p className="mt-0.5 text-[12.5px] text-fg-2">{subtitle}</p>}
+                  {title && <h2 className="text-ui-[19px] font-extrabold tracking-[-0.01em]">{title}</h2>}
+                  {subtitle && <p className="mt-0.5 text-ui-[12.5px] text-fg-2">{subtitle}</p>}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {action}

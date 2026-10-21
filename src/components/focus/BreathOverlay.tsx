@@ -66,15 +66,15 @@ export function BreathOverlay({ open, onDone }: { open: boolean; onDone: () => v
             </motion.div>
           </div>
           <div className="pointer-events-none absolute inset-x-0 bottom-[22%] text-center">
-            <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 1 }} className="text-[20px] font-semibold tracking-tight text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.5),0_2px_16px_rgba(0,0,0,0.4)]">
+            <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 1 }} className="text-ui-[20px] font-semibold tracking-tight text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.5),0_2px_16px_rgba(0,0,0,0.4)]">
               深呼吸して、準備をしよう
             </motion.p>
             {/* 入れ子の AnimatePresence は親の退場を止めることがあるため、キーを変えて入場だけ */}
-            <motion.p key={phase} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="mt-2 text-[15px] font-medium text-white/90 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)]">
+            <motion.p key={phase} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="mt-2 text-ui-[15px] font-medium text-white/90 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)]">
               {inhale ? '吸って…' : '吐いて…'}
             </motion.p>
           </div>
-          <span className="absolute bottom-[calc(env(safe-area-inset-bottom)+28px)] text-[12px] text-white/75 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)]">タップでスキップ</span>
+          <span className="absolute bottom-[calc(env(safe-area-inset-bottom)+28px)] text-ui-[12px] text-white/75 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)]">タップでスキップ</span>
         </motion.button>
       )}
     </AnimatePresence>

@@ -42,10 +42,10 @@ export function PickerModal<T extends string | number>({
               }}
               className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-accent-soft"
             >
-              {o.icon && <span className="grid h-8 w-8 shrink-0 place-items-center text-[17px]">{o.icon}</span>}
+              {o.icon && <span className="grid h-8 w-8 shrink-0 place-items-center text-ui-[17px]">{o.icon}</span>}
               <span className="min-w-0 flex-1">
-                <span className="block text-[14px] font-bold">{o.label}</span>
-                {o.detail && <span className="mt-0.5 block text-[12px] text-fg-2">{o.detail}</span>}
+                <span className="block text-ui-[14px] font-bold">{o.label}</span>
+                {o.detail && <span className="mt-0.5 block text-ui-[12px] text-fg-2">{o.detail}</span>}
               </span>
               {active && (
                 <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-accent-ink">

@@ -129,7 +129,7 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
   const b = timer.booking;
   const km = b ? Math.max(0, Math.ceil(b.km * (1 - (t.journeyProgress ?? 0)))) : null;
   const remaining = t.journeyRemainingMs ?? t.remainingMs ?? t.elapsedMs;
-  const status = rest ? '休憩中 · 巡航高度で待機' : waiting ? '待機中' : running ? `${b?.from ?? ''} → ${b?.to ?? ''} · 巡航中` : '一時停止中';
+  const status = rest ? '休憩中 · 巡航高度で待機' : waiting ? '待機中' : running ? (b ? `${b.from} → ${b.to} · 巡航中` : '遊覧飛行 · 巡航中') : '一時停止中';
 
   return (
     <div className={`fl-root absolute inset-0 touch-none select-none ${view.window ? "fl-on-window" : ""}`} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onContextMenu={(e) => e.preventDefault()}>
@@ -219,6 +219,15 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
               <button onClick={() => (rest ? t.skipBreak() : t.start())} className="fl-cta h-11 px-5 text-[14px]">
                 離陸
               </button>
+            ) : !b ? (
+              // 予約していない旅（予定から出発など）は距離がないので、ここまでの集中を出す
+              <div className="text-right">
+                <p className="text-[11.5px] text-white/50">ここまでの集中</p>
+                <p className="fl-num flex items-baseline justify-end">
+                  <span className="text-[31px] font-bold leading-none tracking-tight">{Math.round(t.journeyFocusMs / MIN)}</span>
+                  <span className="ml-1 text-[13px] font-semibold text-white/45">分</span>
+                </p>
+              </div>
             ) : (
               <div className="text-right">
                 <p className="text-[11.5px] text-white/50">残り距離</p>
@@ -234,7 +243,6 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
               <div className="h-full rounded-full bg-white transition-[width] duration-1000 ease-linear" style={{ width: `${(t.journeyProgress ?? 0) * 100}%` }} />
             </div>
           )}
-          {!b && <p className="mt-1 text-[11px] text-white/45">集中 {Math.round(t.journeyFocusMs / MIN)} 分</p>}
         </div>
       </div>
 

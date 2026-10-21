@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, Clock3, Flame, IdCard, Music, Settings2 } from 'lucide-react';
+import { ChevronDown, Clock3, Flame, IdCard, Music, Play } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { useTimer, type JourneyResult } from '@/store/TimerStore';
 import { Pressable } from '@/components/ui/Pressable';
@@ -8,22 +8,23 @@ import { SetupSheet } from '@/components/home/SetupSheet';
 import { BreathOverlay } from '@/components/focus/BreathOverlay';
 import { CassettePlayer } from '@/components/audio/CassettePlayer';
 import { TOOL_TABS, ToolsPanel, type ToolTab } from '@/components/tools/ToolsPanel';
-import { SettingsScreen } from './SettingsScreen';
 import { getDesign, TRAVEL_MODES, type BookingPlan } from '@/designs';
 import type { HomeSkin } from '@/designs/types';
 import { ModeSheet } from '@/components/profile/ModeSheet';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { streaks, summary } from '@/lib/stats';
-import { dateKey, fmtDuration } from '@/lib/time';
+import { dateKey, fmtClock, fmtDuration } from '@/lib/time';
 import { useNow } from '@/hooks/useNow';
 import { easeIOS, springBouncy, springSoft } from '@/lib/motion';
 
 interface Props {
   result: JourneyResult | null;
   setResult: (r: JourneyResult | null) => void;
+  /** インサイトのタブへ（今日の記録のバッジ） */
+  onInsights?: () => void;
 }
 
-export function HomeScreen({ result, setResult }: Props) {
+export function HomeScreen({ result, setResult, onInsights }: Props) {
   const { settings, updateSettings, ensureSubject } = useApp();
   const t = useTimer();
   const { timer } = t;
@@ -31,7 +32,6 @@ export function HomeScreen({ result, setResult }: Props) {
   const [breath, setBreath] = useState(false);
   const [music, setMusic] = useState(false);
   const [tool, setTool] = useState<ToolTab | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -93,10 +93,10 @@ export function HomeScreen({ result, setResult }: Props) {
             <HomeIdle
               onFocus={() => setSetup(true)}
               onMusic={() => setMusic(true)}
-              onSettings={() => setSettingsOpen(true)}
               onTool={setTool}
               onMode={() => setModeOpen(true)}
               onProfile={() => setProfileOpen(true)}
+              onInsights={onInsights}
             />
           </motion.div>
         )}
@@ -110,28 +110,39 @@ export function HomeScreen({ result, setResult }: Props) {
       )}
       <CassettePlayer open={music} onClose={() => setMusic(false)} />
       <ToolsPanel tab={tool} onTab={setTool} onClose={() => setTool(null)} />
-      <SettingsScreen open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <ModeSheet open={modeOpen} onClose={() => setModeOpen(false)} />
       <ProfileSheet open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   );
 }
 
-function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: { onFocus: () => void; onMusic: () => void; onSettings: () => void; onTool: (t: ToolTab) => void; onMode: () => void; onProfile: () => void }) {
-  const { settings, sessions } = useApp();
+function HomeIdle({ onFocus, onMusic, onTool, onMode, onProfile, onInsights }: { onFocus: () => void; onMusic: () => void; onTool: (t: ToolTab) => void; onMode: () => void; onProfile: () => void; onInsights?: () => void }) {
+  const { settings, sessions, plans, subjectById } = useApp();
+  const { startPlanned } = useTimer();
   const mode = TRAVEL_MODES.find((m) => m.id === settings.timerDesign);
   const skin = getDesign(settings.timerDesign).home;
   // 日付が変わったら「今日」と連続日数を数え直す
-  const today = dateKey(useNow(60_000));
+  const nowMs = useNow(60_000);
+  const today = dateKey(nowMs);
   const sum = useMemo(() => summary(sessions), [sessions, today]); // eslint-disable-line react-hooks/exhaustive-deps
   const st = useMemo(() => streaks(sessions), [sessions, today]); // eslint-disable-line react-hooks/exhaustive-deps
   const playing = settings.bgmPlaying || settings.ambientPlaying;
+  // 今日の目標（分）に対する進み具合
+  const goal = settings.dailyGoalMin;
+  const ratio = goal > 0 ? Math.min(1, sum.today / goal) : 0;
+  // 次の予定（今日、まだ終わっていないもののうち いちばん早いもの）。押すとその予定で出発
+  const nowMin = new Date(nowMs).getHours() * 60 + new Date(nowMs).getMinutes();
+  const next = useMemo(
+    () => plans.filter((p) => p.date === today && p.endMin > nowMin && subjectById(p.subjectId)).sort((x, y) => x.startMin - y.startMin)[0],
+    [plans, today, nowMin, subjectById],
+  );
+  const nextSubject = next ? subjectById(next.subjectId) : undefined;
 
   return (
     <div className="relative mx-auto h-full max-w-xl">
 
-      {/* ヘッダー：左にサウンド、真ん中に旅のモード、右に旅のパスと設定（すべて 42px） */}
-      <div className="screen-header relative [grid-template-columns:92px_minmax(0,1fr)_92px]">
+      {/* ヘッダー：左にサウンド、真ん中に旅のモード、右に旅のパス（すべて 42px）。設定はタブバーのいちばん右 */}
+      <div className="screen-header relative">
         <Pressable onClick={onMusic} aria-label="サウンド" className={`btn-icon ${skin.chip} ${playing ? 'ring-2 ring-[#FF9F0A]/70' : ''}`}>
           <Music />
         </Pressable>
@@ -143,20 +154,29 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: {
             <ChevronDown size={15} strokeWidth={2.6} className="opacity-70" />
           </Pressable>
         </div>
-        <div className="flex justify-end gap-2">
-          <Pressable onClick={onProfile} aria-label="旅のパス" className={`btn-icon ${skin.chip}`}>
-            <IdCard />
-          </Pressable>
-          <Pressable onClick={onSettings} aria-label="設定" className={`btn-icon ${skin.chip}`}>
-            <Settings2 />
-          </Pressable>
-        </div>
+        <Pressable onClick={onProfile} aria-label="旅のパス" className={`btn-icon ${skin.chip}`}>
+          <IdCard />
+        </Pressable>
       </div>
 
-      {/* 挨拶（1 行。ヘッダーの左端にそろえる） */}
-      <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={springSoft} className={`relative mt-2.5 truncate px-5 text-[18px] font-bold leading-tight tracking-tight ${skin.greeting}`}>
-        やあ！{settings.userName}、<span className="text-[14px] font-semibold opacity-90">前へ進む準備はいい？</span>
-      </motion.h1>
+      {/* 挨拶と次の予定：シーンの上でもくっきり読めるよう、着せ替えの面（不透明に近い塗り）に載せる。光彩・ぼかしの影は使わない */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={springSoft} className="relative mt-3 flex flex-col items-start gap-2 px-5">
+        <h1 className={`max-w-full truncate rounded-full px-3.5 py-1.5 text-[14px] font-bold leading-tight ${skin.chip} ${skin.greeting}`}>
+          やあ！{settings.userName}、<span className="font-semibold opacity-80">前へ進む準備はいい？</span>
+        </h1>
+        {next && nextSubject && (
+          <Pressable
+            onClick={() => startPlanned(nextSubject.id, next.endMin - next.startMin)}
+            aria-label={`次の予定で出発：${fmtClock(next.startMin)} ${next.title || nextSubject.name}`}
+            className={`flex max-w-full items-center gap-2 rounded-full py-1.5 pl-2 pr-3 text-[12.5px] font-bold ${skin.chip}`}
+          >
+            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: nextSubject.color }} />
+            <span className="tabular shrink-0">{next.startMin <= nowMin ? 'いま' : fmtClock(next.startMin)}</span>
+            <span className="min-w-0 truncate">{next.title || nextSubject.name} · {fmtDuration(next.endMin - next.startMin)}</span>
+            <Play size={12} fill="currentColor" className="shrink-0 opacity-80" />
+          </Pressable>
+        )}
+      </motion.div>
 
       {/* サイドのツールタブ（窓の外・景色の端に） */}
       <motion.nav initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ ...springBouncy, delay: 0.15 }} className={`absolute right-3 top-[30%] flex flex-col gap-1 rounded-full p-1 ${skin.chip}`} aria-label="ツール">
@@ -167,19 +187,38 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: {
         ))}
       </motion.nav>
 
-      {/* 下：タブバーのすぐ上。真ん中に「集中」、左右に今日の記録（シーンの主役＝テーブルの上の小物などに重ねない） */}
+      {/* 下：タブバーのすぐ上。真ん中に「集中」、左右に今日の記録（目標までの輪）と連続日数。押すとインサイトへ */}
       <div className="absolute inset-x-0 bottom-[calc(var(--nav-space)+16px)] grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-5">
-        <span className={`tabular flex h-[32px] items-center gap-1.5 justify-self-start rounded-full px-3 text-[12px] font-bold ${skin.chip}`}>
-          <Clock3 size={13} strokeWidth={2.4} />
-          今日 {fmtDuration(sum.today, true)}
-        </span>
+        <Pressable onClick={onInsights} aria-label={`今日の集中 ${fmtDuration(sum.today, true)}${goal > 0 ? `（目標 ${fmtDuration(goal, true)}）` : ''}`} className={`tabular flex h-[34px] items-center gap-1.5 justify-self-start whitespace-nowrap rounded-full pl-1.5 pr-3 text-[12px] font-bold ${skin.chip}`}>
+          {goal > 0 ? <GoalRing ratio={ratio} /> : <Clock3 size={13} strokeWidth={2.4} className="ml-1" />}
+          {goal > 0 ? (
+            <span>
+              {fmtDuration(sum.today, true)}
+              <span className="font-semibold opacity-60">/{fmtDuration(goal, true)}</span>
+            </span>
+          ) : (
+            <span>今日 {fmtDuration(sum.today, true)}</span>
+          )}
+        </Pressable>
         <FocusButton Skin={skin.Focus} bloom={skin.bloom} onClick={onFocus} />
-        <span className={`tabular flex h-[32px] items-center gap-1.5 justify-self-end rounded-full px-3 text-[12px] font-bold ${skin.chip}`}>
+        <Pressable onClick={onInsights} aria-label={`${st.current}日連続`} className={`tabular flex h-[34px] items-center gap-1.5 justify-self-end whitespace-nowrap rounded-full px-3 text-[12px] font-bold ${skin.chip}`}>
           <Flame size={13} strokeWidth={2.4} />
           {st.current}日連続
-        </span>
+        </Pressable>
       </div>
     </div>
+  );
+}
+
+/** 今日の目標までの小さな輪（バッジの中） */
+function GoalRing({ ratio }: { ratio: number }) {
+  const r = 9;
+  const c = 2 * Math.PI * r;
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" className="shrink-0 -rotate-90" aria-hidden>
+      <circle cx="12" cy="12" r={r} fill="none" stroke="currentColor" strokeOpacity={0.2} strokeWidth="3" />
+      <circle cx="12" cy="12" r={r} fill="none" stroke={ratio >= 1 ? '#34C759' : 'currentColor'} strokeWidth="3" strokeLinecap="round" strokeDasharray={`${c * ratio} ${c}`} />
+    </svg>
   );
 }
 

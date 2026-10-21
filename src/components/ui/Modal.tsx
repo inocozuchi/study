@@ -8,7 +8,7 @@ export function Modal({ open, onClose, children, dismissable = true }: { open: b
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-x-0 top-0 h-app z-[60] flex items-center justify-center px-6">
+        <div className="ui-text fixed inset-x-0 top-0 h-app z-[60] flex items-center justify-center px-6">
           <motion.div
             className="absolute inset-0"
             style={{ background: 'var(--scrim)' }}

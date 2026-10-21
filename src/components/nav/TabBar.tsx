@@ -1,18 +1,19 @@
 import { useEffect, useRef } from 'react';
 import { animate, motion, useMotionValue } from 'framer-motion';
-import { CalendarDays, ChartColumn, Route, Tent, type LucideIcon } from 'lucide-react';
+import { CalendarDays, ChartColumn, Route, Settings2, Tent, type LucideIcon } from 'lucide-react';
 import { easeIOS, spring } from '@/lib/motion';
 
 /** 選択の面が滑るバネ（液体のように少し伸びて、スッと収まる） */
 const PILL = { type: 'spring' as const, stiffness: 420, damping: 34, mass: 0.8 };
 
-export type TabKey = 'trail' | 'timeline' | 'routes' | 'insights';
+export type TabKey = 'trail' | 'timeline' | 'routes' | 'insights' | 'settings';
 
 export const TABS: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: 'trail', label: 'ホーム', icon: Tent },
   { key: 'timeline', label: 'タイムライン', icon: CalendarDays },
   { key: 'routes', label: 'ルート', icon: Route },
   { key: 'insights', label: 'インサイト', icon: ChartColumn },
+  { key: 'settings', label: '設定', icon: Settings2 },
 ];
 
 /** タブバーの高さ（index.css の --nav-space もこの値で計算している） */
@@ -32,7 +33,7 @@ export interface TabBarSkin {
 }
 const PLAIN: TabBarSkin = { bar: 'border border-line bg-surface shadow-raised', pill: 'bg-accent-soft', on: 'text-accent-ink', off: 'text-fg-2' };
 
-export function TabBar({ tab, onChange, skin = PLAIN }: { tab: TabKey; onChange: (t: TabKey) => void; skin?: TabBarSkin }) {
+export function TabBar({ tab, onChange, onReselect, skin = PLAIN }: { tab: TabKey; onChange: (t: TabKey) => void; onReselect?: (t: TabKey) => void; skin?: TabBarSkin }) {
   const idx = Math.max(0, TABS.findIndex((t) => t.key === tab));
   const stretch = useMotionValue(1);
   const prev = useRef(idx);
@@ -44,9 +45,9 @@ export function TabBar({ tab, onChange, skin = PLAIN }: { tab: TabKey; onChange:
     return () => c.stop();
   }, [idx, stretch]);
   return (
-    <div className="tabbar-pad px-6">
+    <div className="tabbar-pad px-4">
       <nav
-        className={`relative mx-auto flex max-w-[340px] rounded-full p-1.5 transition-colors duration-300 ${skin.bar}`}
+        className={`relative mx-auto flex max-w-[380px] rounded-full p-1.5 transition-colors duration-300 ${skin.bar}`}
         style={{ height: TAB_BAR_H }}
         aria-label="メインナビゲーション"
       >
@@ -62,13 +63,14 @@ export function TabBar({ tab, onChange, skin = PLAIN }: { tab: TabKey; onChange:
           return (
             <motion.button
               key={key}
-              onClick={() => onChange(key)}
+              // いま開いているタブをもう一度押すと、いちばん上へ戻る（iOS と同じ）
+              onClick={() => (active ? onReselect?.(key) : onChange(key))}
               transition={spring}
               aria-label={label}
               aria-current={active ? 'page' : undefined}
               className={`relative z-10 grid flex-1 place-items-center rounded-full transition-colors duration-150 ${active ? skin.on : skin.off}`}
             >
-              <Icon size={24} strokeWidth={active ? 2.3 : 1.9} />
+              <Icon size={22} strokeWidth={active ? 2.3 : 1.9} />
             </motion.button>
           );
         })}

@@ -97,7 +97,8 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
           <Music />
         </motion.button>
         <div className="flex flex-col items-center">
-          <RollSign cls={cls} goal={destinationOf(timer, settings)} />
+          {/* 予約していない旅（予定から出発など）は、目標がなければ科目の名前を行き先に（「目標 行」と出さない） */}
+          <RollSign cls={cls} goal={timer.booking || settings.goal.trim() ? destinationOf(timer, settings) : subject?.name ?? '臨時'} />
           <button onClick={() => !rest && !waiting && t.toggle()} className="pointer-events-auto mt-3 text-center" aria-label={timer.running ? '一時停止' : '再開'}>
             <span className="tabular block font-digits text-[37px] font-semibold leading-none tracking-wider text-[#F4EEDD] [text-shadow:0_2px_0_rgba(0,0,0,0.45),0_0_18px_rgba(0,0,0,0.3)]">{fmtTimer(shown)}</span>
             <span className="mt-1.5 inline-block rounded-full bg-black/35 px-2.5 py-0.5 text-[11px] font-bold text-[#F4EEDD]/90">{label}</span>

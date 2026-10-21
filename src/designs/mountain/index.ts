@@ -35,7 +35,7 @@ export const mountainDesign: TimerDesign = {
   skeleton: '#1C2433',
   home: {
     chip: 'mt-chip',
-    greeting: 'font-maru text-[#1F3A30] [text-shadow:0_0_8px_rgba(255,255,255,0.8),0_1px_0_rgba(255,255,255,0.7)]',
+    greeting: 'font-maru',
     tabbar: { bar: 'mt-tabbar', pill: 'mt-tabbar-pill', on: 'text-[#2C4A3E]', off: 'text-[#2C4A3E]/55' },
     Focus: MountainFocus,
     bloom: 'rgba(251,248,241,0.9)',

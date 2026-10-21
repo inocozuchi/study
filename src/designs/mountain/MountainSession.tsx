@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useIsPresent } from 'framer-motion';
 import { Check, Coffee, Flag, Flame, Music } from 'lucide-react';
 import { useTimer } from '@/store/TimerStore';
 import { useApp } from '@/store/AppStore';
-import { fmtDuration, fmtTimer, MIN } from '@/lib/time';
+import { fmtDuration, fmtTimer, locale, MIN } from '@/lib/time';
 import { springBouncy } from '@/lib/motion';
 import { CrayonOutline } from './CrayonDefs';
 import type { DesignSessionProps } from '../types';
@@ -104,7 +104,7 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
                 </span>
                 <span className="min-w-0 flex-1 leading-tight">
                   <span className="block font-maru text-[17px] font-bold">{rest ? '休息' : 'ひと息'}</span>
-                  <span className="block text-[12.5px] text-ink-soft">{new Date().toLocaleDateString('ja-JP')} · ここまで {fmtDuration(t.journeyFocusMs / MIN)}</span>
+                  <span className="block text-[12.5px] text-ink-soft">{new Date().toLocaleDateString(locale())} · ここまで {fmtDuration(t.journeyFocusMs / MIN)}</span>
                 </span>
                 <motion.button onClick={() => (rest ? t.skipBreak() : t.start())} className="rounded-full px-3 py-2 font-maru text-[15px] font-bold text-crayon-blue">
                   出発

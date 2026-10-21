@@ -23,9 +23,7 @@ export interface ScreenChrome {
 export function chromeFor({ home, immersive }: { home: boolean; immersive: boolean }): ScreenChrome {
   // ホーム：シーンを全画面に。集中・休憩・リザルトの間はタブバーも隠す
   if (home) return { fullscreen: true, statusArea: 'scene', bottomNav: !immersive };
-  // タイムライン・ルート・インサイト：地の色の画面。時刻の下は地の色で塗り、スクロールした中身を入り込ませない
+  // タイムライン・ルート・インサイト・設定：地の色の画面。時刻の下は地の色で塗り、スクロールした中身を入り込ませない
   return { fullscreen: false, statusArea: 'solid', bottomNav: true };
 }
 
-/** 全画面を覆う画面（設定）。自分で時刻の帯を持つ */
-export const OVERLAY_CHROME: ScreenChrome = { fullscreen: false, statusArea: 'solid', bottomNav: false };

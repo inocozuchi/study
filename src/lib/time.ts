@@ -1,3 +1,5 @@
+import { lang } from './i18n';
+
 export const MIN = 60_000;
 export const HOUR = 60 * MIN;
 export const DAY = 24 * HOUR;
@@ -67,6 +69,10 @@ export function fmtDuration(min: number, short = false): string {
     if (h === 0) return `${r}m`;
     return r === 0 ? `${h}h` : `${h}h ${r}m`;
   }
+  if (lang() === 'en') {
+    if (h === 0) return `${r} min`;
+    return r === 0 ? `${h}h` : `${h}h ${r}m`;
+  }
   if (h === 0) return `${r}分`;
   return r === 0 ? `${h}時間` : `${h}時間${r}分`;
 }
@@ -81,12 +87,21 @@ export function fmtTimer(ms: number): string {
 }
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 export function weekdayJa(d: Date | number) {
-  return WEEKDAYS[new Date(d).getDay()];
+  return (lang() === 'en' ? WEEKDAYS_EN : WEEKDAYS)[new Date(d).getDay()];
 }
+
+/** 月曜始まりの曜日の短い名前（カレンダーの見出し） */
+export const weekdaysMonFirst = () => (lang() === 'en' ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] : ['月', '火', '水', '木', '金', '土', '日']);
+
+/** 日付の言語（toLocaleDateString などに渡す） */
+export const locale = () => (lang() === 'en' ? 'en-US' : 'ja-JP');
 
 export function fmtDateJa(d: Date | number, withWeekday = true) {
   const x = new Date(d);
+  if (lang() === 'en') return `${withWeekday ? `${weekdayJa(x)}, ` : ''}${MONTHS_EN[x.getMonth()]} ${x.getDate()}`;
   return `${x.getMonth() + 1}月${x.getDate()}日${withWeekday ? `（${weekdayJa(x)}）` : ''}`;
 }
 

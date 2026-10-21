@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
-import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
+import { MotionConfig, motion } from 'framer-motion';
 import { AppProvider, useApp } from '@/store/AppStore';
 import { TimerProvider, useTimer, type JourneyResult } from '@/store/TimerStore';
 import { TabBar, type TabKey } from '@/components/nav/TabBar';
@@ -10,9 +10,11 @@ import { HomeScreen } from '@/screens/HomeScreen';
 const loadTimeline = () => import('@/screens/TimelineScreen');
 const loadRoutes = () => import('@/screens/RoutesScreen');
 const loadInsights = () => import('@/screens/InsightsScreen');
+const loadSettings = () => import('@/screens/SettingsScreen');
 const TimelineScreen = lazy(() => loadTimeline().then((m) => ({ default: m.TimelineScreen })));
 const RoutesScreen = lazy(() => loadRoutes().then((m) => ({ default: m.RoutesScreen })));
 const InsightsScreen = lazy(() => loadInsights().then((m) => ({ default: m.InsightsScreen })));
+const SettingsScreen = lazy(() => loadSettings().then((m) => ({ default: m.SettingsScreen })));
 import { ambient } from '@/audio/ambient';
 import { bgm } from '@/audio/bgm';
 import { loadLibrary } from '@/audio/bgmLibrary';
@@ -22,6 +24,8 @@ import { hourFor } from '@/lib/scene';
 import { getDesign } from '@/designs';
 import { markBoot } from '@/lib/boot';
 import { applyFont } from '@/lib/fonts';
+import { applyDisplay } from '@/lib/display';
+import { applyLanguage } from '@/lib/i18n';
 import { applyAppearance, setEdgeColors } from '@/lib/theme';
 import { useSceneHeld } from '@/lib/sceneHold';
 import { useDepth } from '@/lib/depth';
@@ -50,6 +54,13 @@ function Gate() {
   useEffect(() => {
     if (font) applyFont(font);
   }, [font]);
+  const textScale = ready ? settings.textScale : undefined;
+  const lineSpacing = ready ? settings.lineSpacing : undefined;
+  useEffect(() => applyDisplay(textScale, lineSpacing), [textScale, lineSpacing]);
+  const language = ready ? settings.language : undefined;
+  useEffect(() => {
+    if (language) void applyLanguage(language);
+  }, [language]);
   const appearance = ready ? settings.appearance : undefined;
   useEffect(() => {
     if (appearance) applyAppearance(appearance);
@@ -98,6 +109,7 @@ function Shell() {
       void loadTimeline();
       void loadRoutes();
       void loadInsights();
+      void loadSettings();
     }, 2500);
     return () => clearTimeout(id);
   }, []);
@@ -145,30 +157,28 @@ function Shell() {
         <SceneLayer ended={!!result} paused={!sceneShown} shown={sceneShown} />
       </div>
 
-      <AnimatePresence mode="popLayout" initial={false}>
+      {/* タブの切り替えは iOS と同じく前の画面をすぐ外し、新しい画面だけ 250ms でふわっと出す。
+          前の画面の退場を待たない（退場の中の AnimatePresence が止まると前の画面が残り続けた） */}
         <motion.main
           key={tab}
-          variants={{
-            // タブの切り替え：250ms のクロスフェード + 下から 6px（filter は使わない。位置と透明度だけ）
-            enter: { opacity: 0, y: 6 },
-            center: { opacity: 1, y: 0 },
-            exit: { opacity: 0 },
-          }}
-          initial="enter"
-          animate="center"
-          exit="exit"
+          // 250ms のフェード + 下から 6px（filter は使わない。位置と透明度だけ）
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: easeIOS }}
           layoutScroll
-          className={`absolute inset-0 ${chrome.fullscreen ? 'overflow-hidden' : 'no-scrollbar overflow-y-auto overscroll-contain'}`}
+          // スクロールの枠（タブをもう一度押すと上へ）
+          data-main-scroll
+          // ホーム以外の画面（アプリ本体）は文字の大きさ・行間の設定に従う（ホームは旅のモードの絵なので寸法を変えない）
+          className={`absolute inset-0 ${onHome ? '' : 'ui-text'} ${chrome.fullscreen ? 'overflow-hidden' : 'no-scrollbar overflow-y-auto overscroll-contain'}`}
         >
-          {tab === 'trail' && <HomeScreen result={result} setResult={setResult} />}
+          {tab === 'trail' && <HomeScreen result={result} setResult={setResult} onInsights={() => setTab('insights')} />}
           <Suspense fallback={null}>
             {tab === 'timeline' && <TimelineScreen onStartFocus={() => setTab('trail')} />}
             {tab === 'routes' && <RoutesScreen />}
             {tab === 'insights' && <InsightsScreen />}
+            {tab === 'settings' && <SettingsScreen />}
           </Suspense>
         </motion.main>
-      </AnimatePresence>
 
       {/* タブバー：画面の最下部に固定。集中中は画面の外へ隠し、シーンを一番下まで見せる */}
       <div
@@ -183,7 +193,7 @@ function Shell() {
           </div>
         </div>
         {/* ホームにいる間は、タブバーも旅のモードの色に着せ替える */}
-        <TabBar tab={tab} onChange={setTab} skin={onHome ? getDesign(settings.timerDesign).home.tabbar : undefined} />
+        <TabBar tab={tab} onChange={setTab} onReselect={() => document.querySelector<HTMLElement>('[data-main-scroll]')?.scrollTo({ top: 0, behavior: 'smooth' })} skin={onHome ? getDesign(settings.timerDesign).home.tabbar : undefined} />
       </div>
       {/* 奥へ引っ込んだときの暗がり（filter は使わない：iPhone で重い） */}
       <motion.div className="pointer-events-none absolute inset-0 z-[90] bg-black" initial={false} animate={{ opacity: depth ? 0.22 : 0 }} transition={{ duration: 0.35, ease: easeIOS }} />

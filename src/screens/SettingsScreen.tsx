@@ -1,12 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
-import { usePresentDepth } from '@/lib/depth';
-import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack';
-import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Bell, CalendarDays, ChevronLeft, ChevronRight, Clock, Coffee, Database, Leaf, Mountain, Music, PlusSquare, Repeat, Smartphone, Sun, Timer, Trash2,
+  Bell, CalendarDays, ChevronRight, Clock, Coffee, Database, Leaf, Mountain, Music, PlusSquare, Repeat, Smartphone, Sun, Timer, Trash2,
   Bug, CloudRain, Compass, Disc3, Flame, Flower2, Snowflake, Sprout, Sunrise, Sunset, TrainFrontTunnel, Trees, VolumeX,
   AudioLines, Contrast, IdCard, Moon, Ruler, TrainFront, Type, User, Volume2, Waves, Wind,
+  ALargeSmall, Download, Goal, Languages, TextQuote, Upload,
 } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
 import { Toggle } from '@/components/ui/Toggle';
@@ -18,8 +15,6 @@ import { useBgmTracks } from '@/audio/bgmLibrary';
 import { SEASONS, SEASON_ORDER } from '@/designs/mountain/scene/palette';
 import { getDesign } from '@/designs';
 import { wakeLockSupported } from '@/hooks/useWakeLock';
-import { springSheet } from '@/lib/motion';
-import { useHoldScene } from '@/lib/sceneHold';
 import { ambient } from '@/audio/ambient';
 import { FONTS, fontById, loadFontPreviews, unloadFontPreviews } from '@/lib/fonts';
 import { GoogleCalendarSheet, googleStatusLabel } from '@/components/settings/GoogleCalendarSheet';
@@ -29,8 +24,9 @@ import { DayHoursSheet } from '@/components/timeline/DayHoursSheet';
 import { fmtClock } from '@/lib/time';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { setLayoutProbe, useLayoutProbe } from '@/components/debug/LayoutProbe';
-import { OVERLAY_CHROME } from '@/lib/chrome';
-import type { AmbientChannel, AmbientMix, Appearance, FontId, Season, Settings, SkyOverride, TrainClass } from '@/types';
+import type { AmbientChannel, AmbientMix, Appearance, FontId, Language, LineSpacing, Season, Settings, SkyOverride, TrainClass } from '@/types';
+import { TEXT_SCALES } from '@/lib/display';
+import { fmtDuration } from '@/lib/time';
 
 /**
  * 設定の 1 項目＝1 枚の浮いたカード（泰山木POS の設定と同じ）。
@@ -52,8 +48,8 @@ function Row({ icon, title, detail, value, onClick, right, danger = false }: { i
         <span className={`grid w-[22px] shrink-0 place-items-center ${danger ? 'text-danger' : 'text-accent'}`}>{icon}</span>
       )}
       <span className="min-w-0 flex-1">
-        <span className={`block text-[14px] font-bold ${danger ? 'text-danger-ink' : ''}`}>{title}</span>
-        {sub != null && sub !== '' && <span className="mt-[3px] block text-[12px] leading-snug text-fg-2">{sub}</span>}
+        <span className={`block text-ui-[14px] font-bold ${danger ? 'text-danger-ink' : ''}`}>{title}</span>
+        {sub != null && sub !== '' && <span className="mt-[3px] block text-ui-[12px] leading-snug text-fg-2">{sub}</span>}
       </span>
       {right}
       {onClick && !right && <ChevronRight size={18} className="shrink-0 text-fg-2" />}
@@ -66,7 +62,7 @@ function Group({ title, children, footer }: { title: string; children: ReactNode
     <section className="mt-6">
       <p className="section-label mb-2 px-1">{title}</p>
       <div className="flex flex-col gap-2">{children}</div>
-      {footer && <p className="mt-2 px-1 text-[12px] leading-relaxed text-fg-2">{footer}</p>}
+      {footer && <p className="mt-2 px-1 text-ui-[12px] leading-relaxed text-fg-2">{footer}</p>}
     </section>
   );
 }
@@ -79,7 +75,12 @@ const FONT_SAMPLE = Array.from(new Set(FONTS.map((f) => `${f.label}${f.detail}�
 
 const TRAIN_CLASS_LABEL: Record<TrainClass, string> = { local: '普通', rapid: '快速', kyuko: '急行', express: '特急' };
 
-type PickerKey = 'focus' | 'short' | 'long' | 'every' | 'bgm' | 'ambient' | 'sky' | 'season' | 'font' | 'appearance' | 'trainClass';
+type PickerKey = 'focus' | 'short' | 'long' | 'every' | 'bgm' | 'ambient' | 'sky' | 'season' | 'font' | 'appearance' | 'trainClass' | 'language' | 'textScale' | 'lineSpacing' | 'dailyGoal';
+
+const BACKUP_MSG_KEY = 'focus-trail:backup-msg';
+const LANGUAGE_LABEL: Record<Language, string> = { ja: '日本語', en: 'English' };
+const SPACING_LABEL: Record<LineSpacing, string> = { tight: '狭い', normal: 'ふつう', relaxed: '広い' };
+const scaleLabel = (v: number) => (v === 1 ? '標準' : `${Math.round(v * 100)}%`);
 
 const AMBIENT_PRESETS: { key: string; label: string; mix: AmbientMix; icon: ReactNode }[] = [
   { key: 'none', label: 'なし', icon: <VolumeX size={18} />, mix: { rain: 0, fire: 0, wind: 0, river: 0, insects: 0 } },
@@ -101,9 +102,19 @@ function SeasonIcon({ season, size = 18 }: { season: Season; size?: number }) {
   return <I size={size} />;
 }
 
-/** iOS 設定アプリ風。ホームの歯車から右へスライドして開く */
-export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { settings, updateSettings, clearAll } = useApp();
+/** 設定（タブバーのいちばん右のタブ）。iOS の設定アプリ風に 1 項目＝1 枚のカード */
+export function SettingsScreen() {
+  const { settings, updateSettings, clearAll, exportBackup, importBackup } = useApp();
+  const [backupMsg, setBackupMsg] = useState<string | null>(() => {
+    try {
+      const m = sessionStorage.getItem(BACKUP_MSG_KEY);
+      sessionStorage.removeItem(BACKUP_MSG_KEY);
+      return m;
+    } catch {
+      return null;
+    }
+  });
+  const fileRef = useRef<HTMLInputElement>(null);
   const tracks = useBgmTracks();
   const currentTrack = tracks.find((t) => t.id === settings.bgmTrackId) ?? tracks[0];
   const [picker, setPicker] = useState<PickerKey | null>(null);
@@ -114,14 +125,6 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
   const [googleOpen, setGoogleOpen] = useState(false);
   const [hoursOpen, setHoursOpen] = useState(false);
   const google = useGoogleCalendar();
-  // 設定は画面全体を覆うので、開いて少したったら下のシーンを止める（スライドの間は見えている）
-  const [covered, setCovered] = useState(false);
-  useEffect(() => {
-    if (!open) return setCovered(false);
-    const id = setTimeout(() => setCovered(true), 420);
-    return () => clearTimeout(id);
-  }, [open]);
-  useHoldScene(covered);
   const [name, setName] = useState('');
   const [confirm, setConfirm] = useState(false);
   const set = <K extends keyof Settings>(k: K) => (v: Settings[K]) => updateSettings({ [k]: v } as Partial<Settings>);
@@ -188,6 +191,33 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
       ],
       onSelect: (v) => updateSettings({ trainClass: v as TrainClass }),
     },
+    language: {
+      title: '言語',
+      value: settings.language,
+      options: [
+        { value: 'ja', label: '日本語', icon: <Languages size={18} /> },
+        { value: 'en', label: 'English', icon: <Languages size={18} /> },
+      ],
+      onSelect: (v) => updateSettings({ language: v as Language }),
+    },
+    textScale: {
+      title: '文字の大きさ',
+      value: settings.textScale,
+      options: TEXT_SCALES.map((v) => ({ value: v, label: <span style={{ fontSize: `${15 * v}px` }}>{scaleLabel(v)}　あア Aa 25:00</span> })),
+      onSelect: (v) => updateSettings({ textScale: Number(v) }),
+    },
+    lineSpacing: {
+      title: '行間',
+      value: settings.lineSpacing,
+      options: (['tight', 'normal', 'relaxed'] as LineSpacing[]).map((v) => ({ value: v, label: SPACING_LABEL[v] })),
+      onSelect: (v) => updateSettings({ lineSpacing: v as LineSpacing }),
+    },
+    dailyGoal: {
+      title: '1 日の目標',
+      value: settings.dailyGoalMin,
+      options: [0, 30, 60, 90, 120, 180, 240, 300, 360, 480].map((m) => ({ value: m, label: m === 0 ? '決めない' : fmtDuration(m) })),
+      onSelect: (v) => updateSettings({ dailyGoalMin: Number(v) }),
+    },
     season: { title: 'シーズン', value: settings.season, options: SEASON_ORDER.map((s) => ({ value: s, label: SEASONS[s].label, icon: <SeasonIcon season={s} /> })), onSelect: (v) => updateSettings({ season: v as Season }) },
   };
   // 閉じるアニメーションの間も中身を表示しておく
@@ -202,27 +232,12 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
   }, [picker]);
   const skyLabel = SKY_LABEL[settings.sky];
   const probe = useLayoutProbe();
-  // 下からせり上がり、後ろのホームは少し奥へ引っ込む（iOS のシート）
-  usePresentDepth(open);
-  // 左端から右へスワイプで閉じる（iOS の「戻る」）
-  const swipe = useEdgeSwipeBack(onClose, open);
-
-  return createPortal(
+  return (
     <>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            className="fixed inset-x-0 top-0 h-app z-40 overflow-y-auto bg-page text-fg" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={springSheet} style={{ willChange: 'transform', x: swipe.x }} {...swipe.bind}>
-            {/* 時刻の帯の下は地の色で塗る（スクロールした項目が時刻に重ならない）。この画面と一緒に動く */}
-            <div className="status-band z-10" data-area={OVERLAY_CHROME.statusArea} aria-hidden />
-            <div className="mx-auto max-w-xl px-4 pb-[calc(env(safe-area-inset-bottom)+40px)] pt-safe">
-              {/* 見出しの行：「戻る」はいつも左上の同じ位置 */}
-              <div className="mt-2 flex items-center gap-1.5">
-                <button onClick={onClose} className="-ml-2 flex min-h-[40px] min-w-[76px] items-center gap-px rounded-card py-2 pl-1.5 pr-2.5 text-[14px] font-semibold text-accent-ink active:bg-accent-soft">
-                  <ChevronLeft size={20} strokeWidth={2.2} /> 戻る
-                </button>
-                <h1 className="page-title">設定</h1>
-              </div>
+            <div className="mx-auto max-w-xl px-5 pb-nav pt-safe">
+              <header className="pt-2">
+                <h1 className="text-ui-[29px] font-bold leading-tight tracking-tight">設定</h1>
+              </header>
 
               <Group title="プロフィール">
                 <Row
@@ -242,6 +257,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                 <Row icon={<Coffee size={21} />} title="休憩時間" value={`${settings.pomodoroShortBreak}分`} onClick={() => setPicker('short')} />
                 <Row icon={<Clock size={21} />} title="長い休憩" value={`${settings.pomodoroLongBreak}分`} onClick={() => setPicker('long')} />
                 <Row icon={<Repeat size={21} />} title="長い休憩の間隔" value={`${settings.longBreakEvery}回ごと`} onClick={() => setPicker('every')} />
+                <Row icon={<Goal size={21} />} title="1 日の目標" value={settings.dailyGoalMin ? `${fmtDuration(settings.dailyGoalMin)}（ホームの「今日」に進み具合の輪）` : '決めない'} onClick={() => setPicker('dailyGoal')} />
                 <Row icon={<Sunrise size={21} />} title="起床と就寝" value={`${fmtClock(settings.wakeMin)} 起床 · ${fmtClock(settings.sleepMin)} 就寝（タイムラインの始まりと終わり）`} onClick={() => setHoursOpen(true)} />
                 <Row icon={<Waves size={19} />} title="休憩のあと自動で出発" right={<Toggle checked={settings.autoContinue} onChange={set('autoContinue')} label="自動で出発" />} />
                 <Row icon={<Wind size={19} />} title="集中前の深呼吸" right={<Toggle checked={settings.breathing} onChange={set('breathing')} label="深呼吸" />} />
@@ -260,9 +276,12 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                 <Row icon={<Bell size={19} />} title="完了チャイム" right={<Toggle checked={settings.chime} onChange={set('chime')} label="完了チャイム" />} />
               </Group>
 
-              <Group title="表示">
+              <Group title="表示" footer="文字の大きさ・行間はタイムライン・ルート・インサイト・設定とシートに効きます（旅のモードの絵は変わりません）。">
                 <Row icon={<Contrast size={21} />} title="外観" value={APPEARANCE_LABEL[settings.appearance]} onClick={() => setPicker('appearance')} />
                 <Row icon={<Type size={21} />} title="フォント" value={fontById(settings.font).label} onClick={() => setPicker('font')} />
+                <Row icon={<ALargeSmall size={21} />} title="文字の大きさ" value={scaleLabel(settings.textScale)} onClick={() => setPicker('textScale')} />
+                <Row icon={<TextQuote size={21} />} title="行間" value={SPACING_LABEL[settings.lineSpacing] ?? 'ふつう'} onClick={() => setPicker('lineSpacing')} />
+                <Row icon={<Languages size={21} />} title="言語 / Language" value={LANGUAGE_LABEL[settings.language] ?? '日本語'} onClick={() => setPicker('language')} />
               </Group>
 
               <Group title="システム設定">
@@ -277,7 +296,7 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
                 <Row icon={<Sun size={21} />} title="空の時間" value={skyLabel} onClick={() => setPicker('sky')} />
               </Group>
 
-              <Group title="旅のモード" footer="航空モードは準備中です。列車の走行音は public/sounds/train.mp3 を置くと鳴ります。">
+              <Group title="旅のモード" footer="列車の走行音は public/sounds/train.mp3 を置くと鳴ります。">
                 <Row icon={<Mountain size={21} />} title="モード" value={getDesign(settings.timerDesign).name} onClick={() => setModeOpen(true)} />
                 <Row icon={<IdCard size={21} />} title="旅のパス" value={`${settings.userName} · ${settings.goal.trim() || '目標を決める'}`} onClick={() => setProfileOpen(true)} />
                 <Row icon={<SeasonIcon season={settings.season} size={21} />} title="登山：シーズン" value={SEASONS[settings.season].label} onClick={() => setPicker('season')} />
@@ -292,14 +311,50 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
               </Group>
 
               <Group title="データ" footer="記録はこの端末のブラウザ内に保存されます。ホーム画面に追加するとアプリとして全画面で使えます。">
+                <Row
+                  icon={<Download size={20} />}
+                  title="バックアップを書き出す"
+                  detail="記録・科目・予定・ノート・設定を 1 つのファイルに"
+                  onClick={() => {
+                    const blob = new Blob([exportBackup()], { type: 'application/json' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `focus-trail-${new Date().toISOString().slice(0, 10)}.json`;
+                    a.click();
+                    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+                    setBackupMsg('バックアップを書き出しました');
+                  }}
+                />
+                <Row icon={<Upload size={20} />} title="バックアップから戻す" detail="いまの記録は書き出したファイルの内容に置き換わります" onClick={() => fileRef.current?.click()} />
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  aria-label="バックアップのファイル"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = '';
+                    if (!f) return;
+                    const text = await f.text();
+                    // 戻すとアプリ全体を作り直す（この画面も新しくなる）ので、知らせは sessionStorage に残して次の画面で出す
+                    try {
+                      sessionStorage.setItem(BACKUP_MSG_KEY, 'バックアップから戻しました');
+                    } catch {
+                      /* noop */
+                    }
+                    if (!(await importBackup(text))) {
+                      sessionStorage.removeItem(BACKUP_MSG_KEY);
+                      setBackupMsg('このファイルは読めませんでした');
+                    }
+                  }}
+                />
+                {backupMsg && <p className="px-1 text-ui-[12px] font-semibold text-accent-ink" role="status">{backupMsg}</p>}
                 <Row icon={<Trash2 size={21} />} title="すべての記録を消去" onClick={() => setConfirm(true)} danger />
-                <Row icon={<Database size={21} />} title="Focus Trail" value="v2.1" />
+                <Row icon={<Database size={21} />} title="Focus Trail" value="v2.2" />
                 <Row icon={<Ruler size={19} />} title="表示の診断" detail="画面の高さ・安全域・タブバーの位置を表示" right={<Toggle checked={probe} onChange={setLayoutProbe} label="表示の診断" />} />
               </Group>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {p && <PickerModal open={!!picker} onClose={() => setPicker(null)} title={p.title} value={p.value} options={p.options} onSelect={p.onSelect} />}
 
@@ -318,22 +373,21 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
             setNameOpen(false);
           }}
         >
-          <input className="field text-[17px] font-semibold" value={name} onChange={(e) => setName(e.target.value)} maxLength={16} autoFocus placeholder="旅人" />
+          <input className="field text-ui-[17px] font-semibold" value={name} onChange={(e) => setName(e.target.value)} maxLength={16} autoFocus placeholder="旅人" />
           <button type="submit" className="btn-primary w-full">保存</button>
         </form>
       </Sheet>
 
       <Modal open={confirm} onClose={() => setConfirm(false)}>
         <div className="p-6 text-center">
-          <p className="text-[18px] font-extrabold">すべての記録を消去しますか？</p>
-          <p className="mt-2 text-[12.5px] text-fg-2">科目・記録・予定・ノート・ToDo・習慣がすべて消えます。この操作は取り消せません。</p>
+          <p className="text-ui-[18px] font-extrabold">すべての記録を消去しますか？</p>
+          <p className="mt-2 text-ui-[12.5px] text-fg-2">科目・記録・予定・ノート・ToDo・習慣がすべて消えます。この操作は取り消せません。</p>
           <div className="mt-5 grid grid-cols-2 gap-2">
             <button onClick={() => setConfirm(false)} className="rounded-card bg-fill py-3 font-bold">やめる</button>
             <button
               onClick={async () => {
                 await clearAll();
                 setConfirm(false);
-                onClose();
               }}
               className="rounded-card bg-danger py-3 font-bold text-white"
             >
@@ -342,7 +396,6 @@ export function SettingsScreen({ open, onClose }: { open: boolean; onClose: () =
           </div>
         </div>
       </Modal>
-    </>,
-    document.body,
+    </>
   );
 }

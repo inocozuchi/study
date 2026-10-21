@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { addDays, dateKey, startOfMonth, startOfWeek } from '@/lib/time';
+import { addDays, dateKey, startOfMonth, startOfWeek, weekdaysMonFirst } from '@/lib/time';
 
 export interface DayMarks {
   /** その日の科目の色（集中・予定）。最大 3 つまで点で出す */
@@ -9,7 +9,6 @@ export interface DayMarks {
   events: boolean;
 }
 
-const WEEK = ['月', '火', '水', '木', '金', '土', '日'];
 
 /**
  * 月のカレンダー。日をタップするとその日のタイムラインを下に出す。
@@ -28,7 +27,7 @@ export function MonthCalendar({ month, selected, today, marks, onSelect, onMonth
         <button aria-label="前の月" onClick={() => onMonth(-1)} className="hit grid h-9 w-9 place-items-center rounded-full text-accent-ink active:bg-accent-soft">
           <ChevronLeft size={20} strokeWidth={2.4} />
         </button>
-        <motion.p key={label} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="text-[15px] font-extrabold tabular">
+        <motion.p key={label} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="text-ui-[15px] font-extrabold tabular">
           {label}
         </motion.p>
         <button aria-label="次の月" onClick={() => onMonth(1)} className="hit grid h-9 w-9 place-items-center rounded-full text-accent-ink active:bg-accent-soft">
@@ -36,8 +35,8 @@ export function MonthCalendar({ month, selected, today, marks, onSelect, onMonth
         </button>
       </div>
       <div className="mt-1 grid grid-cols-7">
-        {WEEK.map((w, i) => (
-          <span key={w} className={`py-1 text-center text-[11px] font-bold ${i === 6 ? 'text-danger-ink/80' : 'text-fg-2'}`}>
+        {weekdaysMonFirst().map((w, i) => (
+          <span key={w} className={`py-1 text-center text-ui-[11px] font-bold ${i === 6 ? 'text-danger-ink/80' : 'text-fg-2'}`}>
             {w}
           </span>
         ))}
@@ -59,7 +58,7 @@ export function MonthCalendar({ month, selected, today, marks, onSelect, onMonth
               className="flex flex-col items-center gap-[3px] py-1"
             >
               <span
-                className={`tabular grid h-8 w-8 place-items-center rounded-full text-[13px] transition-colors ${
+                className={`tabular grid h-8 w-8 place-items-center rounded-full text-ui-[13px] transition-colors ${
                   isSel ? 'bg-accent font-extrabold text-white' : isToday ? 'font-extrabold text-accent-ink ring-[1.5px] ring-inset ring-accent' : inMonth ? 'font-semibold text-fg' : 'font-medium text-fg-3'
                 }`}
               >

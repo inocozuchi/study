@@ -28,7 +28,7 @@ export const trainDesign: TimerDesign = {
   skeleton: '#2A221D',
   home: {
     chip: 'tr-chip',
-    greeting: 'tr-mincho text-[#F4EEDD] [text-shadow:0_1px_2px_rgba(20,10,4,0.8)]',
+    greeting: 'tr-mincho',
     tabbar: { bar: 'tr-tabbar', pill: 'tr-tabbar-pill', on: 'text-[#F4EEDD]', off: 'text-[#F4EEDD]/55' },
     Focus: TrainFocus,
     bloom: 'rgba(212,175,115,0.85)',
