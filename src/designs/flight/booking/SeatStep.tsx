@@ -58,7 +58,8 @@ export function SeatStep({ draft, route, patch, onBack, onNext }: { draft: Fligh
 
   return (
     <div className="absolute inset-0 bg-[radial-gradient(120%_60%_at_50%_0%,#151820,#050608_70%)]">
-      <div className="absolute inset-x-0 top-0 z-20 bg-gradient-to-b from-[#050608] via-[#050608]/85 to-transparent px-4 pb-6 pt-safe">
+      {/* 見出し：文字の後ろは塗りの面（ぼかし・暗いグラデーションを文字に重ねない）。下の縁だけ座席へ溶かす */}
+      <div className="absolute inset-x-0 top-0 z-20 bg-[#050608] px-4 pb-3 pt-safe after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-5 after:bg-gradient-to-b after:from-[#050608] after:to-transparent after:content-['']">
         <div className="mt-1 flex items-center justify-between">
           <button onClick={onBack} aria-label="戻る" className="fl-btn fl-glass h-11 w-11">
             <ChevronLeft size={21} />

@@ -1,124 +1,52 @@
-import { Plane } from 'lucide-react';
-import { pad } from '@/lib/time';
 import { useApp } from '@/store/AppStore';
-import { airportByCode } from './airports';
+import { airportByCode, flightNo } from './airports';
+import { PassCard } from './PassCard';
+import { Barcode2D } from './parts';
 import type { ProfileCardProps } from '../types';
 
-const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-
-function hash(s: string) {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
-  return h >>> 0;
-}
-
-/** 空港コード風の 3 文字（英字ならその頭文字、日本語なら文字から決まる 3 文字） */
-function code(text: string, fallback: string) {
-  const latin = text.toUpperCase().replace(/[^A-Z]/g, '');
-  if (latin.length >= 3) return latin.slice(0, 3);
-  if (!text.trim()) return fallback;
-  let h = hash(text);
-  let out = '';
-  for (let i = 0; i < 3; i++) {
-    out += String.fromCharCode(65 + (h % 26));
-    h = Math.floor(h / 26);
-  }
-  return out;
-}
-
-/** バーコード（名前から決まる太さの縦線） */
-function Barcode({ seed, className = '' }: { seed: string; className?: string }) {
-  let h = hash(seed) || 1;
-  const bars: { x: number; w: number }[] = [];
-  let x = 0;
-  while (x < 120) {
-    h = Math.imul(h ^ (h >>> 13), 0x5bd1e995) >>> 0;
-    const w = 1 + (h % 3);
-    const gap = 1 + ((h >>> 4) % 3);
-    bars.push({ x, w });
-    x += w + gap;
-  }
-  return (
-    <svg viewBox="0 0 120 30" preserveAspectRatio="none" className={className} aria-hidden>
-      {bars.map((b, i) => (
-        <rect key={i} x={b.x} y="0" width={b.w} height="30" fill="currentColor" />
-      ))}
-    </svg>
-  );
-}
-
-/** 航空モード：旅のパスの搭乗券。PASSENGER NAME と DESTINATION（＝目標）、これまでに飛んだ距離 */
+/**
+ * 航空の旅のパス：予約の画面と同じ「ダーク × Liquid Glass」の搭乗券（ドットの世界地図の透かし・アンバーの差し色）。
+ * 出発空港 → DESTINATION。行き先の空港コードは、いまの予約か最後に飛んだ便の到着空港。まだ飛んでいなければ「GOAL」。
+ * 行き先の名前はユーザーの目標（なければ空港の名前）。距離はログブックの合計、時間は累計の集中。
+ */
 export function BoardingPass({ info }: ProfileCardProps) {
-  const { name, goal, sessions, settings } = info;
+  const { name, goal, totalMinutes, sessions, settings } = info;
   const { logs } = useApp();
-  const now = new Date();
-  const dest = goal.trim() || '目標';
+  const flights = logs.filter((l) => l.mode === 'flight').sort((a, b) => b.endedAt - a.endedAt);
   const home = airportByCode(settings.flightFrom || 'HND');
-  const miles = logs.filter((l) => l.mode === 'flight').reduce((sum, l) => sum + l.km, 0);
-  const flight = `FT${String(settings.pomodoroFocus).padStart(3, '0')}`;
-  const gate = `${'ABCD'[sessions % 4]}${(sessions % 24) + 1}`;
-  const seat = `${(sessions % 38) + 1}${'ACDF'[hash(name) % 4]}`;
-  const date = `${pad(now.getDate())}${MONTHS[now.getMonth()]}`;
-  const boarding = `${pad(now.getHours())}:${pad(Math.floor(now.getMinutes() / 5) * 5)}`;
-
-  const Field = ({ label, value, big }: { label: string; value: string; big?: boolean }) => (
-    <div className="min-w-0">
-      <p className="text-[8.5px] font-bold tracking-[0.16em] text-[#7D8797]">{label}</p>
-      <p className={`tabular whitespace-nowrap font-bold text-[#1B2433] ${big ? 'truncate text-[15px]' : 'text-[12.5px] tracking-tight'}`}>{value}</p>
-    </div>
-  );
-
+  const last = flights[0] ? airportByCode(flights[0].to) : null;
+  const miles = Math.round(flights.reduce((sum, l) => sum + l.km, 0));
+  const dest = goal.trim() || last?.name || '目標';
+  const seat = `${(sessions % 38) + 1}${'ACDF'[sessions % 4]}`;
   return (
-    <div className="relative flex aspect-[1.586] w-full overflow-hidden rounded-[18px] bg-[#FBFCFE] text-[#1B2433] shadow-[0_14px_30px_-14px_rgba(20,30,60,0.5)]" aria-label="搭乗券">
-      {/* 本券 */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center justify-between gap-2 bg-[#1D3557] px-4 py-2.5 text-white">
-          <p className="flex items-center gap-1.5 whitespace-nowrap text-[12.5px] font-extrabold tracking-[0.12em]">
-            <Plane size={14} className="-rotate-45" /> FOCUS AIR
-          </p>
-          <p className="whitespace-nowrap text-right text-[8.5px] font-bold leading-tight tracking-[0.16em] opacity-80">
-            BOARDING PASS
-            <br />
-            搭乗券
-          </p>
-        </div>
-        <div className="flex flex-1 flex-col justify-between px-4 py-3">
-          <Field label="PASSENGER NAME" value={name} big />
-          <div className="flex items-end justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-[28px] font-extrabold leading-none tracking-wide">{home.code}</p>
-              <p className="mt-0.5 truncate text-[10px] font-bold text-[#7D8797]">{home.name}</p>
+    <div className="fl-root relative overflow-hidden rounded-[30px] bg-[#050608] p-3 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.8)]" aria-label={`搭乗券 ${name} ${home.code}から${dest}`}>
+      {/* ガラスが透けて見えるよう、うしろに色の光をにじませる */}
+      <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(45%_35%_at_20%_30%,rgba(255,159,10,0.3),transparent),radial-gradient(50%_40%_at_85%_70%,rgba(10,132,255,0.28),transparent)]" />
+      <div className="relative">
+        <PassCard
+          compact
+          data={{
+            from: { code: home.code, name: home.name },
+            to: { code: last?.code ?? 'GOAL', name: dest },
+            minutes: totalMinutes,
+            km: miles,
+            seat,
+            task: name,
+            icon: 'target',
+            date: new Date(),
+            board: `${flights.length} 便`,
+            flight: flightNo(`${name}${home.code}${dest}`),
+          }}
+          stub={
+            <div className="fl-glass relative overflow-hidden rounded-b-[26px] px-5 pb-4 pt-3">
+              <Barcode2D seed={name + dest} className="h-[52px] w-full" />
+              <p className="fl-num mt-1.5 flex justify-between text-[11px] font-semibold tracking-[0.12em] text-white/55">
+                <span>PASSENGER · {name}</span>
+                <span>MILEAGE {miles.toLocaleString()} km</span>
+              </p>
             </div>
-            <Plane size={18} className="mb-4 shrink-0 rotate-45 text-[#E85D4A]" />
-            <div className="min-w-0 text-right">
-              <p className="text-[28px] font-extrabold leading-none tracking-wide text-[#E85D4A]">{code(dest, 'GOL')}</p>
-              <p className="mt-0.5 truncate text-[10px] font-bold text-[#7D8797]">DESTINATION · {dest}</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-4 gap-1">
-            <Field label="FLIGHT" value={flight} />
-            <Field label="DATE" value={date} />
-            <Field label="GATE" value={gate} />
-            <Field label="SEAT" value={seat} />
-          </div>
-        </div>
-      </div>
-
-      {/* ミシン目 */}
-      <div className="relative w-0 border-l-2 border-dashed border-[#D5DBE5]">
-        <span className="absolute -left-[9px] -top-2 h-4 w-4 rounded-full bg-surface" />
-        <span className="absolute -bottom-2 -left-[9px] h-4 w-4 rounded-full bg-surface" />
-      </div>
-
-      {/* 半券 */}
-      <div className="flex w-[30%] flex-col justify-between px-3 py-3">
-        <div className="space-y-1.5">
-          <Field label="BOARDING" value={boarding} />
-          <Field label="SEAT" value={seat} />
-        </div>
-        {/* これまでに飛んだ距離（ログブックの合計） */}
-        <Field label="MILEAGE" value={`${miles.toLocaleString()} km`} />
-        <Barcode seed={name + dest} className="h-10 w-full text-[#1B2433]" />
+          }
+        />
       </div>
     </div>
   );

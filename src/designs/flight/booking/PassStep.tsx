@@ -1,7 +1,8 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, Plane } from 'lucide-react';
 import { playSfx } from '@/audio/sfx';
+import { easeIOS } from '@/lib/motion';
 import { cabinSound } from '@/audio/cabinSound';
 import { airportByCode, flightNo, type Route } from '../airports';
 import { Barcode2D } from '../parts';
@@ -9,15 +10,25 @@ import { NOTCH_TOP, PassCard, type PassData } from '../PassCard';
 import { Steps } from './RouteStep';
 import type { FlightDraft } from './FlightBooking';
 
-type Phase = 'ready' | 'torn' | 'scanning';
+type Phase = 'printing' | 'ready' | 'torn' | 'scanning';
 
 /**
  * ③ 搭乗券の発券と搭乗ゲート。
+ *  0. 開くと、上の発券キオスクの光る差し出し口から搭乗券がスッと滑り出し、文字とバーコードがレーザーで上から順に焼き付けられる（約 1.2 秒）
  *  1.「チェックイン」：ミシン目に沿って半券（バーコード）がピリッと斜めに切り離され、少し下に傾いて浮く。機内モードの帯が出る
  *  2.「搭乗」（または半券を下へスワイプ）：バーコードが光ってスキャンされ、ピッ → 電子音 → ポーン。地図の画面へ溶けていく
  */
 export function PassStep({ draft, route, onBack, onBoard }: { draft: FlightDraft; route: Route; onBack: () => void; onBoard: () => void }) {
-  const [phase, setPhase] = useState<Phase>('ready');
+  const [phase, setPhase] = useState<Phase>('printing');
+  const torn = phase === 'torn' || phase === 'scanning';
+  useEffect(() => {
+    playSfx('thermal');
+    const id = setTimeout(() => {
+      playSfx('blip');
+      setPhase('ready');
+    }, 1250);
+    return () => clearTimeout(id);
+  }, []);
   const busy = useRef(false);
   const from = airportByCode(draft.origin);
   const data: PassData = useMemo(
@@ -72,7 +83,7 @@ export function PassStep({ draft, route, onBack, onBoard }: { draft: FlightDraft
         </div>
         {/* 機内モードの帯 */}
         <AnimatePresence>
-          {phase !== 'ready' && (
+          {torn && (
             <motion.div initial={{ y: -16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0 }} transition={{ type: 'spring', stiffness: 380, damping: 28, delay: 0.25 }} className="fl-glass mx-auto mt-3 flex w-fit items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5">
               <span className="grid h-6 w-6 place-items-center rounded-full bg-[#FF9F0A] text-[#1A1206]">
                 <Plane size={13} strokeWidth={2.6} />
@@ -84,8 +95,29 @@ export function PassStep({ draft, route, onBack, onBoard }: { draft: FlightDraft
         </AnimatePresence>
       </div>
 
+      {/* 発券キオスクの差し出し口（光のライン）。搭乗券はここから滑り出す */}
+      <div className="pointer-events-none absolute inset-x-0 top-[calc(var(--safe-top)+104px)] z-10 mx-auto w-[min(96vw,376px)]" aria-hidden>
+        <div className="fl-glass flex h-[18px] items-center rounded-full px-3">
+          <span className="h-[3px] w-full rounded-full bg-[#FFD60A] shadow-[0_0_12px_3px_rgba(255,214,10,0.55)]" style={{ opacity: phase === 'printing' ? 1 : 0.35, transition: 'opacity 0.6s' }} />
+        </div>
+      </div>
+
       <div className="absolute inset-x-0 top-[calc(var(--safe-top)+126px)] mx-auto w-[min(92vw,360px)]">
-        <motion.div initial={{ y: 40, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ type: 'spring', stiffness: 220, damping: 24 }}>
+        <motion.div
+          className="relative"
+          initial={{ y: -60, clipPath: 'inset(0% 0% 100% 0%)' }}
+          animate={{ y: 0, clipPath: 'inset(0% -10% -40% -10%)' }}
+          transition={{ duration: 1.1, ease: easeIOS }}
+        >
+          {/* レーザーの焼き付け：明るい線が上から下へ走り、通ったところから文字とバーコードが現れる */}
+          {phase === 'printing' && (
+            <motion.span
+              className="pointer-events-none absolute inset-x-[-6px] z-20 h-[2px] rounded-full bg-[#FFD60A] shadow-[0_0_16px_5px_rgba(255,214,10,0.7)]"
+              initial={{ top: '0%', opacity: 1 }}
+              animate={{ top: '100%', opacity: [1, 1, 0] }}
+              transition={{ duration: 1.1, ease: easeIOS }}
+            />
+          )}
           <PassCard
             data={data}
             stub={
@@ -94,14 +126,14 @@ export function PassStep({ draft, route, onBack, onBoard }: { draft: FlightDraft
                 dragConstraints={{ top: 0, bottom: 0 }}
                 dragElastic={{ top: 0, bottom: 0.6 }}
                 onDragEnd={(_, info) => info.offset.y > 50 && board()}
-                animate={phase === 'ready' ? { rotate: 0, x: 0, y: 0 } : { rotate: 6, x: 14, y: 30 }}
+                animate={!torn ? { rotate: 0, x: 0, y: 0 } : { rotate: 6, x: 14, y: 30 }}
                 transition={{ type: 'spring', stiffness: 200, damping: 15 }}
                 style={{ transformOrigin: '0% 0%' }}
-                className={`relative ${phase !== 'ready' ? 'cursor-grab touch-none' : ''}`}
+                className={`relative ${torn ? 'cursor-grab touch-none' : ''}`}
               >
                 <div
-                  className={`fl-glass relative overflow-hidden rounded-b-[26px] px-5 pb-4 pt-4 ${phase !== 'ready' ? 'fl-torn-top shadow-[0_24px_40px_-18px_rgba(0,0,0,0.9)]' : ''}`}
-                  style={phase === 'ready' ? { WebkitMask: NOTCH_TOP, mask: NOTCH_TOP } : undefined}
+                  className={`fl-glass relative overflow-hidden rounded-b-[26px] px-5 pb-4 pt-4 ${torn ? 'fl-torn-top shadow-[0_24px_40px_-18px_rgba(0,0,0,0.9)]' : ''}`}
+                  style={!torn ? { WebkitMask: NOTCH_TOP, mask: NOTCH_TOP } : undefined}
                 >
                   <div className="relative">
                     <Barcode2D seed={data.flight + data.seat} className="h-[72px] w-full" />
@@ -134,8 +166,8 @@ export function PassStep({ draft, route, onBack, onBoard }: { draft: FlightDraft
       </div>
 
       <div className="absolute inset-x-0 bottom-0 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)]">
-        <button onClick={phase === 'ready' ? checkIn : board} disabled={phase === 'scanning'} className="fl-cta h-14 w-full text-[17px]">
-          {phase === 'ready' ? 'チェックイン' : phase === 'torn' ? '搭乗' : '搭乗中…'}
+        <button onClick={phase === 'ready' ? checkIn : board} disabled={phase === 'scanning' || phase === 'printing'} className="fl-cta h-14 w-full text-[17px]">
+          {phase === 'printing' ? '発券中…' : phase === 'ready' ? 'チェックイン' : phase === 'torn' ? '搭乗' : '搭乗中…'}
         </button>
       </div>
     </div>

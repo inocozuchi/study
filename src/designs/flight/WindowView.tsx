@@ -1,11 +1,13 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
 
 /** 窓枠の絵（public/flight/window-frame.webp）の比と、透過した窓ガラスの位置（絵に対する割合。scripts/process-flight-assets.py） */
 const FRAME_AR = 1000 / 1791;
 const GLASS = { x: 0.231, y: 0.3316, w: 0.5328, h: 0.4514 };
 const BASE = import.meta.env.BASE_URL;
+
+/** 窓の外の画像（フライトの画面を開いたら先に読み込んでおく） */
+export const windowUrls = () => [`${BASE}flight/window-frame.webp`, `${BASE}flight/wing.webp`, ...(['day', 'sunset', 'night'] as const).map((s) => `${BASE}flight/${s}/sky.webp`)];
 
 export type SkySet = 'day' | 'sunset' | 'night';
 /** 時間帯 → 空の絵（夜明けは夕方の絵） */
@@ -24,11 +26,11 @@ const WING_FILTER: Record<SkySet, string> = {
 };
 
 /**
- * 窓の外（右上の窓のボタンで開くサブの画面。メインはレーダーの地図）。
+ * 窓の外（上の「レーダー地図 | 機窓ビュー」で切り替えるサブの画面。メインはレーダーの地図）。
  * 下から：空と雲海（sky。ゆっくり横に流れる）→ 主翼（wing。かすかに揺れる）→ シェード → 窓枠（window-frame。ガラスは透過）。
  * 右の座席（D / F）は進行方向が右：雲は右から左へ。左の座席（A / C）は雲が左から右へ流れ、主翼を左右反転する。
  */
-export function WindowView({ onClose, seat, hour }: { onClose: () => void; seat?: string; hour: number }) {
+export function WindowView({ seat, hour }: { seat?: string; hour: number }) {
   const left = /[ABC]$/i.test(seat ?? '');
   const set = skySetFor(hour);
   const glass = useRef<HTMLDivElement>(null);
@@ -91,10 +93,7 @@ export function WindowView({ onClose, seat, hour }: { onClose: () => void; seat?
         <img src={`${BASE}flight/window-frame.webp`} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full select-none" style={{ zIndex: 10, filter: FRAME_FILTER[set] }} />
       </div>
 
-      <button onClick={onClose} aria-label="窓を閉じる（地図に戻る）" className="fl-glass absolute left-1/2 top-[calc(var(--safe-top)+10px)] z-20 flex h-10 -translate-x-1/2 items-center gap-1.5 rounded-full pl-3 pr-4 text-[14px] font-semibold">
-        <X size={16} /> 地図に戻る
-      </button>
-      <p className="absolute inset-x-0 top-[calc(var(--safe-top)+60px)] z-20 text-center text-[12px] text-white/70 [text-shadow:0_1px_4px_rgba(0,0,0,0.6)]">シェードは上下にドラッグして開け閉めできます</p>
+      <p className="absolute inset-x-0 top-[calc(var(--safe-top)+58px)] z-20 text-center text-[12px] text-white/70 [text-shadow:0_1px_4px_rgba(0,0,0,0.6)]">シェードは上下にドラッグして開け閉めできます</p>
     </motion.div>
   );
 }

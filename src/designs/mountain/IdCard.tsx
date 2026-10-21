@@ -18,19 +18,23 @@ const day = (t: number) => {
   return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`;
 };
 
-/** 登山者 ID カード：生成りのキャンバス地にクレヨン。ニックネーム・累計の登山時間・現在の標高 */
+/**
+ * 山岳登頂認定パスポート（登山の旅のパス）：木の札に載せた生成りの麻布のカード。帯は水彩のにじみ、
+ * 右下は刺繍のワッペン。ニックネーム・累計の登山時間・現在の標高
+ */
 export function IdCard({ info }: ProfileCardProps) {
   const { name, totalMinutes, since, settings } = info;
   const altitude = totalMinutes * METERS_PER_MINUTE;
   return (
-    <div className="mt-paper relative aspect-[1.586] w-full overflow-hidden rounded-[22px] font-maru text-ink shadow-[0_14px_30px_-14px_rgba(60,40,20,0.55)]" aria-label="登山者IDカード">
+    <div className="mt-wood rounded-[26px] p-2.5">
+    <div className="mt-paper relative aspect-[1.586] w-full overflow-hidden rounded-[18px] font-maru text-ink shadow-[0_8px_16px_-8px_rgba(40,22,10,0.6)]" aria-label="山岳登頂認定パスポート">
       {/* 別のモードのときはシーンが置いていないので、フィルタをここにも置く */}
       <CrayonDefs />
       {/* 帯 */}
-      <div className="flex items-center justify-between px-4 pb-2 pt-3" style={{ background: 'linear-gradient(180deg, #8FBFAE, #7FB09F)' }}>
-        <div className="leading-none text-[#FBF6EA]">
-          <p className="text-[16px] font-bold tracking-wide">登山者IDカード</p>
-          <p className="mt-1 text-[9px] font-bold tracking-[0.3em] opacity-80">MOUNTAINEER ID</p>
+      <div className="mt-wash flex items-center justify-between px-4 pb-2 pt-3">
+        <div className="leading-none text-[#FBF6EA] [text-shadow:0_1px_0_rgba(60,90,80,0.35)]">
+          <p className="text-[15px] font-bold tracking-wide">山岳登頂認定パスポート</p>
+          <p className="mt-1 text-[9px] font-bold tracking-[0.3em] opacity-85">SUMMIT PASSPORT</p>
         </div>
         <svg viewBox="0 0 40 28" className="h-7 w-10" aria-hidden>
           <g filter="url(#crayon-soft)">
@@ -70,15 +74,17 @@ export function IdCard({ info }: ProfileCardProps) {
           <p className="tabular tracking-[0.14em]">No. {idNumber(name + (since ?? ''))}</p>
           <p>入山 {since ? day(since) : '— — —'} · テント {TENTS[settings.tentStyle]?.name ?? TENTS[0].name}</p>
         </div>
-        {/* 認定のはんこ */}
-        <span className="relative grid h-[46px] w-[46px] rotate-[-14deg] place-items-center rounded-full text-[11px] font-bold leading-none text-[#C9604A]" style={{ boxShadow: 'inset 0 0 0 2px rgba(201,96,74,0.75)' }}>
-          <span className="text-center">
-            山歩
-            <br />
-            認定
+        {/* 認定の刺繍ワッペン（テラコッタの布に山と「認定」） */}
+        <span className="mt-patch relative grid h-[54px] w-[54px] rotate-[-10deg] place-items-center rounded-full bg-[#C9704F] text-[#FBF6EA]">
+          <span className="flex flex-col items-center leading-none">
+            <svg viewBox="0 0 24 14" className="h-[13px] w-[22px]" aria-hidden>
+              <path d="M1 13 L9 3 L13 8 L16 5 L23 13 Z" fill="#FBF6EA" />
+            </svg>
+            <span className="mt-0.5 text-[10px] font-bold tracking-[0.1em]">認定</span>
           </span>
         </span>
       </div>
+    </div>
     </div>
   );
 }

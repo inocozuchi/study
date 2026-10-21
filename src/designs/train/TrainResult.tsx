@@ -53,7 +53,7 @@ export function TrainResult({ result, onContinue }: DesignResultProps) {
           <motion.div className="mt-[8vh] w-full" initial={{ opacity: 0, y: 30, rotate: -4 }} animate={{ opacity: 1, y: 0, rotate: -1.5 }} transition={{ ...springBouncy, delay: 0.5 }}>
             <HardTicket
               punched
-              stamp={result.arrived ? `到着 ${b.to}` : `途中下車 ${reached}`}
+              stamp={result.arrived ? { kind: '到着', at: b.to } : { kind: '途中下車', at: reached ?? b.from }}
               data={{
                 from: b.from,
                 to: b.to,

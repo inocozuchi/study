@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft } from 'lucide-react';
 import { playSfx } from '@/audio/sfx';
@@ -7,7 +7,7 @@ import { HardTicket, type HardTicketData } from './HardTicket';
 import { Steps } from './LineStep';
 import type { TrainDraft } from './TrainBooking';
 
-type Phase = 'ready' | 'insert' | 'punch' | 'out' | 'bell';
+type Phase = 'issuing' | 'ready' | 'insert' | 'punch' | 'out' | 'bell';
 
 /** 切符の上端から改札口（差し込み口）までの距離・差し込んだときに見えている高さ（px） */
 const GATE_TOP = 400;
@@ -22,11 +22,27 @@ function hash(s: string) {
 
 /**
  * ③ 硬券の発券と改札。
+ * 開くと、上の真鍮の発券口から「ガシャン、ジジジ…」と印字されながら硬券が少しずつ押し出され、最後に日付印が「ポン」と押される（約 1.3 秒）。
  * 「改札を通る」（または切符を下へスワイプ）→ 切符が改札口へ差し込まれ、真鍮の改札鋏がパチン！と入る →
  * 切符が戻ってくると上の縁に切り欠き（入鋏痕）→ 発車ベル → 汽笛 → 車窓へズームイン。
  */
 export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraft; stop: Stop; onBack: () => void; onDepart: () => void }) {
-  const [phase, setPhase] = useState<Phase>('ready');
+  const [phase, setPhase] = useState<Phase>('issuing');
+  // 発券：印字しながら押し出す → 日付印 → 改札へ進める
+  useEffect(() => {
+    playSfx('print');
+    const a = setTimeout(() => {
+      playSfx('stamp');
+      navigator.vibrate?.(14);
+      setDated(true);
+    }, 1150);
+    const b = setTimeout(() => setPhase('ready'), 1400);
+    return () => {
+      clearTimeout(a);
+      clearTimeout(b);
+    };
+  }, []);
+  const [dated, setDated] = useState(false);
   const busy = useRef(false);
   const data: HardTicketData = useMemo(
     () => ({
@@ -80,27 +96,53 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
             <ChevronLeft size={21} />
           </button>
           <div className="text-center">
-            <p className="text-[17px] font-bold tracking-[0.2em] text-[#F4EEDD]">{phase === 'ready' ? '乗車券' : phase === 'bell' ? '発車いたします' : '改札'}</p>
+            <p className="text-[17px] font-bold tracking-[0.2em] text-[#F4EEDD]">{phase === 'issuing' ? '発券中' : phase === 'ready' ? '乗車券' : phase === 'bell' ? '発車いたします' : '改札'}</p>
             <Steps at={3} />
           </div>
           <span className="w-11" />
         </div>
       </div>
 
-      {/* 硬券 */}
+      {/* 発券口（真鍮の細いスリット）。硬券はこの下から押し出される */}
+      <div className="pointer-events-none absolute inset-x-0 z-20 mx-auto w-[min(96vw,372px)]" style={{ top: `calc(var(--safe-top) + ${TICKET_TOP - 30}px)` }} aria-hidden>
+        <div className="tr-wood rounded-[8px] px-3 pb-2 pt-1.5 shadow-[0_10px_18px_-10px_rgba(0,0,0,0.8)]">
+          <p className="text-center text-[10px] font-bold tracking-[0.5em] text-[#D9C08A]/80">乗車券發賣機</p>
+          <div className="tr-brass mt-1 flex h-[12px] items-center rounded-[3px] px-2">
+            <span className="h-[4px] w-full rounded-full bg-[#1a0f08] shadow-[inset_0_2px_3px_rgba(0,0,0,0.9)]" />
+          </div>
+        </div>
+      </div>
+
+      {/* 硬券：発券中は発券口の下で切り抜き、印字に合わせて少しずつ押し出す */}
+      <div className={`absolute inset-x-0 bottom-0 z-10 ${phase === 'issuing' ? 'overflow-hidden' : ''}`} style={{ top: `calc(var(--safe-top) + ${TICKET_TOP - 8}px)` }}>
       <motion.div
-        className="absolute inset-x-0 z-10 mx-auto w-[min(90vw,350px)]"
-        style={{ top: `calc(var(--safe-top) + ${TICKET_TOP}px)` }}
-        initial={{ y: -30, opacity: 0, rotate: -3 }}
-        animate={inserted ? { y: insertY, opacity: 1, rotate: 0 } : phase === 'ready' ? { y: 0, opacity: 1, rotate: -1.5 } : { y: -6, opacity: 1, rotate: 1.5 }}
-        transition={inserted ? { duration: 0.42, ease: [0.5, 0, 0.75, 0] } : { type: 'spring', stiffness: 200, damping: 18 }}
+        className="absolute inset-x-0 mx-auto w-[min(90vw,350px)]"
+        style={{ top: 8 }}
+        initial={{ y: '-100%', rotate: 0 }}
+        animate={
+          phase === 'issuing'
+            ? { y: ['-100%', '-78%', '-74%', '-52%', '-48%', '-26%', '-22%', '0%'], rotate: 0 }
+            : inserted
+              ? { y: insertY, opacity: 1, rotate: 0 }
+              : phase === 'ready'
+                ? { y: 0, opacity: 1, rotate: -1.5 }
+                : { y: -6, opacity: 1, rotate: 1.5 }
+        }
+        transition={
+          phase === 'issuing'
+            ? { duration: 1.05, ease: 'linear', delay: 0.15, times: [0, 0.18, 0.3, 0.48, 0.6, 0.78, 0.88, 1] }
+            : inserted
+              ? { duration: 0.42, ease: [0.5, 0, 0.75, 0] }
+              : { type: 'spring', stiffness: 200, damping: 18 }
+        }
         drag={phase === 'ready' ? 'y' : false}
         dragConstraints={{ top: 0, bottom: 0 }}
         dragElastic={{ top: 0.05, bottom: 0.5 }}
         onDragEnd={(_, info) => info.offset.y > 60 && pass()}
       >
-        <HardTicket data={data} punched={punched} />
+        <HardTicket data={data} punched={punched} dated={dated} />
       </motion.div>
+      </div>
 
       {/* 改札鋏（真鍮）：切符の上の縁で噛む */}
       <AnimatePresence>
@@ -135,7 +177,7 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
                 </motion.p>
               ) : (
                 <motion.p key="bell" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mb-2 text-center text-[13px] font-bold tracking-[0.2em] text-[#D9C08A]">
-                  {phase === 'bell' ? `${data.to}ゆき、まもなく発車いたします` : 'パチン'}
+                  {phase === 'issuing' ? '発券しています…' : phase === 'bell' ? `${data.to}ゆき、まもなく発車いたします` : 'パチン'}
                 </motion.p>
               )}
             </AnimatePresence>

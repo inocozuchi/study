@@ -124,10 +124,6 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: {
 
 
   return (
-    <>
-    {/* 挨拶とバッジの後ろだけ、上からうすく暗くする（シーンの窓枠・駅名標と文字がぶつかって読みにくくならないように）。
-        画面の幅いっぱい・下は透明へ溶かすので、シーンとの境目は見えない */}
-    <div className="pointer-events-none absolute inset-x-0 top-0 h-[calc(var(--safe-top)+250px)] bg-[linear-gradient(180deg,rgba(8,10,16,0.62)_0%,rgba(8,10,16,0.4)_45%,rgba(8,10,16,0.14)_75%,rgba(8,10,16,0)_100%)]" aria-hidden />
     <div className="relative mx-auto h-full max-w-xl">
       {/* 上部 */}
       <div className="relative flex items-center justify-between gap-2 px-5 pt-safe">
@@ -153,22 +149,11 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: {
       {/* 挨拶 */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={springSoft} className="px-6 pt-5">
         {/* シーンの上なので、外観（ライト／ダーク）に関係なく白い文字 */}
-        <h1 className="text-[30px] font-bold leading-tight tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,0,0,0.35)]">
+        <h1 className="text-[30px] font-bold leading-tight tracking-tight text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.55),0_2px_14px_rgba(0,0,0,0.45)]">
           やあ！{settings.userName}、
           <br />
           <span className="text-[21px] font-semibold text-white/95">前へ進む準備はいい？</span>
         </h1>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {[
-            { k: 'today', icon: <Clock3 size={13} strokeWidth={2.4} />, text: `今日 ${fmtDuration(sum.today, true)}` },
-            { k: 'streak', icon: <Flame size={13} strokeWidth={2.4} />, text: `${st.current}日連続` },
-          ].map((c) => (
-            <span key={c.k} className="fabric-denim stitch tabular flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold">
-              {c.icon}
-              {c.text}
-            </span>
-          ))}
-        </div>
       </motion.div>
 
       {/* サイドのツールタブ */}
@@ -180,12 +165,22 @@ function HomeIdle({ onFocus, onMusic, onSettings, onTool, onMode, onProfile }: {
         ))}
       </motion.nav>
 
-      {/* 下部：集中ボタン */}
+      {/* 下部：今日の記録と集中ボタン（記録のバッジは上の挨拶から下へ。シーンの駅名標や窓枠と重ならない） */}
       <div className="absolute inset-x-0 bottom-[calc(var(--nav-space)+24px)] flex flex-col items-center px-6">
+        <div className="mb-6 flex flex-wrap justify-center gap-1.5">
+          {[
+            { k: 'today', icon: <Clock3 size={13} strokeWidth={2.4} />, text: `今日 ${fmtDuration(sum.today, true)}` },
+            { k: 'streak', icon: <Flame size={13} strokeWidth={2.4} />, text: `${st.current}日連続` },
+          ].map((c) => (
+            <span key={c.k} className="fabric-denim stitch tabular flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold">
+              {c.icon}
+              {c.text}
+            </span>
+          ))}
+        </div>
         <FocusButton onClick={onFocus} />
       </div>
     </div>
-    </>
   );
 }
 

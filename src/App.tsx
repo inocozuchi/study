@@ -1,8 +1,8 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { AppProvider, useApp } from '@/store/AppStore';
 import { TimerProvider, useTimer, type JourneyResult } from '@/store/TimerStore';
-import { TabBar, TABS, type TabKey } from '@/components/nav/TabBar';
+import { TabBar, type TabKey } from '@/components/nav/TabBar';
 import { IslandPlayer } from '@/components/nav/IslandPlayer';
 import { SummitModal } from '@/components/routes/SummitModal';
 import { HomeScreen } from '@/screens/HomeScreen';
@@ -26,7 +26,7 @@ import { applyAppearance, setEdgeColors } from '@/lib/theme';
 import { useSceneHeld } from '@/lib/sceneHold';
 import { useDepth } from '@/lib/depth';
 import { useNow } from '@/hooks/useNow';
-import { easeIOS, spring, springSheet, springSoft } from '@/lib/motion';
+import { easeIOS, spring, springSheet } from '@/lib/motion';
 import { chromeFor } from '@/lib/chrome';
 import { LayoutProbe } from '@/components/debug/LayoutProbe';
 
@@ -80,12 +80,8 @@ function Shell() {
     }
   });
   const [result, setResult] = useState<JourneyResult | null>(null);
-  const prevIndex = useRef(TABS.findIndex((t) => t.key === tab));
-  const index = TABS.findIndex((t) => t.key === tab);
-  const direction = index >= prevIndex.current ? 1 : -1;
 
   const setTab = (t: TabKey) => {
-    prevIndex.current = TABS.findIndex((x) => x.key === tab);
     setTabState(t);
     try {
       sessionStorage.setItem(TAB_KEY, t);
@@ -141,24 +137,27 @@ function Shell() {
         style={{ transformOrigin: '50% 40%' }}
       >
       {/* 背景の層：全画面の画面でだけシーンを見せる。ほかの画面では止めて隠す（地の色の上にカードを並べる） */}
-      <div className="absolute inset-0" style={{ visibility: sceneShown ? 'visible' : 'hidden' }} data-probe={sceneShown ? 'scene' : undefined}>
+      <div
+        className="absolute inset-0"
+        // シーンはパッと消さずに 250ms で溶かしてから隠す（タブの切り替えと同じ速さ）
+        style={{ opacity: sceneShown ? 1 : 0, visibility: sceneShown ? 'visible' : 'hidden', transition: sceneShown ? 'opacity 250ms cubic-bezier(0.22, 1, 0.36, 1)' : 'opacity 250ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 250ms' }}
+        data-probe={sceneShown ? 'scene' : undefined}>
         <SceneLayer ended={!!result} paused={!sceneShown} shown={sceneShown} />
       </div>
 
-      <AnimatePresence mode="popLayout" initial={false} custom={direction}>
+      <AnimatePresence mode="popLayout" initial={false}>
         <motion.main
           key={tab}
-          custom={direction}
           variants={{
-            // 画面全体に filter（blur）をかけると重く、ガラスのぼかしも効かなくなるので、位置と透明度だけで切り替える
-            enter: (d: number) => ({ opacity: 0, x: d * 36 }),
-            center: { opacity: 1, x: 0 },
-            exit: (d: number) => ({ opacity: 0, x: d * -36 }),
+            // タブの切り替え：250ms のクロスフェード + 下から 6px（filter は使わない。位置と透明度だけ）
+            enter: { opacity: 0, y: 6 },
+            center: { opacity: 1, y: 0 },
+            exit: { opacity: 0 },
           }}
           initial="enter"
           animate="center"
           exit="exit"
-          transition={springSoft}
+          transition={{ duration: 0.25, ease: easeIOS }}
           layoutScroll
           className={`absolute inset-0 ${chrome.fullscreen ? 'overflow-hidden' : 'no-scrollbar overflow-y-auto overscroll-contain'}`}
         >

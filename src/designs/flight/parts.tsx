@@ -98,17 +98,6 @@ export function Barcode2D({ seed, rows = 9, className = '', color = '#F5F6F8' }:
   );
 }
 
-/** 窓のピクトグラム（楕円の窓とシェード） */
-export function WindowIcon({ size = 18 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <rect x="6" y="2.5" width="12" height="19" rx="6" />
-      <path d="M6.6 9h10.8" />
-      <path d="M9.5 14.5c1.2-1 3.8-1 5 0" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 /** 2 文字の時間表記（1h 22m / 45m） */
 export function hm(minutes: number) {
   const m = Math.max(0, Math.round(minutes));
