@@ -3,7 +3,7 @@
 学習・集中記録 PWA。**メイン機能はポモドーロタイマー**。タイムライン・ルート・インサイトはサブ機能。
 タイマーには複数の「デザイン」＝**旅のモード**がある：
 - **登山**（集中＝山を登る旅、休憩＝焚き火、終わり＝キャンプの夜）
-- **列車**（大正・昭和レトロ × アニメ美術の車窓。予約は古地図の東海道・木の客車の座席・硬券と改札鋏。休憩＝途中の駅、一時停止＝信号場、終わり＝行き先の駅）
+- **列車**（大正・昭和レトロ × アニメ美術の車窓。予約は全国の路線の古地図・木の客車の座席・硬券と改札鋏。休憩＝途中の駅、一時停止＝信号場、終わり＝行き先の駅）
 - **航空**（Liquid Glass × ナイトフライトレーダー。予約は航路図とダイヤル・機内の座席・搭乗券とゲート。集中＝夜の地図の上を機体が進む）
 各デザインは別物として作る（登山の複製にしない）。列車・航空は「旅の予約から出発までの儀式」（下記「予約」）から始まる。
 
@@ -48,7 +48,7 @@ src/
   audio/bgm.ts          BGM エンジン（アップロードした曲を LoopPlayer で鳴らす。曲は ID で選ぶ）
   audio/loopPlayer.ts   音声ファイルのシームレス無限ループ（AudioBuffer ループ、無音の自動トリム、継ぎ目のクロスフェードを焼き込む）
   audio/bgmLibrary.ts   曲リスト：public/bgm/tracks.json（実行時に読む）。曲がなければ BGM は鳴らない
-  audio/trainSound.ts   列車の走行音（public/sounds/train.*）。クロスフェードなしのループ、速さに合わせて playbackRate（普通 1.0 / 特急 1.4）
+  audio/trainSound.ts   列車の走行音（public/sounds/train.*）。クロスフェードなしのループ、速さに合わせて playbackRate（普通 1.0・快速 1.12・急行 1.25・特急 1.4）
   audio/sfx.ts          予約・出発の儀式の効果音（すべて合成）：ダイヤルの刻み・改札鋏・発車ベル・汽笛・半券を切る音・スキャン・機内チャイム・電子音
   audio/cabinSound.ts   航空の機内の音（茶色のノイズを低域で。合成・継ぎ目なしのループ）
   lib/                  純粋関数：time / altitude（標高・ステージ）/ stats / scene（空の配色・旅の時間）/ id
@@ -66,13 +66,13 @@ src/
       airports.ts       空港・航路（羽田からの所要の表 / ほかは距離から）・投影・航路の弧
       FlightMap.tsx     夜の地図のカメラ（中心・倍率を MotionValue で。絵は public/flight/map-*.svg）+ MapAnchor
       view.ts           シーン（地図）と HUD が共有する表示（カメラ・レイヤー・大きな時計・窓）
-      FlightScene / FlightSession / FlightResult / WindowView（窓の外）/ PassCard（搭乗券）/ BoardingPass（旅のパス）
+      FlightScene / FlightSession / FlightResult / WindowView（窓の外：窓枠・主翼・空の画像）/ PassCard（搭乗券）/ BoardingPass（旅のパス）
       booking/          FlightBooking → RouteStep（航路図とダイヤル）/ SeatStep（機内の座席）/ PassStep（チェックイン・搭乗）
     train/              列車デザイン（下記「列車シーンの構成」。クラス名は tr-）
       TrainScene / TrainSession / TrainResult / Ticket（マルス券のカード）
-      stations.ts       止まる場所（出発駅・途中の駅・信号場・終着駅）。予約した旅は東海道本線の実際の駅
+      stations.ts       止まる場所（出発駅・途中の駅・信号場・終着駅）。予約した旅は路線の実際の駅（`bookedStops` / `routeOf`）
       booking/          TrainBooking → LineStep（古地図とダイヤル・駅名標・旅の支度）/ CarStep（三等客車・展望車）/ TicketStep（改札）
-                        HardTicket（硬券）/ line.ts（東海道本線の駅・営業キロ・所要の目安）
+                        HardTicket（硬券）/ line.ts（全国の路線の駅・営業キロ・種別 CLASSES）/ maps.json（路線ごとの古地図の投影）
       scene/            TrainStage（rAF・速さ・画像の層）/ views（景色の組・窓の位置）/ assets.json（素材の寸法）
     mountain/           登山デザイン（クレヨン × 布はこのフォルダの中だけ）
       index.ts          mountainDesign（mountain.css を読み込む）
@@ -109,12 +109,12 @@ public/
   manifest.webmanifest, sw.js, icons/（icon.svg が元絵）, splash/（iOS 起動画像）
   bgm/      BGM のフォルダ（tracks.json は任意。README.md に書き方）
   ambient/  環境音のフォルダ（sounds.json は任意。README.md に書き方）
-  train/    列車の車窓の素材（WebP。仕上げは scripts/process-train-assets.py、元の画像は assets-src/train/）。map/tokaido.svg は古地図
-  flight/   航空の地図（map-dark.svg / map-lines.svg）と搭乗券のドットの世界地図（dots.svg）
+  train/    列車の車窓の素材（WebP。仕上げは scripts/process-train-assets.py、元の画像は assets-src/train/）。map/{hokkaido,tohoku,tokaido,kyushu,trail}.svg は路線ごとの古地図
+  flight/   航空の地図（map-dark.svg / map-lines.svg）・搭乗券のドットの世界地図（dots.svg）・窓の外の画像（window-frame / wing / {day,sunset,night}/sky。仕上げは scripts/process-flight-assets.py、元の画像は assets-src/flight/）
   sounds/   モードの音：train.*＝列車の走行音、それ以外（river / rain / festival …）は環境音のミキサーに並ぶ
 vite.config.ts             audioManifests：ビルド時に bgm/・ambient/・sounds/ の音声ファイルを一覧（json）へ自動で足す
 scripts/generate-assets.mjs  icon.svg → アイコン PNG と iOS 起動画像（playwright-core を --no-save で入れて実行）
-scripts/build-maps.py        地図を作る（devDependency の world-atlas＝Natural Earth の海岸線から。メルカトル。投影の値は各デザインの map.json）
+scripts/build-maps.py        地図を作る（devDependency の world-atlas＝Natural Earth の海岸線から。メルカトル。投影の値は航空の map.json・列車の maps.json）
 .github/workflows/deploy.yml main への push で GitHub Pages に公開
 ```
 
@@ -172,7 +172,7 @@ interface TimerDesign {
 
 ## ルートの画面（旅のモードに連動）
 - `RoutesScreen` は選んでいるモードの `design.routes` を使う：登山＝山岳ルート（MountainArt・標高・登頂スタンプ）、
-  列車＝路線図（東海道本線 東京→大阪。科目の累計の割合だけ線路が伸びる）、航空＝航路図（東アジア周遊便 HND→…→HND）。
+  列車＝路線図（東海道・山陽本線 東京→下関。科目の累計の割合だけ線路が伸びる）、航空＝航路図（東アジア周遊便 HND→…→HND）。
 - 列車・航空のカードの絵は各デザインの `routes.tsx`（地図の SVG を `<image>` で敷いた 1 枚の静的な SVG。動かさない）。
   詳しいシートは駅・空港の印の一覧、記録のタブはログブック（`TravelLog`）。
 
@@ -195,6 +195,8 @@ interface TimerDesign {
 - 予約のカメラはダイヤルが止まってから動かし、拡大率は収まらないとき・ずっと寄れるときだけ変える（大きな地図を何度も描き直さない）。
 - 空港は羽田からの所要の表（ユーザー指定）、ほかの出発地は `28 分 + 距離 / 16.5`。大島は実在のコード OIM。
 - フライト中：タップで休憩・長押しで着陸・ドラッグで移動・2 本指で拡大。左上：一時停止・機内の音・大きな時計・音楽。右上：ルート全体・機体を追う・レイヤー・窓の外。
+- **窓の外**（`WindowView`。サブの画面、メインはレーダーの地図）：下から 空と雲海 `{day,sunset,night}/sky.webp`（z1・時間帯で選び、ゆっくり横に流す）→ 主翼 `wing.webp`（z5・かすかに揺れる）→ シェード（ドラッグで開け閉め）→ 窓枠 `window-frame.webp`（z10・窓ガラスは透過）。
+  右の座席（D / F）は進行方向が右：雲は右から左へ。左の座席（A / C）は雲が左から右へ流れ、主翼を `scaleX(-1)`。夜は窓枠・主翼を `brightness` で暗く（動かない絵にだけフィルタ）。
   下：残り時間・残り距離（予約の距離 × 残りの割合）。機内の音は飛んでいる間だけ（`settings.flightCabin`）。
 
 ## 列車の予約（src/designs/train/booking）
@@ -202,9 +204,13 @@ interface TimerDesign {
 - **質感はマット**（上質紙・古布・使い込んだ木）：どの面にも `grain.png`（ごく薄い粒）を重ね、上の縁の白い光沢線・光沢のグラデーションは使わない。
   立体感は内側への影と温かい色のドロップシャドウだけ。色は生成り #F4EEDD・臙脂 #7A2830・真鍮 #B8955A・ダークウッド #3B2416（純白・純黒は使わない）。
   部品は `train.css` の `tr-paper` / `tr-wood` / `tr-brass` / `tr-enji` / `tr-velvet` / `tr-enamel` / `tr-card` / `tr-ruler` / `tr-gate` …（インラインで光沢を足さない）。
-- 路線は東海道本線（東京〜大阪の実際の駅の位置・営業キロ）。所要の目安は東京から 25 分＝小田原、50 分＝熱海、90 分＝靜岡…（大阪発は逆向き）。
-  ダイヤルの時間だけ線路が伸び（臙脂）、いちばん近い駅が行き先（琺瑯の駅名標）。地図の駅を押しても選べる。
-- 座席：三等客車（普通・木のボックス席）/ 展望車（特急・ソファと展望デッキ）。客車がそのまま種別（`trainClass`）になる。
+- 路線は 5 つ（`line.ts` の `LINES`。駅の位置・営業キロは実際の値のおおよそ）：函館・宗谷本線 / 東北本線 / 東海道・山陽本線（東京〜下関）/ 鹿児島本線・指宿枕崎線（門司港〜枕崎）/
+  稚内〜枕崎 全線走破（北海道 → 青函トンネル → 東北本線 → 東海道・山陽本線 → 関門トンネル → 鹿児島本線）。地図の左上の路線の札で路線と出発駅、隣の札で上り・下り（`dir`）を選ぶ。
+  地図は路線ごとの古地図（`public/train/map/{路線}.svg`、投影は `maps.json`）。カメラの倍率の上限・駅名を全部出す倍率は「1 度あたりの px」で決める。
+- 種別：普通 / 快速 / 急行 / 特急（`CLASSES`）。集中 1 分で進む営業キロ（2.2 / 2.8 / 3.4 / 4.4 km）・車窓の速さ・走行音の速さ・料金が変わる。
+  ダイヤルは 25 分〜10 時間。時間 × 種別の速さだけ線路が伸び（臙脂）、いちばん近い駅が行き先（琺瑯の駅名標）。地図の駅を押しても選べる。
+- 旅の途中の駅は「集中した分の割合 = 進んだキロの割合」で通る（予約の時間ちょうどで行き先に着く）。着いた駅（途中下車の駅）が次の出発駅になり、同じ路線・同じ向きに乗り継げる（`trainFrom` / `trainLine` / `trainDir`）。
+- 座席：三等客車（普通・快速・木のボックス席）/ 展望車（急行・特急・ソファと展望デッキ）。客車を替えると種別も替わる。
 - 改札：硬券（B 型の比・地紋・日付印・乗車記念）を改札口へ → 改札鋏で切り欠き（入鋏痕）→ 発車ベル → 汽笛 → 車窓へズームイン。
 - 休憩で止まる駅は「ここまでに集中した分」で通り過ぎた実際の駅。終着は行き先（途中で終えたら途中下車の駅）。
 
@@ -218,19 +224,21 @@ interface TimerDesign {
 ## 列車シーンの構成（src/designs/train/scene）
 - 車窓は**アニメ美術の画像**（`public/train/`。WebP）を重ねた視差スクロール。SVG で描いた景色は使わない。
   - 最前面：車内の絵 `frame-table`（窓ガラスが透過）を画面いっぱいに置く（cover）。窓の位置は `assets.json` の割合から計算（`views.ts` の `trainLayout`）。
-  - 窓の形に切り抜いた中（下から）：遠景 `sky` / 中景 `mid`（窓の下 64%、上端は空へ溶ける）/ フェンス `fence` / 電柱 `pole`
-  - 流れる速さ（巡航 = 1）：中景 60 px/秒 : 遠景 9 px/秒（10 : 1.5）、フェンス 150 px/秒。電柱は 2〜5 秒ごとに右から現れ 0.4 秒で駆け抜ける。
+  - 窓の形に切り抜いた中（下から）：遠景 `sky` / 中景 `mid`（窓の下 64%、上端は空へ溶ける）/ フェンス `fence` / 電柱 `pole` / 架線（canvas）
+  - 流れる速さ（巡航 = 1）：中景 60 px/秒 : 遠景 9 px/秒（10 : 1.5）、フェンス 150 px/秒。電柱は線路に沿って 2〜5 秒ごとに並び（`s.poles`。線路に沿った位置で持つ）、0.4 秒で窓を駆け抜ける。
+  - 架線：窓の上 10〜25% に 3 本。電柱で高く留まり、電柱の間で放物線に垂れる（電柱が来ると跳ね上がり、過ぎるとまた垂れていく）。小さな canvas に線路の位置が変わったときだけ描く。
   - 動かすのは transform だけ（1 本の rAF）。各画像は横に並べた帯を「1 枚の幅で割った余り」だけ動かしてつなぎ目なく流す。
 - 景色の組（`day` / `sunset` / `night` / `rain`）は時刻（空の時間の設定）と天気（`Settings.trainWeather`）から選ぶ（`viewFor`）。
   変わったら新しい組を 1.6 秒でふわっと重ね、古い組を外す。ほかの組の画像は起動 4 秒後に先読みする。
 - 車内の色：夕方は茜色、夜は `brightness(0.4)` + 群青、雨は `grayscale(0.15) brightness(0.85)` + 青い影。
   色の重ねは車内の絵の形（`mask-image`）にだけ乗せる（窓の外には乗らない）。フェンスの色は時間帯ごとの画像に焼き込み済み（動く層にフィルタをかけない）。
 - 雨は窓の外に雨のすじ（CSS の繰り返し画像を流すだけ）と、窓ガラスを流れる雨粒（`GlassDrops`：止まりかけては流れ落ちる粒＋小さな水滴。transform だけ）を重ねる。
-- **駅のホーム**（`{day,sunset,night,rain}/station.webp`）：出発前・休憩・旅の終わりに、窓の右の外から滑り込んでホームの真ん中で止まる。
+- **駅のホーム**（`{day,sunset,night,rain}/station.webp`）：出発前・休憩・旅の終わりに、窓の右の外から滑り込んでホームの真ん中（絵の横 50%＝屋根の下の駅名標）で止まる。
+  絵は `scale(1.15)`（黒い縁を出さない）+ 両端を `mask-image: linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%)` で景色へ溶かし、両端に電柱を立ててつなぎ目を隠す。
   減速度は「いまの速さから距離 D＝(窓の幅＋ホームの幅)/2 でちょうど止まる」値（`流れる速さ × v² / 2D`）。集中の 1 回が終わる少し前からブレーキをかけ、終わる瞬間に止まる（`approach`）。
   発車すると加速に合わせて左へ流れ去る。駅名標の位置とその上に刷る文字の色は `assets.json` の `station.sign` / `ink`（`process-train-assets.py station` で作る）。
-  駅名標には明朝で駅名・読み（東海道本線はかな）・前後の駅を重ねる（`SignBoard`）。一時停止（信号場）では駅に入らない。
-- 速さ v（普通の巡航 = 1、特急 = 1.65）：発車でゆっくり加速し、休憩・一時停止・旅の終わりでブレーキをかけて止まる。走行音は `trainSound.setMotion()` に速さを伝える。
+  駅名標には明朝で駅名・読み（路線の駅はかな）・前後の駅を重ねる（`SignBoard`）。一時停止（信号場）では駅に入らない。
+- 速さ v（普通の巡航 = 1、快速 1.2、急行 1.42、特急 1.65）：発車でゆっくり加速し、休憩・一時停止・旅の終わりでブレーキをかけて止まる。走行音は `trainSound.setMotion()` に速さを伝える。
 - 素材の仕上げ（透過・ループ・圧縮）は `scripts/process-train-assets.py`。元の画像は `assets-src/train/`。
 
 ## 空の時間（Settings.sky）
@@ -365,7 +373,7 @@ interface TimerDesign {
   - 先頭・末尾の無音はエンコーダーのパディング（1.5ms 以上・各端 0.25 秒まで）だけを外す。
 - フェードはユーザーが再生/一時停止・音量を変えたときだけ。一時停止は位置を覚え、続きから再開する。
 - 音の追加は `public/bgm/`・`public/ambient/`・`public/sounds/` にファイルを置くだけ（json は題名などを決めたいときだけ）。SW は一覧の json だけネットワーク優先。
-- 列車の走行音（`public/sounds/train.*`）はクロスフェードせずサンプル単位でつなぎ、速さを playbackRate で表す（発車で上がっていき、巡航は普通 1.0・特急 1.4）。
+- 列車の走行音（`public/sounds/train.*`）はクロスフェードせずサンプル単位でつなぎ、速さを playbackRate で表す（発車で上がっていき、巡航は普通 1.0・快速 1.12・急行 1.25・特急 1.4）。
 - 音量は設定に保存（`bgmVolume` / `ambient`（内蔵）/ `ambientFiles`（追加した音、ID ごと））。起動時は再生を止めた状態から（iOS はタップが必要）。
 
 ## 規約

@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft } from 'lucide-react';
 import { playSfx } from '@/audio/sfx';
-import { fare, type Stop } from './line';
+import { fare, lineById, type Stop } from './line';
 import { HardTicket, type HardTicketData } from './HardTicket';
 import { Steps } from './LineStep';
 import type { TrainDraft } from './TrainBooking';
@@ -28,7 +28,6 @@ function hash(s: string) {
 export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraft; stop: Stop; onBack: () => void; onDepart: () => void }) {
   const [phase, setPhase] = useState<Phase>('ready');
   const busy = useRef(false);
-  const express = draft.cls === 'express';
   const data: HardTicketData = useMemo(
     () => ({
       from: draft.origin,
@@ -38,12 +37,13 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
       seat: draft.seat ?? '—',
       task: draft.task ?? 'フォーカス',
       icon: draft.icon ?? 'target',
-      express,
-      fare: fare(stop.km, express),
+      line: lineById(draft.line).name,
+      cls: draft.cls,
+      fare: fare(stop.km, draft.cls),
       date: new Date(),
       serial: String(hash(`${draft.origin}${stop.station.name}${draft.seat}${new Date().toDateString()}`) % 10000).padStart(4, '0'),
     }),
-    [draft.origin, draft.minutes, draft.seat, draft.task, draft.icon, stop, express],
+    [draft.origin, draft.line, draft.minutes, draft.seat, draft.task, draft.icon, stop, draft.cls],
   );
 
   const pass = () => {

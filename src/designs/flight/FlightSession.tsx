@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent as RPointerEvent, type R
 import { AnimatePresence, motion, useIsPresent } from 'framer-motion';
 import { AudioLines, Clock3, Layers, Maximize2, Music, Navigation, Pause, Play, Pointer, VolumeX } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
+import { hourFor } from '@/lib/scene';
 import { useTimer } from '@/store/TimerStore';
 import { MIN, fmtTimer } from '@/lib/time';
 import { clampZoom } from './FlightMap';
@@ -147,7 +148,7 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>{view.window && <WindowView onClose={() => setFlightView({ window: false })} />}</AnimatePresence>
+      <AnimatePresence>{view.window && <WindowView onClose={() => setFlightView({ window: false })} seat={b?.seat} hour={hourFor(settings.sky, new Date())} />}</AnimatePresence>
 
       {/* 左上 */}
       <div className="pointer-events-none absolute left-4 top-[calc(var(--safe-top)+6px)] z-30 flex flex-col gap-2.5">

@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { trainSound } from '@/audio/trainSound';
 import { VIEWS, assets, isNight, trainLayout, url, viewFor, type TrainLayout, type TrainView } from './views';
+import { CLASSES } from '../booking/line';
+import type { TrainClass } from '@/types';
 
 /** 駅名標に出す文字 */
 export interface StationSign {
@@ -15,7 +17,8 @@ export interface TrainStageProps {
   hour: number;
   /** 走っているか（集中中で一時停止していない） */
   moving: boolean;
-  express: boolean;
+  /** 種別（普通・快速・急行・特急）。巡航の速さと加速が変わる */
+  cls: TrainClass;
   /** 雨の景色にする */
   rain: boolean;
   paused?: boolean;
@@ -27,10 +30,7 @@ export interface TrainStageProps {
   approach?: { inMs: number; sign: StationSign } | null;
 }
 
-/** 巡航の速さ（普通 = 1。特急は 1.65 倍で流れる） */
-const CRUISE = { local: 1, express: 1.65 };
-/** 加速（1 秒あたり）。普通は約 10 秒、特急は約 12 秒で巡航に届く */
-const ACCEL = { local: 0.11, express: 0.15 };
+/** 巡航の速さ（普通 = 1。快速 1.2・急行 1.42・特急 1.65 倍で流れる）と加速（1 秒あたり）は CLASSES。普通は約 10 秒、特急は約 12 秒で巡航に届く */
 /** ブレーキ（1 秒あたり） */
 const BRAKE = 0.2;
 /** 巡航 = 1 のときの流れる速さ（px/秒）。中景 : 遠景 = 10 : 1.5 */
@@ -38,6 +38,23 @@ const SPEED = { mid: 60, sky: 9, fence: 150 };
 /** 電柱が窓を横切る時間（秒）と、次の電柱までの間隔（秒） */
 const POLE_PASS = 0.4;
 const POLE_GAP: [number, number] = [2, 5];
+/** 電柱の柱の位置（電柱の絵の幅に対する割合）と、架線が電柱に留まる高さ（窓の高さに対する割合）・電柱の間のたるみ */
+const POLE_AXIS = 0.5;
+const WIRES = [
+  { y: 0.1, sag: 0.08, w: 1.6 },
+  { y: 0.135, sag: 0.085, w: 1.2 },
+  { y: 0.17, sag: 0.09, w: 1.1 },
+];
+/** 架線の色（外の明るさに合わせる） */
+const WIRE_INK: Record<TrainView, string> = {
+  day: 'rgba(38,40,46,0.72)',
+  sunset: 'rgba(48,26,22,0.78)',
+  night: 'rgba(150,162,200,0.26)',
+  rain: 'rgba(44,50,58,0.6)',
+};
+/** 駅のホームの絵の拡大（窓の縁に絵の黒い縁が出ないように）と、両端を溶かすマスク */
+const STATION_SCALE = 1.15;
+const STATION_MASK = 'linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%)';
 /** 景色の切り替え（ふわっと重ねる）時間 */
 const FADE_MS = 1600;
 
@@ -79,7 +96,7 @@ const stationW = (v: TrainView, wh: number) => (assets.sets[v].station.width / a
  *   D = (窓の幅 + ホームの幅) / 2、減速度 = 流れる速さ × v² / (2D)
  * 発車すると、ホームは加速に合わせて左へ流れ去る。
  */
-export function TrainStage({ hour, moving, express, rain, paused = false, sound, station = null, approach = null }: TrainStageProps) {
+export function TrainStage({ hour, moving, cls, rain, paused = false, sound, station = null, approach = null }: TrainStageProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [L, setL] = useState<TrainLayout | null>(null);
   const view = viewFor(hour, rain);
@@ -94,12 +111,14 @@ export function TrainStage({ hour, moving, express, rain, paused = false, sound,
   }, [view]);
 
   const tracks = useRef(new Map<TrainView, Tracks>());
+  const wireRef = useRef<HTMLCanvasElement>(null);
   const swayRef = useRef<HTMLDivElement>(null);
 
   const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const live = useRef({ moving, express, station: !!station, deadline: null as number | null });
+  const live = useRef({ moving, cls, station: !!station, deadline: null as number | null, view });
+  live.current.view = view;
   live.current.moving = moving;
-  live.current.express = express;
+  live.current.cls = cls;
   live.current.station = !!station;
   // 集中の 1 回が終わる時刻（1 秒ごとに届く値から、フレームの時計に直しておく）
   const approachMs = approach?.inMs ?? null;
@@ -112,9 +131,12 @@ export function TrainStage({ hour, moving, express, rain, paused = false, sound,
   else if (approach) lastSign.current = approach.sign;
   const sign = lastSign.current;
   const state = useRef({
-    v: moving ? (express ? CRUISE.express : CRUISE.local) : 0,
+    v: moving ? CLASSES[cls].cruise : 0,
     off: { sky: 0, mid: 0, fence: 0 },
-    pole: { x: Infinity, wait: 1 + Math.random() * 2 },
+    // 電柱は線路に沿った位置（d と同じ単位）で持つ。架線は隣り合う電柱の間にたるむ
+    d: 0,
+    poles: [] as number[],
+    wireAt: NaN,
     t: 0,
     bump: 0,
     joint: 0,
@@ -154,8 +176,22 @@ export function TrainStage({ hour, moving, express, rain, paused = false, sound,
     });
     const fenceTile = (assets.fence.width / assets.fence.height) * wh * GEO.fence.h;
     const poleW = Math.max(...VIEWS.map((v) => tile(v).pole));
-    // 駅のホームが窓の外（右）から真ん中まで進む距離
-    const D = (ww + Math.max(...VIEWS.map((v) => stationW(v, wh)))) / 2 + 8;
+    // 駅のホームが窓の外（右）から真ん中まで進む距離（拡大したぶんも含めて）
+    const D = (ww + Math.max(...VIEWS.map((v) => stationW(v, wh))) * STATION_SCALE) / 2 + 8;
+    // 電柱の間隔（線路に沿った px）：巡航で 2〜5 秒ごと
+    const poleRun = (ww + poleW) / POLE_PASS;
+    const gap = () => poleRun * (POLE_GAP[0] + Math.random() * (POLE_GAP[1] - POLE_GAP[0]));
+    if (!s.poles.length) s.poles = [s.d - gap() * Math.random()];
+    // 架線のキャンバス（窓の上の 1/3）
+    const cv = wireRef.current;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const ch = wh * 0.34;
+    if (cv) {
+      cv.width = Math.round(ww * dpr);
+      cv.height = Math.round(ch * dpr);
+    }
+    const ctx = cv?.getContext('2d') ?? null;
+    s.wireAt = NaN;
     const stSpeed = SPEED.fence * k;
     let raf = 0;
     let last = performance.now();
@@ -165,8 +201,8 @@ export function TrainStage({ hour, moving, express, rain, paused = false, sound,
       last = now;
       s.t += dt;
       const cfg = live.current;
-      const cls = cfg.express ? 'express' : 'local';
-      const target = cfg.moving ? CRUISE[cls] : 0;
+      const c = CLASSES[cfg.cls];
+      const target = cfg.moving ? c.cruise : 0;
       const st = s.st;
       // 駅に止まりたいか：休憩・終着・出発前、または集中の終わりまでの時間がブレーキの時間を切ったとき
       const left = cfg.deadline == null ? Infinity : (cfg.deadline - now) / 1000;
@@ -194,7 +230,7 @@ export function TrainStage({ hour, moving, express, rain, paused = false, sound,
       } else if (st.phase === 'stopped') {
         s.v = 0;
       } else {
-        if (s.v < target) s.v = Math.min(target, s.v + ACCEL[cls] * dt * (1 - 0.55 * (s.v / target) ** 2));
+        if (s.v < target) s.v = Math.min(target, s.v + c.accel * dt * (1 - 0.55 * (s.v / target) ** 2));
         else s.v = Math.max(target, s.v - BRAKE * dt * (0.4 + s.v));
         if (s.v < 0.002) s.v = 0;
       }
@@ -207,17 +243,38 @@ export function TrainStage({ hour, moving, express, rain, paused = false, sound,
       s.off.mid += SPEED.mid * sp * dt;
       s.off.fence += SPEED.fence * sp * dt;
 
-      // 電柱：ときどき右から現れ、一瞬で駆け抜ける
-      if (s.pole.x === Infinity) {
-        if (s.v > 0.25) {
-          s.pole.wait -= dt * s.v;
-          if (s.pole.wait <= 0) s.pole.x = ww;
-        }
-      } else {
-        s.pole.x -= ((ww + poleW) / Math.max(0.3, POLE_PASS / s.v)) * dt * (reduced ? 0.6 : 1);
-        if (s.pole.x < -poleW || s.v === 0) {
-          s.pole.x = Infinity;
-          s.pole.wait = POLE_GAP[0] + Math.random() * (POLE_GAP[1] - POLE_GAP[0]);
+      // 電柱：線路に沿って並ぶ。窓を一瞬で駆け抜ける速さ（速いときは 0.3 秒で頭打ち）
+      s.d += ((ww + poleW) / Math.max(0.3, POLE_PASS / Math.max(s.v, 1e-6))) * dt * (reduced ? 0.6 : 1);
+      while (s.poles[s.poles.length - 1] < s.d + ww + poleW * 2) s.poles.push(s.poles[s.poles.length - 1] + gap());
+      while (s.poles.length > 2 && s.poles[1] < s.d - poleW) s.poles.shift();
+      // いま窓に見える電柱（間隔が窓より広いので、見えるのは多くても 1 本）
+      const seen = s.poles.find((p) => p - s.d > -poleW && p - s.d < ww + poleW);
+      const poleX = seen == null ? null : seen - s.d - poleW * POLE_AXIS;
+
+      // 架線：電柱で高く留まり、間で垂れる。電柱が来ると跳ね上がり、過ぎるとまた垂れていく
+      if (ctx && s.d !== s.wireAt) {
+        s.wireAt = s.d;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, ww, ch);
+        ctx.strokeStyle = WIRE_INK[cfg.view];
+        ctx.lineCap = 'round';
+        const N = 28;
+        for (const w of WIRES) {
+          ctx.lineWidth = w.w;
+          ctx.beginPath();
+          let j = 0;
+          for (let i = 0; i <= N; i++) {
+            const x = (ww * i) / N;
+            const p = s.d + x;
+            while (j < s.poles.length - 2 && s.poles[j + 1] <= p) j++;
+            const a = s.poles[j];
+            const b = s.poles[j + 1];
+            const u = Math.min(1, Math.max(0, (p - a) / (b - a)));
+            const y = (w.y + w.sag * 4 * u * (1 - u)) * wh;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
         }
       }
 
@@ -226,7 +283,7 @@ export function TrainStage({ hour, moving, express, rain, paused = false, sound,
         if (tr.sky) tr.sky.style.transform = `translate3d(${-(s.off.sky % t.sky).toFixed(1)}px,0,0)`;
         if (tr.mid) tr.mid.style.transform = `translate3d(${-(s.off.mid % t.mid).toFixed(1)}px,0,0)`;
         if (tr.fence) tr.fence.style.transform = `translate3d(${-(s.off.fence % fenceTile).toFixed(1)}px,0,0)`;
-        if (tr.pole) tr.pole.style.transform = s.pole.x === Infinity ? 'translate3d(-9999px,0,0)' : `translate3d(${s.pole.x.toFixed(1)}px,0,0)`;
+        if (tr.pole) tr.pole.style.transform = poleX == null ? 'translate3d(-9999px,0,0)' : `translate3d(${poleX.toFixed(1)}px,0,0)`;
         if (tr.station) tr.station.style.transform = st.phase === 'none' ? 'translate3d(-99999px,0,0)' : `translate3d(${st.x.toFixed(1)}px,0,0)`;
       }
 
@@ -243,7 +300,7 @@ export function TrainStage({ hour, moving, express, rain, paused = false, sound,
 
       if (now - s.lastSound > 120) {
         s.lastSound = now;
-        trainSound.setMotion(s.v / CRUISE[cls], cfg.express);
+        trainSound.setMotion(s.v / c.cruise, c.rate);
       }
     };
     raf = requestAnimationFrame(frame);
@@ -275,6 +332,8 @@ export function TrainStage({ hour, moving, express, rain, paused = false, sound,
             {views.map(({ v, fade }) => (
               <ViewLayers key={v} view={v} L={L} fade={fade} part="pole" bind={(t) => bindTracks(v, t)} />
             ))}
+            {/* 架線（電柱の間にたるむ電線。窓の上のほう） */}
+            <canvas ref={wireRef} className="pointer-events-none absolute left-0 top-0" style={{ width: L.win.w, height: L.win.h * 0.34 }} aria-hidden />
             {/* 駅のホーム（止まるときだけ右から流れ込む。いちばん手前の景色） */}
             {views.map(({ v, fade }) => (
               <ViewLayers key={v} view={v} L={L} fade={fade} part="station" sign={sign} bind={(t) => bindTracks(v, t)} />
@@ -348,13 +407,30 @@ function ViewLayers({ view, L, fade, part, bind, sign = null }: { view: TrainVie
   const wh = L.win.h;
   const midH = wh * GEO.mid.h;
   const poleH = wh * GEO.pole.h;
+  const poleW = (a.pole.width / a.pole.height) * poleH;
   if (part === 'station') {
     const sw = stationW(view, wh);
     return (
       <div className={`pointer-events-none absolute inset-0 ${fade ? 'tr-fadein' : ''}`}>
         <div className="absolute top-0 will-change-transform" style={{ left: (L.win.w - sw) / 2, width: sw, height: wh, transform: 'translate3d(-99999px,0,0)' }} ref={(el) => { t.current.station = el; }}>
-          <img src={url.station(view)} alt="" aria-hidden draggable={false} decoding="async" className="block h-full w-full max-w-none select-none" />
-          {sign && <SignBoard sign={sign} view={view} w={sw} h={wh} />}
+          {/* 絵を少し拡大し（黒い縁を出さない）、両端を景色へ溶かす。絵の横の真ん中（屋根の下の駅名標）が窓の真ん中に止まる */}
+          <div className="absolute inset-0" style={{ transform: `scale(${STATION_SCALE})`, WebkitMaskImage: STATION_MASK, maskImage: STATION_MASK }}>
+            <img src={url.station(view)} alt="" aria-hidden draggable={false} decoding="async" className="block h-full w-full max-w-none select-none" />
+            {sign && <SignBoard sign={sign} view={view} w={sw} h={wh} />}
+          </div>
+          {/* ホームの始まりと終わりに電柱を立てて、景色とのつなぎ目を隠す */}
+          {[-1, 1].map((side) => (
+            <img
+              key={side}
+              src={url.pole(view)}
+              alt=""
+              aria-hidden
+              draggable={false}
+              decoding="async"
+              className="absolute max-w-none select-none"
+              style={{ top: wh * GEO.pole.top, height: poleH, width: poleW, left: sw / 2 + side * sw * STATION_SCALE * 0.39 - poleW * POLE_AXIS }}
+            />
+          ))}
         </div>
       </div>
     );
@@ -363,7 +439,7 @@ function ViewLayers({ view, L, fade, part, bind, sign = null }: { view: TrainVie
     return (
       <div className={`absolute inset-0 ${fade ? 'tr-fadein' : ''}`}>
         <div className="absolute left-0 will-change-transform" style={{ top: wh * GEO.pole.top, transform: 'translate3d(-9999px,0,0)' }} ref={(el) => { t.current.pole = el; }}>
-          <img src={url.pole(view)} alt="" aria-hidden draggable={false} decoding="async" className="block max-w-none select-none" style={{ height: poleH, width: (a.pole.width / a.pole.height) * poleH }} />
+          <img src={url.pole(view)} alt="" aria-hidden draggable={false} decoding="async" className="block max-w-none select-none" style={{ height: poleH, width: poleW }} />
         </div>
       </div>
     );

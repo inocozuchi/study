@@ -1,12 +1,12 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useApp } from '@/store/AppStore';
 import { taskIcon } from '@/lib/tasks';
 import { MIN, pad } from '@/lib/time';
 import { springBouncy, springSoft } from '@/lib/motion';
-import { goalName, originName } from './stations';
+import { bookedStops, goalName, originName, routeOf } from './stations';
 import { HardTicket } from './booking/HardTicket';
-import { fare, lastPassed, stationByName, stopsFrom } from './booking/line';
+import { CLASSES, classOf, fare, lastPassed } from './booking/line';
 import type { DesignResultProps } from '../types';
 
 function fmtSpent(ms: number) {
@@ -22,7 +22,7 @@ function fmtSpent(ms: number) {
  * 予約のない旅（予定から出発したなど）は乗車記念の硬券。
  */
 export function TrainResult({ result, onContinue }: DesignResultProps) {
-  const { settings, subjectById, subjects, logs } = useApp();
+  const { settings, updateSettings, subjectById, subjects, logs } = useApp();
   const subject = subjectById(result.subjectId);
   const b = result.booking;
   const d = new Date(result.endedAt);
@@ -31,7 +31,13 @@ export function TrainResult({ result, onContinue }: DesignResultProps) {
   const totalKm = Math.round(rides.reduce((s, l) => s + l.km, 0) * 10) / 10;
 
   // 途中で終えたときは、通り過ぎた最後の駅で降りる
-  const reached = b ? (result.arrived ? b.to : lastPassed(stopsFrom(b.from), result.focusMs / MIN)?.station.name ?? b.from) : null;
+  const reached = b ? (result.arrived ? b.to : lastPassed(bookedStops(b, settings), result.focusMs / MIN)?.station.name ?? b.from) : null;
+  const route = b ? routeOf(b, settings) : null;
+  const cls = route?.cls ?? classOf(settings.trainClass);
+  // 着いた駅（途中下車の駅）が次の出発駅：同じ路線・同じ向きに乗り継げる
+  useEffect(() => {
+    if (b && route && reached && reached !== settings.trainFrom) updateSettings({ trainFrom: reached, trainLine: route.line.id, trainDir: route.dir });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="tr-mincho absolute inset-0 overflow-y-auto overscroll-contain bg-black/35">
@@ -56,8 +62,9 @@ export function TrainResult({ result, onContinue }: DesignResultProps) {
                 seat: b.seat,
                 task: b.task,
                 icon: taskIcon(b.task, subjects),
-                express: settings.trainClass === 'express',
-                fare: fare(b.km, settings.trainClass === 'express'),
+                line: route?.line.name ?? '',
+                cls,
+                fare: fare(b.km, cls),
                 date: new Date(result.startedAt),
                 serial: `${pad(d.getHours())}${pad(d.getMinutes())}`,
               }}
@@ -80,7 +87,8 @@ export function TrainResult({ result, onContinue }: DesignResultProps) {
             <span className="text-[#7A2830]">{subject?.name ?? b?.task ?? '集中'}</span> に <span className="text-[#7A2830]">{spent}</span> 乗車
           </p>
           <p className="text-[12px] text-[#6B4A2B]">
-            {settings.trainClass === 'express' ? '特急' : '普通'}
+            {route ? `${route.line.name} · ` : ''}
+            {CLASSES[cls].label}
             {result.cycles > 0 ? ` · 途中 ${result.cycles} 駅に停車` : ''}
             {b && result.km != null ? ` · ${result.km} 粁` : ''}
           </p>
@@ -109,7 +117,7 @@ export function TrainResult({ result, onContinue }: DesignResultProps) {
         <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...springBouncy, delay: 1.1 }} whileTap={{ scale: 0.95 }} onClick={onContinue} className="tr-enji mt-6 h-12 rounded-[10px] px-10 text-[17px] font-bold tracking-[0.3em]">
           改札を出る
         </motion.button>
-        {b && <p className="mt-2 text-[11px] text-[#F4EEDD]/50">{stationByName(b.from).name}から {b.km} 粁の旅</p>}
+        {b && <p className="mt-2 text-[11px] text-[#F4EEDD]/50">{b.from}から {b.km} 粁の旅</p>}
       </div>
     </div>
   );

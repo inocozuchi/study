@@ -78,6 +78,20 @@
   to { transform: translate3d(-50%, 0, 0); }
 }
 .fl-clouds { animation: fl-clouds 38s linear infinite; will-change: transform; }
+/* 窓の外の空：2 枚つなぎの帯を 1 枚分だけ流す（右の座席は右から左、左の座席は逆） */
+.fl-sky { animation: fl-clouds 140s linear infinite; will-change: transform; }
+.fl-sky-rev { animation-direction: reverse; }
+/* 主翼のかすかな揺れ（気流） */
+@keyframes fl-wing {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  30% { transform: translate3d(0, -0.6%, 0) rotate(-0.35deg); }
+  65% { transform: translate3d(0, 0.5%, 0) rotate(0.25deg); }
+}
+.fl-wing { animation: fl-wing 6.5s ease-in-out infinite; transform-origin: 0% 100%; will-change: transform; }
+@media (prefers-reduced-motion: reduce) {
+  .fl-sky { animation-duration: 280s; }
+  .fl-wing { animation: none; }
+}
 @keyframes fl-blink {
   0%, 86%, 100% { opacity: 0; }
   88%, 92% { opacity: 1; }

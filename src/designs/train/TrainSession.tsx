@@ -6,16 +6,21 @@ import { useApp } from '@/store/AppStore';
 import { fmtDuration, fmtTimer, MIN } from '@/lib/time';
 import { springBouncy } from '@/lib/motion';
 import { destinationOf, stopFor } from './stations';
+import { CLASSES, classOf } from './booking/line';
+import type { TrainClass } from '@/types';
 import type { DesignSessionProps } from '../types';
 
 const HOLD_MS = 1100;
 
-/** 方向幕：種別（特急は赤、普通は紺）と行き先 */
-export function RollSign({ express, goal, className = '' }: { express: boolean; goal: string; className?: string }) {
+/** 方向幕の種別の色（特急は赤、急行は朱、快速は緑、普通は紺） */
+const ROLL: Record<TrainClass, string> = { local: '#2E3A52', rapid: '#3E5A3A', kyuko: '#A2582C', express: '#8E3A30' };
+
+/** 方向幕：種別と行き先 */
+export function RollSign({ cls, goal, className = '' }: { cls: TrainClass; goal: string; className?: string }) {
   return (
     <span className={`tr-roll inline-flex items-stretch overflow-hidden rounded-[6px] text-[#1F2328] ${className}`}>
-      <span className="grid place-items-center px-2.5 text-[15px] font-extrabold tracking-[0.2em] text-[#F4EEDD]" style={{ background: express ? '#8E3A30' : '#2E3A52' }}>
-        {express ? '特急' : '普通'}
+      <span className="grid place-items-center px-2.5 text-[15px] font-extrabold tracking-[0.2em] text-[#F4EEDD]" style={{ background: ROLL[cls] }}>
+        {CLASSES[cls].label}
       </span>
       <span className="max-w-[56vw] truncate px-3 py-1 text-[17px] font-extrabold tracking-[0.12em]">{goal}<span className="ml-0.5 text-[13px]">行</span></span>
     </span>
@@ -32,7 +37,7 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
   const [hold, setHold] = useState<{ x: number; y: number } | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const start = useRef<{ x: number; y: number } | null>(null);
-  const express = settings.trainClass === 'express';
+  const cls = classOf(timer.booking?.cls ?? settings.trainClass);
 
   useEffect(() => {
     if (!hint) return;
@@ -100,7 +105,7 @@ export function TrainSession({ onMusic, onEnd }: DesignSessionProps) {
           <Music size={20} />
         </motion.button>
         <div className="mt-2 flex flex-col items-center">
-          <RollSign express={express} goal={destinationOf(timer, settings)} />
+          <RollSign cls={cls} goal={destinationOf(timer, settings)} />
           <button onClick={() => !rest && !waiting && t.toggle()} className="pointer-events-auto mt-3 text-center" aria-label={timer.running ? '一時停止' : '再開'}>
             <span className="tabular block font-digits text-[40px] font-semibold leading-none tracking-wider text-[#F4EEDD] [text-shadow:0_2px_0_rgba(0,0,0,0.45),0_0_18px_rgba(0,0,0,0.3)]">{fmtTimer(shown)}</span>
             <span className="mt-1.5 inline-block rounded-full bg-black/35 px-2.5 py-0.5 text-[11px] font-bold text-[#F4EEDD]/90">{label}</span>

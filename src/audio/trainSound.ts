@@ -8,13 +8,11 @@ import { detectLoopRegion, seamlessBuffer } from './loopPlayer';
  * （クロスフェードは使わない。先頭・末尾のエンコーダーの無音だけを外し、波形が飛ぶときだけ数 ms 重ねる）。
  * 速さは playbackRate とピッチで表す：
  *   - 停車中は無音。発車すると playbackRate と音量が少しずつ上がる（加速）
- *   - 巡航の playbackRate は普通 1.0、特急 1.4
+ *   - 巡航の playbackRate は普通 1.0・快速 1.12・急行 1.25・特急 1.4
  *   - 停車に向けて下がっていき、止まると消える
  * シーンが 1 秒に数回 setMotion を呼ぶ。値はなめらかに追いかける（setTargetAtTime）。
  */
 
-const LOCAL_RATE = 1.0;
-const EXPRESS_RATE = 1.4;
 /** 動き出した直後の playbackRate（巡航の何倍か） */
 const START_RATE = 0.55;
 
@@ -29,7 +27,8 @@ class TrainSound {
   private enabled = false;
   private volume = 0.8;
   private speed = 0;
-  private express = false;
+  /** 巡航の playbackRate（種別で決まる。普通 1.0 … 特急 1.4） */
+  private cruise = 1;
   private stopTimer: ReturnType<typeof setTimeout> | null = null;
 
   /** public/sounds の一覧から train で始まる音声ファイルを探す */
@@ -72,11 +71,11 @@ class TrainSound {
     this.apply();
   }
 
-  /** speed：巡航を 1 とした速さ（0 = 停車）。express：特急 */
-  setMotion(speed: number, express: boolean) {
-    if (Math.abs(speed - this.speed) < 0.01 && express === this.express) return;
+  /** speed：巡航を 1 とした速さ（0 = 停車）。cruise：巡航の playbackRate（普通 1.0・快速 1.12・急行 1.25・特急 1.4） */
+  setMotion(speed: number, cruise: number) {
+    if (Math.abs(speed - this.speed) < 0.01 && cruise === this.cruise) return;
     this.speed = Math.max(0, speed);
-    this.express = express;
+    this.cruise = cruise;
     this.apply();
   }
 
@@ -108,8 +107,8 @@ class TrainSound {
     const now = ctx.currentTime;
     const audible = this.enabled && this.speed > 0.005;
     const v = Math.min(1, this.speed);
-    const cruise = this.express ? EXPRESS_RATE : LOCAL_RATE;
-    // 加速の途中は低く、巡航で 1.0 / 1.4 に届く
+    const cruise = this.cruise;
+    // 加速の途中は低く、巡航で種別の速さに届く
     const rate = cruise * (START_RATE + (1 - START_RATE) * v);
     src.playbackRate.cancelScheduledValues(now);
     src.playbackRate.setTargetAtTime(rate, now, 0.35);

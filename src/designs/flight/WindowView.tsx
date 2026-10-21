@@ -1,84 +1,100 @@
+import { useLayoutEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 
-const WIN_W = 248;
-const WIN_H = 360;
-const LIP = 26;
+/** 窓枠の絵（public/flight/window-frame.webp）の比と、透過した窓ガラスの位置（絵に対する割合。scripts/process-flight-assets.py） */
+const FRAME_AR = 1000 / 1791;
+const GLASS = { x: 0.231, y: 0.3316, w: 0.5328, h: 0.4514 };
+const BASE = import.meta.env.BASE_URL;
 
-/** 星の位置（決まった並び。毎回変わらない） */
-const STARS = Array.from({ length: 34 }, (_, i) => {
-  const a = Math.sin(i * 12.9898) * 43758.5453;
-  const b = Math.sin(i * 78.233) * 12543.1234;
-  return { x: (a - Math.floor(a)) * 100, y: (b - Math.floor(b)) * 52, r: i % 7 === 0 ? 1.6 : 1 };
-});
+export type SkySet = 'day' | 'sunset' | 'night';
+/** 時間帯 → 空の絵（夜明けは夕方の絵） */
+export const skySetFor = (hour: number): SkySet => (hour >= 6.5 && hour < 16.5 ? 'day' : (hour >= 16.5 && hour < 19) || (hour >= 5 && hour < 6.5) ? 'sunset' : 'night');
+
+/** 窓枠・主翼にかける色（夜は内装を暗く、夕方は暖かく。動かない絵にだけかける） */
+const FRAME_FILTER: Record<SkySet, string> = {
+  day: 'none',
+  sunset: 'brightness(0.82) sepia(0.18)',
+  night: 'brightness(0.4) saturate(0.7)',
+};
+const WING_FILTER: Record<SkySet, string> = {
+  day: 'none',
+  sunset: 'sepia(0.4) saturate(1.3) brightness(0.82) hue-rotate(-8deg)',
+  night: 'brightness(0.32) saturate(0.6)',
+};
 
 /**
- * 窓の外（機内の楕円の窓）。夜の雲海がゆっくり流れ、主翼の先の灯りが点滅する。
- * 窓のシェードは指で上下に開け閉めできる。
+ * 窓の外（右上の窓のボタンで開くサブの画面。メインはレーダーの地図）。
+ * 下から：空と雲海（sky。ゆっくり横に流れる）→ 主翼（wing。かすかに揺れる）→ シェード → 窓枠（window-frame。ガラスは透過）。
+ * 右の座席（D / F）は進行方向が右：雲は右から左へ。左の座席（A / C）は雲が左から右へ流れ、主翼を左右反転する。
  */
-export function WindowView({ onClose }: { onClose: () => void }) {
+export function WindowView({ onClose, seat, hour }: { onClose: () => void; seat?: string; hour: number }) {
+  const left = /[ABC]$/i.test(seat ?? '');
+  const set = skySetFor(hour);
+  const glass = useRef<HTMLDivElement>(null);
+  const [h, setH] = useState(0);
+  useLayoutEffect(() => {
+    const el = glass.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setH(el.clientHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const lip = h * 0.05;
+
   return (
     <motion.div
-      className="absolute inset-0 z-[35] grid place-items-center bg-[radial-gradient(90%_70%_at_50%_45%,#2A2D33,#121418_70%)]"
+      className="absolute inset-0 z-[35] overflow-hidden bg-[#121418]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onPointerDown={(e) => e.stopPropagation()}
       onPointerUp={(e) => e.stopPropagation()}
     >
-      <button onClick={onClose} aria-label="窓を閉じる（地図に戻る）" className="fl-glass absolute left-1/2 top-[calc(var(--safe-top)+10px)] flex h-10 -translate-x-1/2 items-center gap-1.5 rounded-full pl-3 pr-4 text-[14px] font-semibold active:scale-95">
-        <X size={16} /> 地図に戻る
-      </button>
-
-      {/* 窓枠（内装のパネル） */}
-      <div className="relative grid place-items-center rounded-[150px] p-[22px] shadow-[inset_0_2px_0_rgba(255,255,255,0.12),0_30px_60px_-20px_rgba(0,0,0,0.8)]" style={{ background: 'linear-gradient(160deg,#E4E1DA,#B9B5AC 60%,#9F9B93)' }}>
-        <div className="relative overflow-hidden rounded-[124px] shadow-[inset_0_0_0_6px_#8C887F,inset_0_8px_18px_rgba(0,0,0,0.5)]" style={{ width: WIN_W, height: WIN_H }}>
-          {/* 夜空 */}
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg,#050A1C 0%,#0D1838 45%,#24305A 70%,#4B3A5E 100%)' }} />
-          {STARS.map((s, i) => (
-            <span key={i} className="absolute rounded-full bg-white" style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.r * 2, height: s.r * 2, opacity: 0.5 + (i % 3) * 0.2 }} />
-          ))}
-          <span className="absolute right-[22%] top-[12%] h-7 w-7 rounded-full bg-[#F4EFDF] shadow-[0_0_24px_6px_rgba(244,239,223,0.35)]" />
-          {/* 雲海（2 枚つなぎを流す） */}
-          <div className="fl-clouds absolute bottom-0 left-0 h-[46%] w-[200%]">
+      {/* 窓枠の絵を画面いっぱいに（cover）。窓ガラスの位置はこの箱の割合で決まる */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ width: `max(100vw, calc(100dvh * ${FRAME_AR}))`, aspectRatio: `${FRAME_AR}` }}>
+        <div
+          ref={glass}
+          className="absolute overflow-hidden rounded-[48%/34%]"
+          style={{ left: `${(GLASS.x - 0.01) * 100}%`, top: `${(GLASS.y - 0.01) * 100}%`, width: `${(GLASS.w + 0.02) * 100}%`, height: `${(GLASS.h + 0.02) * 100}%` }}
+        >
+          {/* z1 空と雲海：2 枚つなぎを流す */}
+          <div className={`fl-sky absolute inset-y-0 left-0 flex h-full w-max ${left ? 'fl-sky-rev' : ''}`} style={{ zIndex: 1 }}>
             {[0, 1].map((k) => (
-              <div
-                key={k}
-                className="absolute bottom-0 h-full w-1/2"
-                style={{
-                  left: `${k * 50}%`,
-                  background:
-                    'radial-gradient(40% 50% at 15% 80%,rgba(150,160,200,0.75),transparent 70%),radial-gradient(35% 45% at 45% 70%,rgba(120,130,175,0.7),transparent 70%),radial-gradient(45% 55% at 78% 85%,rgba(160,165,205,0.75),transparent 70%),radial-gradient(60% 40% at 50% 100%,rgba(110,118,160,0.9),transparent 75%)',
-                }}
-              />
+              <img key={k} src={`${BASE}flight/${set}/sky.webp`} alt="" draggable={false} className="h-full w-auto max-w-none select-none" />
             ))}
           </div>
-          {/* 主翼の先と灯り */}
-          <svg className="absolute bottom-[18%] left-0 w-[70%]" viewBox="0 0 170 60" aria-hidden>
-            <path d="M0 40 L150 22 L158 26 L0 60 Z" fill="#1B1E25" />
-            <path d="M0 40 L150 22" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
-          </svg>
-          <span className="fl-blink absolute bottom-[calc(18%+30px)] left-[calc(70%-12px)] h-2.5 w-2.5 rounded-full bg-[#FF453A] shadow-[0_0_14px_5px_rgba(255,69,58,0.7)]" />
-          {/* 窓ガラスの映り込み */}
-          <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(130deg,rgba(255,255,255,0.12),transparent_35%)]" />
-
-          {/* シェード（下へ引くと閉まる） */}
-          <motion.div
-            drag="y"
-            dragConstraints={{ top: -(WIN_H - LIP), bottom: 0 }}
-            dragElastic={0.04}
-            dragMomentum={false}
-            initial={{ y: -(WIN_H - LIP) }}
-            className="absolute inset-x-0 top-0 cursor-grab touch-none"
-            style={{ height: WIN_H }}
-            aria-label="窓のシェード（上下にドラッグ）"
-          >
-            <div className="h-full w-full" style={{ background: 'repeating-linear-gradient(180deg,#DAD6CD 0 3px,#CFCBC1 3px 4px)' }} />
-            <span className="absolute bottom-[8px] left-1/2 h-[6px] w-14 -translate-x-1/2 rounded-full bg-[#9F9B93] shadow-[inset_0_1px_1px_rgba(0,0,0,0.25)]" />
-          </motion.div>
+          {/* z5 主翼：左の座席は左右反転。揺れは内側の箱だけ */}
+          <div className="absolute bottom-[-4%] w-[175%]" style={{ zIndex: 5, [left ? 'right' : 'left']: '-62%', transform: left ? 'scaleX(-1)' : undefined }}>
+            <div className="fl-wing">
+              <img src={`${BASE}flight/wing.webp`} alt="" draggable={false} className="block w-full select-none" style={{ filter: WING_FILTER[set] }} />
+            </div>
+          </div>
+          {/* シェード（下へ引くと閉まる）。窓枠の下に入る */}
+          {h > 0 && (
+            <motion.div
+              drag="y"
+              dragConstraints={{ top: -(h - lip), bottom: 0 }}
+              dragElastic={0.04}
+              dragMomentum={false}
+              initial={{ y: -(h - lip) }}
+              className="absolute inset-x-0 top-0 cursor-grab touch-none"
+              style={{ height: h, zIndex: 8 }}
+              aria-label="窓のシェード（上下にドラッグ）"
+            >
+              <div className="h-full w-full" style={{ background: 'repeating-linear-gradient(180deg,#DAD6CD 0 3px,#CFCBC1 3px 4px)', filter: FRAME_FILTER[set] }} />
+              <span className="absolute bottom-[10px] left-1/2 h-[6px] w-14 -translate-x-1/2 rounded-full bg-[#9F9B93] shadow-[inset_0_1px_1px_rgba(0,0,0,0.25)]" />
+            </motion.div>
+          )}
         </div>
+        {/* z10 窓枠（内装のパネル）。押した指はシェードへ通す */}
+        <img src={`${BASE}flight/window-frame.webp`} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full select-none" style={{ zIndex: 10, filter: FRAME_FILTER[set] }} />
       </div>
-      <p className="absolute top-[calc(var(--safe-top)+62px)] text-[12px] text-white/45">シェードは上下にドラッグして開け閉めできます</p>
+
+      <button onClick={onClose} aria-label="窓を閉じる（地図に戻る）" className="fl-glass absolute left-1/2 top-[calc(var(--safe-top)+10px)] z-20 flex h-10 -translate-x-1/2 items-center gap-1.5 rounded-full pl-3 pr-4 text-[14px] font-semibold active:scale-95">
+        <X size={16} /> 地図に戻る
+      </button>
+      <p className="absolute inset-x-0 top-[calc(var(--safe-top)+60px)] z-20 text-center text-[12px] text-white/70 [text-shadow:0_1px_4px_rgba(0,0,0,0.6)]">シェードは上下にドラッグして開け閉めできます</p>
     </motion.div>
   );
 }

@@ -6,7 +6,7 @@ import { SUBJECT_ICONS } from '@/lib/subjects';
 import { taskOptions, type TaskOption } from '@/lib/tasks';
 import { playSfx } from '@/audio/sfx';
 import { jhm, Steps } from './LineStep';
-import type { Stop } from './line';
+import { isObservation, type Stop } from './line';
 import type { TrainDraft } from './TrainBooking';
 import type { SubjectIconKey, TrainClass } from '@/types';
 
@@ -23,7 +23,7 @@ function Glyph({ icon, size = 16 }: { icon: SubjectIconKey; size?: number }) {
   return <Icon size={size} strokeWidth={2.2} />;
 }
 
-/** ② 座席：客車を選び（三等客車＝普通 / 展望車＝特急）、木の座席を押して「何に集中しますか？」 */
+/** ② 座席：客車を選び（三等客車＝普通・快速 / 展望車＝急行・特急）、木の座席を押して「何に集中しますか？」 */
 export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDraft; stop: Stop; patch: (p: Partial<TrainDraft>) => void; onBack: () => void; onNext: () => void }) {
   const { activeSubjects } = useApp();
   const options = useMemo(() => taskOptions(activeSubjects), [activeSubjects]);
@@ -45,7 +45,9 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
     setOpen(null);
     playSfx('tick');
   };
-  const setCar = (cls: TrainClass) => {
+  // 客車を替えると種別も替わる（三等客車は普通・快速、展望車は急行・特急。同じ側ならそのまま）
+  const setCar = (obs: boolean) => {
+    const cls: TrainClass = obs === isObservation(draft.cls) ? draft.cls : obs ? 'express' : 'local';
     if (cls !== draft.cls) patch({ cls, seat: null, task: null, icon: null });
     setOpen(null);
   };
@@ -72,13 +74,13 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
         <div className="mt-3 grid grid-cols-2 gap-2">
           {(
             [
-              { cls: 'local', name: '三等客車', note: '普通 · 木のボックス席' },
-              { cls: 'express', name: '展望車', note: '特急 · ソファと展望デッキ' },
+              { obs: false, name: '三等客車', note: '普通・快速 · 木のボックス席' },
+              { obs: true, name: '展望車', note: '急行・特急 · ソファと展望デッキ' },
             ] as const
           ).map((c) => {
-            const on = draft.cls === c.cls;
+            const on = isObservation(draft.cls) === c.obs;
             return (
-              <button key={c.cls} onClick={() => setCar(c.cls)} aria-pressed={on} className={`rounded-[8px] px-3 py-2 text-left ${on ? 'tr-enji' : 'border border-[#B8955A]/40 bg-black/25 text-[#F4EEDD]/80'}`}>
+              <button key={c.name} onClick={() => setCar(c.obs)} aria-pressed={on} className={`rounded-[8px] px-3 py-2 text-left ${on ? 'tr-enji' : 'border border-[#B8955A]/40 bg-black/25 text-[#F4EEDD]/80'}`}>
                 <span className="block text-[15px] font-bold tracking-[0.15em]">{c.name}</span>
                 <span className={`block text-[11px] ${on ? 'text-[#D9C08A]' : 'text-[#F4EEDD]/50'}`}>{c.note}</span>
               </button>
@@ -89,8 +91,8 @@ export function CarStep({ draft, stop, patch, onBack, onNext }: { draft: TrainDr
 
       <div className="no-scrollbar absolute inset-0 overflow-y-auto overscroll-contain" onClick={() => setOpen(null)}>
         <div ref={content} className="relative mx-auto w-full max-w-[393px] pb-[calc(env(safe-area-inset-bottom)+120px)] pt-[calc(var(--safe-top)+150px)]">
-          <CarBody express={draft.cls === 'express'}>
-            {draft.cls === 'local' ? (
+          <CarBody express={isObservation(draft.cls)}>
+            {!isObservation(draft.cls) ? (
               Array.from({ length: BOXES }, (_, b) => (
                 <div key={b} className="flex flex-col gap-[3px] py-2">
                   {[b * 2 + 1, b * 2 + 2].map((row, k) => (

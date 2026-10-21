@@ -1,0 +1,52 @@
+{
+  "hokkaido": {
+    "lonMin": 139.3,
+    "lonMax": 145.9,
+    "latMin": 41.2,
+    "latMax": 45.8,
+    "yMax": 51.638368,
+    "scale": 272.727273,
+    "width": 1800,
+    "height": 1730.8
+  },
+  "tohoku": {
+    "lonMin": 138.4,
+    "lonMax": 142.6,
+    "latMin": 35.2,
+    "latMax": 41.6,
+    "yMax": 45.825294,
+    "scale": 220.238095,
+    "width": 925,
+    "height": 1800.7
+  },
+  "tokaido": {
+    "lonMin": 130.4,
+    "lonMax": 140.4,
+    "latMin": 33.25,
+    "latMax": 36.15,
+    "yMax": 38.818726,
+    "scale": 180.0,
+    "width": 1800,
+    "height": 635.1
+  },
+  "kyushu": {
+    "lonMin": 129.3,
+    "lonMax": 132.2,
+    "latMin": 30.9,
+    "latMax": 34.25,
+    "yMax": 36.493344,
+    "scale": 452.758621,
+    "width": 1313,
+    "height": 1800.4
+  },
+  "trail": {
+    "lonMin": 129.3,
+    "lonMax": 145.2,
+    "latMin": 30.85,
+    "latMax": 45.85,
+    "yMax": 51.710119,
+    "scale": 93.522013,
+    "width": 1487,
+    "height": 1800.4
+  }
+}

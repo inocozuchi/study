@@ -1,5 +1,6 @@
 import { SUBJECT_ICONS } from '@/lib/subjects';
-import type { SubjectIconKey } from '@/types';
+import type { SubjectIconKey, TrainClass } from '@/types';
+import { CLASSES, isObservation } from './line';
 
 export interface HardTicketData {
   from: string;
@@ -9,13 +10,19 @@ export interface HardTicketData {
   seat: string;
   task: string;
   icon: SubjectIconKey;
-  express: boolean;
+  /** 路線の名前・種別 */
+  line: string;
+  cls: TrainClass;
   fare: string;
   date: Date;
   serial: string;
 }
 
 const spaced = (s: string) => Array.from(s).join(' ');
+/** 駅名の大きさ（長い駅名は小さく） */
+const nameSize = (s: string) => `${Math.min(10.5, 31 / Math.max(1, Array.from(s).length))}cqw`;
+/** 券の種類：特急券 / 急行券 / 乗車券 */
+const kindOf = (cls: TrainClass) => (cls === 'express' ? '特急券' : cls === 'kyuko' ? '急行券' : '乗車券');
 /** 日付印の日付（令和の年.月.日） */
 const stampDate = (d: Date) => `${d.getFullYear() - 2018}.${d.getMonth() + 1}.${d.getDate()}`;
 
@@ -42,15 +49,15 @@ export function HardTicket({ data, punched = false, stamp }: { data: HardTicketD
   return (
     <div className="relative w-full" style={{ containerType: 'inline-size' }}>
       <div
-        className={`tr-ground tr-mincho relative aspect-[1.885] w-full overflow-hidden rounded-[3px] ${data.express ? 'tr-ground-express' : ''}`}
+        className={`tr-ground tr-mincho relative aspect-[1.885] w-full overflow-hidden rounded-[3px] ${isObservation(data.cls) ? 'tr-ground-express' : ''}`}
         style={{ clipPath: punched ? notch : undefined, boxShadow: '0 1px 0 #d9c8a1, 0 2px 0 #c9b68c, 0 3px 0 #b9a57b, 0 18px 30px -12px rgba(0,0,0,0.75)' }}
         aria-label={`硬券 ${data.from}から${data.to}ゆき`}
       >
         <div className="absolute inset-0 flex flex-col" style={{ padding: '3.4cqw 4.6cqw 3cqw', color: '#2D241C' }}>
           <div className="flex items-baseline justify-between" style={{ fontSize: '3.3cqw' }}>
-            <span className="font-bold tracking-[0.2em]">東海道本線</span>
+            <span className="truncate font-bold tracking-[0.12em]">{data.line}</span>
             <span className="font-bold" style={{ fontSize: '4.6cqw', letterSpacing: '0.5em' }}>
-              {data.express ? '特急券' : '乗車券'}
+              {kindOf(data.cls)}
             </span>
             <span className="font-sans font-bold tabular-nums tracking-[0.15em]" style={{ fontSize: '4.6cqw' }}>
               {data.serial}
@@ -60,7 +67,7 @@ export function HardTicket({ data, punched = false, stamp }: { data: HardTicketD
 
           <div className="flex flex-1 items-center justify-center" style={{ gap: '4cqw' }}>
             <div className="text-center">
-              <p className="font-bold leading-none" style={{ fontSize: '10.5cqw' }}>
+              <p className="whitespace-nowrap font-bold leading-none" style={{ fontSize: nameSize(data.from) }}>
                 {spaced(data.from)}
               </p>
               <p className="mt-[0.6cqw] font-bold" style={{ fontSize: '3.4cqw' }}>
@@ -71,7 +78,7 @@ export function HardTicket({ data, punched = false, stamp }: { data: HardTicketD
               <path d="M1 8h22M17 2l8 6-8 6" fill="none" stroke="#2D241C" strokeWidth="2.6" />
             </svg>
             <div className="text-center">
-              <p className="font-bold leading-none text-[#7A2830]" style={{ fontSize: '10.5cqw' }}>
+              <p className="whitespace-nowrap font-bold leading-none text-[#7A2830]" style={{ fontSize: nameSize(data.to) }}>
                 {spaced(data.to)}
               </p>
               <p className="mt-[0.6cqw] font-bold" style={{ fontSize: '3.4cqw' }}>
@@ -83,7 +90,7 @@ export function HardTicket({ data, punched = false, stamp }: { data: HardTicketD
           {/* 下の段は左に寄せ、右はスタンプの場所に空けておく */}
           <div className="w-[60%] space-y-[0.4cqw]" style={{ fontSize: '3.3cqw' }}>
             <p className="font-bold" style={{ fontSize: '3.5cqw' }}>
-              {data.express ? '一等 · 特急展望車' : '三等 · 普通列車'}
+              {isObservation(data.cls) ? `${data.cls === 'express' ? '一等' : '二等'} · ${CLASSES[data.cls].label}展望車` : `三等 · ${CLASSES[data.cls].label}列車`}
             </p>
             <p className="flex items-center gap-[1cqw] font-bold">
               {data.seat}
