@@ -9,7 +9,7 @@ import { BreathOverlay } from '@/components/focus/BreathOverlay';
 import { CassettePlayer } from '@/components/audio/CassettePlayer';
 import { TOOL_TABS, ToolsPanel, type ToolTab } from '@/components/tools/ToolsPanel';
 import { SettingsScreen } from './SettingsScreen';
-import { getDesign, TRAVEL_MODES } from '@/designs';
+import { getDesign, TRAVEL_MODES, type BookingPlan } from '@/designs';
 import { ModeSheet } from '@/components/profile/ModeSheet';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { streaks, summary } from '@/lib/stats';
@@ -23,7 +23,7 @@ interface Props {
 }
 
 export function HomeScreen({ result, setResult }: Props) {
-  const { settings, updateSettings } = useApp();
+  const { settings, updateSettings, ensureSubject } = useApp();
   const t = useTimer();
   const { timer } = t;
   const [setup, setSetup] = useState(false);
@@ -42,6 +42,23 @@ export function HomeScreen({ result, setResult }: Props) {
     if (settings.bgmOnFocus && !settings.bgmPlaying) updateSettings({ bgmPlaying: true });
   }, [settings.breathing, settings.bgmOnFocus, settings.bgmPlaying, updateSettings]);
   const endBreath = useCallback(() => setBreath(false), []);
+
+  // 予約の画面（列車・航空）から出発：科目を用意し、設定を保存して旅を始める。
+  // 出発の儀式（改札・搭乗）が深呼吸の代わりなので、深呼吸は挟まない
+  const departFromBooking = (plan: BookingPlan) => {
+    const subject = ensureSubject(plan.task, plan.icon);
+    updateSettings({ ...plan.settings, bookingStep: plan.step, bookingMinutes: plan.minutes });
+    const pomodoro = plan.step === 'pomodoro';
+    t.startJourney({
+      subjectId: subject.id,
+      mode: pomodoro ? 'pomodoro' : 'countdown',
+      minutes: pomodoro ? Math.min(25, plan.minutes) : plan.minutes,
+      journeyMinutes: plan.minutes,
+      booking: { ...plan.booking, bookedAt: Date.now() },
+    });
+    if (settings.bgmOnFocus && !settings.bgmPlaying) updateSettings({ bgmPlaying: true });
+    setSetup(false);
+  };
 
   const end = () => {
     const r = t.endJourney();
@@ -81,7 +98,11 @@ export function HomeScreen({ result, setResult }: Props) {
       </AnimatePresence>
 
       <BreathOverlay open={breath && journeying && !result} onDone={endBreath} />
-      <SetupSheet open={setup} onClose={() => setSetup(false)} onStarted={onStarted} />
+      {design.Booking ? (
+        <design.Booking open={setup} onClose={() => setSetup(false)} onStart={departFromBooking} />
+      ) : (
+        <SetupSheet open={setup} onClose={() => setSetup(false)} onStarted={onStarted} />
+      )}
       <CassettePlayer open={music} onClose={() => setMusic(false)} />
       <ToolsPanel tab={tool} onTab={setTool} onClose={() => setTool(null)} />
       <SettingsScreen open={settingsOpen} onClose={() => setSettingsOpen(false)} />

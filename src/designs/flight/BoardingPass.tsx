@@ -1,5 +1,7 @@
 import { Plane } from 'lucide-react';
 import { pad } from '@/lib/time';
+import { useApp } from '@/store/AppStore';
+import { airportByCode } from './airports';
 import type { ProfileCardProps } from '../types';
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -45,12 +47,14 @@ function Barcode({ seed, className = '' }: { seed: string; className?: string })
   );
 }
 
-/** 航空モード（準備中）：搭乗券。PASSENGER NAME と DESTINATION（＝目標） */
+/** 航空モード：旅のパスの搭乗券。PASSENGER NAME と DESTINATION（＝目標）、これまでに飛んだ距離 */
 export function BoardingPass({ info }: ProfileCardProps) {
-  const { name, goal, departure, sessions, settings } = info;
+  const { name, goal, sessions, settings } = info;
+  const { logs } = useApp();
   const now = new Date();
   const dest = goal.trim() || '目標';
-  const from = departure.trim() || 'はじまり';
+  const home = airportByCode(settings.flightFrom || 'HND');
+  const miles = logs.filter((l) => l.mode === 'flight').reduce((sum, l) => sum + l.km, 0);
   const flight = `FT${String(settings.pomodoroFocus).padStart(3, '0')}`;
   const gate = `${'ABCD'[sessions % 4]}${(sessions % 24) + 1}`;
   const seat = `${(sessions % 38) + 1}${'ACDF'[hash(name) % 4]}`;
@@ -82,8 +86,8 @@ export function BoardingPass({ info }: ProfileCardProps) {
           <Field label="PASSENGER NAME" value={name} big />
           <div className="flex items-end justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-[28px] font-extrabold leading-none tracking-wide">{code(from, 'HOM')}</p>
-              <p className="mt-0.5 truncate text-[10px] font-bold text-[#7D8797]">{from}</p>
+              <p className="text-[28px] font-extrabold leading-none tracking-wide">{home.code}</p>
+              <p className="mt-0.5 truncate text-[10px] font-bold text-[#7D8797]">{home.name}</p>
             </div>
             <Plane size={18} className="mb-4 shrink-0 rotate-45 text-[#E85D4A]" />
             <div className="min-w-0 text-right">
@@ -112,12 +116,8 @@ export function BoardingPass({ info }: ProfileCardProps) {
           <Field label="BOARDING" value={boarding} />
           <Field label="SEAT" value={seat} />
         </div>
-        {/* 準備中のスタンプ */}
-        <p className="mx-auto -rotate-[10deg] rounded-[4px] px-1.5 py-0.5 text-center text-[9px] font-extrabold leading-tight tracking-[0.14em] text-[#E85D4A]" style={{ boxShadow: 'inset 0 0 0 1.5px rgba(232,93,74,0.85)' }}>
-          COMING
-          <br />
-          SOON
-        </p>
+        {/* これまでに飛んだ距離（ログブックの合計） */}
+        <Field label="MILEAGE" value={`${miles.toLocaleString()} km`} />
         <Barcode seed={name + dest} className="h-10 w-full text-[#1B2433]" />
       </div>
     </div>

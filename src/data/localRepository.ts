@@ -1,4 +1,4 @@
-import type { ActiveTimer, AppData, DiaryEntry, FocusSession, Habit, PlanBlock, Settings, Subject, Todo } from '@/types';
+import type { ActiveTimer, AppData, DiaryEntry, FocusSession, Habit, PlanBlock, Settings, Subject, Todo, TravelLog } from '@/types';
 import type { FocusRepository } from './repository';
 import { DEFAULT_SETTINGS } from './defaults';
 
@@ -15,6 +15,7 @@ const K = {
   diary: `${PREFIX}diary`,
   todos: `${PREFIX}todos`,
   habits: `${PREFIX}habits`,
+  logs: `${PREFIX}logs`,
 };
 
 function read<T>(key: string, fallback: T): T {
@@ -55,7 +56,7 @@ function mergeSettings(stored: Partial<Settings>): Settings {
 }
 
 function emptyData(settings: Settings): AppData {
-  return { subjects: [], sessions: [], plans: [], settings, diary: [], todos: [], habits: [] };
+  return { subjects: [], sessions: [], plans: [], settings, diary: [], todos: [], habits: [], logs: [] };
 }
 
 export class LocalStorageRepository implements FocusRepository {
@@ -67,6 +68,7 @@ export class LocalStorageRepository implements FocusRepository {
     write(K.diary, data.diary);
     write(K.todos, data.todos);
     write(K.habits, data.habits);
+    write(K.logs, data.logs);
     write(K.initialized, true);
   }
 
@@ -95,6 +97,7 @@ export class LocalStorageRepository implements FocusRepository {
       diary: read<DiaryEntry[]>(K.diary, []),
       todos: read<Todo[]>(K.todos, []),
       habits: read<Habit[]>(K.habits, []),
+      logs: read<TravelLog[]>(K.logs, []),
     };
   }
 
@@ -143,6 +146,10 @@ export class LocalStorageRepository implements FocusRepository {
   }
   async deleteHabit(id: string) {
     write(K.habits, read<Habit[]>(K.habits, []).filter((h) => h.id !== id));
+  }
+
+  async addLog(log: TravelLog) {
+    write(K.logs, [...read<TravelLog[]>(K.logs, []), log]);
   }
 
   loadActiveTimer(): ActiveTimer | null {
