@@ -298,7 +298,7 @@ function TripOptions({ draft, patch, onClose }: { draft: TrainDraft; patch: (p: 
   return (
     <motion.div className="absolute inset-0 z-30 bg-black/55" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
       <motion.div
-        className="tr-paper absolute inset-x-4 top-[calc(env(safe-area-inset-top)+64px)] rounded-[8px] p-5 shadow-[0_0_0_2px_#6B4A2B,0_0_0_5px_#F1E3C4,0_0_0_6px_#6B4A2B,0_24px_50px_-20px_rgba(0,0,0,0.9)]"
+        className="tr-paper absolute inset-x-4 top-[calc(var(--safe-top)+64px)] rounded-[8px] p-5 shadow-[0_0_0_2px_#6B4A2B,0_0_0_5px_#F1E3C4,0_0_0_6px_#6B4A2B,0_24px_50px_-20px_rgba(0,0,0,0.9)]"
         initial={{ y: -16, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: -16, opacity: 0 }}

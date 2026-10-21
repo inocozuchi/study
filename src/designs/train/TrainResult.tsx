@@ -35,7 +35,7 @@ export function TrainResult({ result, onContinue }: DesignResultProps) {
 
   return (
     <div className="tr-mincho absolute inset-0 overflow-y-auto overscroll-contain bg-black/35">
-      <div className="mx-auto flex w-[min(92vw,360px)] flex-col items-center pb-[calc(env(safe-area-inset-bottom)+28px)] pt-[calc(env(safe-area-inset-top)+18px)]">
+      <div className="mx-auto flex w-[min(92vw,360px)] flex-col items-center pb-[calc(env(safe-area-inset-bottom)+28px)] pt-[calc(var(--safe-top)+18px)]">
         <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...springSoft, delay: 0.2 }} className="text-[13px] font-bold tracking-[0.3em] text-[#F6ECD2]/80">
           {b ? (result.arrived ? `終着 · ${b.to}` : `途中下車 · ${reached}`) : `終着 · ${goalName(settings)}`}
         </motion.p>

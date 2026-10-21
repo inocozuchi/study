@@ -130,6 +130,25 @@ export function trackTo(origin: string, minutes: number) {
   return pts;
 }
 
+/** 東京から km までの線路（地図の単位の点の列） */
+export function trackToKm(km: number) {
+  const pts: { x: number; y: number }[] = [project(LINE[0].lon, LINE[0].lat)];
+  for (let i = 1; i < LINE.length; i++) {
+    const a = LINE[i - 1];
+    const b = LINE[i];
+    if (km >= b.km) {
+      pts.push(project(b.lon, b.lat));
+      continue;
+    }
+    const t = Math.max(0, (km - a.km) / Math.max(0.001, b.km - a.km));
+    pts.push(project(a.lon + (b.lon - a.lon) * t, a.lat + (b.lat - a.lat) * t));
+    break;
+  }
+  return pts;
+}
+
+export const TOTAL_KM = STATIONS[STATIONS.length - 1].km;
+
 /** 線路の全体（地図に敷く） */
 export const FULL_LINE = LINE.map((p) => project(p.lon, p.lat));
 

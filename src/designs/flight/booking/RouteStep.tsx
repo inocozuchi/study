@@ -294,7 +294,7 @@ function AirportSearch({ mode, routes, origin, onPick, onClose }: { mode: 'dest'
   return (
     <motion.div className="absolute inset-0 z-20 bg-black/40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
       <motion.div
-        className="fl-glass absolute inset-x-3 top-[calc(env(safe-area-inset-top)+8px)] max-h-[70%] overflow-hidden rounded-[24px] !bg-[#16181D]/80"
+        className="fl-glass absolute inset-x-3 top-[calc(var(--safe-top)+8px)] max-h-[70%] overflow-hidden rounded-[24px] !bg-[#16181D]/80"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: -20, opacity: 0 }}

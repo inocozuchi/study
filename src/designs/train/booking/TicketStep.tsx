@@ -90,7 +90,7 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
       {/* 硬券 */}
       <motion.div
         className="absolute inset-x-0 z-10 mx-auto w-[min(90vw,350px)]"
-        style={{ top: `calc(env(safe-area-inset-top) + ${TICKET_TOP}px)` }}
+        style={{ top: `calc(var(--safe-top) + ${TICKET_TOP}px)` }}
         initial={{ y: -30, opacity: 0, rotate: -3 }}
         animate={inserted ? { y: insertY, opacity: 1, rotate: 0 } : phase === 'ready' ? { y: 0, opacity: 1, rotate: -1.5 } : { y: -6, opacity: 1, rotate: 1.5 }}
         transition={inserted ? { duration: 0.42, ease: [0.5, 0, 0.75, 0] } : { type: 'spring', stiffness: 200, damping: 18 }}
@@ -107,7 +107,7 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
         {phase === 'punch' && (
           <motion.div
             className="absolute z-30"
-            style={{ top: `calc(env(safe-area-inset-top) + ${GATE_TOP - VISIBLE - 14}px)`, left: 'calc(50% + min(45vw, 175px) * 0.47 - 18px)' }}
+            style={{ top: `calc(var(--safe-top) + ${GATE_TOP - VISIBLE - 14}px)`, left: 'calc(50% + min(45vw, 175px) * 0.47 - 18px)' }}
             initial={{ x: 60, y: -30, opacity: 0, rotate: 30 }}
             animate={{ x: 0, y: 0, opacity: 1, rotate: 0 }}
             exit={{ x: 50, y: -40, opacity: 0, rotate: 25 }}
@@ -119,7 +119,7 @@ export function TicketStep({ draft, stop, onBack, onDepart }: { draft: TrainDraf
       </AnimatePresence>
 
       {/* 改札口：木の囲いと真鍮の差し込み口。切符はこの奥へ入る */}
-      <div className="absolute inset-x-0 bottom-0 z-20" style={{ top: `calc(env(safe-area-inset-top) + ${GATE_TOP}px)` }}>
+      <div className="absolute inset-x-0 bottom-0 z-20" style={{ top: `calc(var(--safe-top) + ${GATE_TOP}px)` }}>
         <div className="mx-auto h-full w-[min(96vw,380px)] rounded-t-[10px]" style={{ background: 'linear-gradient(180deg,#6b4628,#4a2e1c 40%,#3b2416)', boxShadow: 'inset 0 2px 0 rgba(255,220,170,0.25), 0 -12px 24px -10px rgba(0,0,0,0.7)' }}>
           <div className="tr-brass mx-auto -mt-[7px] flex h-[16px] w-[86%] items-center justify-center rounded-[4px] px-2">
             <span className="h-[5px] w-full rounded-full bg-[#1a0f08] shadow-[inset_0_2px_3px_rgba(0,0,0,0.9)]" />

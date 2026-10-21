@@ -3,6 +3,7 @@ import { TrainScene } from './TrainScene';
 import { TrainSession } from './TrainSession';
 import { TrainResult } from './TrainResult';
 import { TrainBooking } from './booking/TrainBooking';
+import { trainRoutes } from './routes';
 import { Ticket } from './Ticket';
 import { assets, isNight } from './scene/views';
 import type { TimerDesign } from '../types';
@@ -21,6 +22,7 @@ export const trainDesign: TimerDesign = {
   Session: TrainSession,
   Result: TrainResult,
   Booking: TrainBooking,
+  routes: trainRoutes,
   // 画面の外の帯は車内の絵の上端・下端の色（夜は暗く）
   edgeColors: (hour) => (isNight(hour) ? { top: '#15130F', bottom: '#110E0D' } : { top: assets.frame.edge.top, bottom: assets.frame.edge.bottom }),
 };

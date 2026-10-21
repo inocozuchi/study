@@ -4,6 +4,7 @@ import { FlightBooking } from './booking/FlightBooking';
 import { FlightScene } from './FlightScene';
 import { FlightSession } from './FlightSession';
 import { FlightResult } from './FlightResult';
+import { flightRoutes } from './routes';
 import type { TimerDesign } from '../types';
 
 /**
@@ -20,5 +21,6 @@ export const flightDesign: TimerDesign = {
   Session: FlightSession,
   Result: FlightResult,
   Booking: FlightBooking,
+  routes: flightRoutes,
   edgeColors: () => ({ top: '#050608', bottom: '#050608' }),
 };

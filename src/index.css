@@ -82,6 +82,11 @@
   }
   :root {
     /* タブバー（浮いたカプセル）の下の余白と、タブバーが占める高さ。ホームのボタン位置・各画面の下の余白はこれから決める */
+    /*
+     * 上の文字・ボタンを置き始める線。時刻の帯（安全域）からさらに 18px 下げる。
+     * iOS（ホーム画面アプリ）は時刻の帯のすぐ下をぼかして見せるので、そこに部品を置かない
+     */
+    --safe-top: calc(max(env(safe-area-inset-top), 16px) + 18px);
     --tabbar-pb: max(calc(env(safe-area-inset-bottom) - 6px), 14px);
     --nav-space: calc(60px + var(--tabbar-pb));
   }
@@ -185,7 +190,7 @@
   .tabbar-pad { padding-bottom: var(--tabbar-pb); }
   /* スクロールする画面の最後の余白：浮いたタブバーと、その上の小さなプレーヤー（48px + 間 24px）に隠れないだけ空ける */
   .pb-nav { padding-bottom: calc(var(--nav-space) + 72px); }
-  .pt-safe { padding-top: max(env(safe-area-inset-top), 16px); }
+  .pt-safe { padding-top: var(--safe-top); }
   .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 12px); }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { scrollbar-width: none; }

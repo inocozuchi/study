@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import type { JourneyResult } from '@/store/TimerStore';
-import type { JourneyBooking, Settings, SubjectIconKey, TimerDesignId, TimeStep } from '@/types';
+import type { JourneyBooking, Settings, Subject, SubjectIconKey, TimerDesignId, TimeStep, TravelMode } from '@/types';
 
 /**
  * ポモドーロタイマーの「デザイン」（登山・鉄道・飛行機…）の契約。
@@ -55,6 +55,46 @@ export interface DesignBookingProps {
   onStart: (plan: BookingPlan) => void;
 }
 
+/** ルートの画面（科目ごとの道のり）の絵 */
+export interface RouteArtProps {
+  subject: Subject;
+  /** 0..1（登頂・完乗・到着で 1） */
+  progress: number;
+  summited: boolean;
+  className?: string;
+}
+
+/** 道のりの途中の印（駅・空港）。at は道のりの割合 0..1 */
+export interface RouteStop {
+  name: string;
+  at: number;
+}
+
+/**
+ * ルートの画面をこのモードの見た目にする（登山＝山岳ルート、列車＝路線図、航空＝航路図）。
+ * 科目ごとの累計の集中が、このモードの道のりの上の現在地になる。ないモードは山岳ルート。
+ */
+export interface DesignRoutes {
+  /** 見出し（路線図・航路図） */
+  title: string;
+  /** 「3 路線 · 完乗 1」の数え方と、終わりの言葉（完乗・到着） */
+  unit: string;
+  doneWord: string;
+  /** 一覧・記録の切り替えの名前 */
+  tabs: [string, string];
+  /** 道のりの名前（東海道本線 · 東京 → 大阪 など） */
+  lineName: string;
+  Art: ComponentType<RouteArtProps>;
+  /** 途中の印 */
+  stops: RouteStop[];
+  /** 進んだ距離の表記（例：231.5 / 556.4 粁） */
+  distance: (progress: number) => string;
+  /** 記録帳に出す旅のモード（ログブック） */
+  logMode: TravelMode;
+  /** 「この路線を次の旅に選ぶ」 */
+  chooseLabel: string;
+}
+
 /** プロフィールのカード（登山者 ID カード・きっぷ・搭乗券）に出す値。ニックネームと目標はモード共通 */
 export interface ProfileInfo {
   name: string;
@@ -97,6 +137,8 @@ export interface TimerDesign {
   ProfileCard: ComponentType<ProfileCardProps>;
   /** プロフィールに差し込む、このモード固有のカスタマイズ（登山：服・テント） */
   ProfileOptions?: ComponentType<DesignSetupProps>;
+  /** ルートの画面（任意。ないモードは山岳ルート） */
+  routes?: DesignRoutes;
   /** ホームで画面の外側の帯（上＝ステータスバー、下＝ホームバー）を塗る色。シーンの空と地面に合わせる */
   edgeColors?: (hour: number, settings: Settings) => { top: string; bottom: string };
 }
