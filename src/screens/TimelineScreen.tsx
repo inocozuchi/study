@@ -41,7 +41,6 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
   const lastPlan = useRef<TimelineItem | null>(null);
   if (planItem) lastPlan.current = planItem;
   const pi = lastPlan.current;
-  const [addMenu, setAddMenu] = useState(false);
   const [eventItem, setEventItem] = useState<CalendarEvent | null>(null);
   const lastEvent = useRef<CalendarEvent | null>(null);
   if (eventItem) lastEvent.current = eventItem;
@@ -129,7 +128,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
           <p className="section-label">{isToday ? '今日' : fmtDateJa(selDate, false)}</p>
           <h1 className="page-title mt-0.5">タイムライン</h1>
         </div>
-        <Pressable onClick={() => setAddMenu(true)} aria-label="追加" className="grid h-11 w-11 place-items-center rounded-full bg-accent text-white shadow-raised">
+        <Pressable onClick={() => setDraft(draftFromNow('plan', selected, settings.wakeMin))} aria-label="追加" className="grid h-11 w-11 place-items-center rounded-full bg-accent text-white shadow-raised">
           <Plus size={22} strokeWidth={2.6} />
         </Pressable>
       </header>
@@ -294,6 +293,8 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
           </>
         )}
         {(() => {
+          // 空き時間を押すと、そこから始まる予定を立てる
+          const planAt = (m: number) => setDraft({ kind: 'plan', date: selected, startMin: Math.ceil(m / 5) * 5, endMin: Math.ceil(m / 5) * 5 + 50 });
           let prevEnd = DAY_START;
           let prevColor = EVENT_COLOR;
           let nowPlaced = nowMin == null || nowMin < DAY_START;
@@ -306,10 +307,10 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
             if (!nowPlaced && nowMin != null && nowMin < it.startMin && nowMin >= prevEnd - 0.01) {
               out.push(<Gap key={`g1-${it.key}`} minutes={nowMin - gapStart} fromColor={prevColor} toColor={NOW_COLOR} />);
               out.push(<NowLine key="now" nowMin={nowMin} nextIn={it.startMin - nowMin} />);
-              out.push(<Gap key={`g2-${it.key}`} minutes={it.startMin - nowMin} fromColor={NOW_COLOR} toColor={color} label />);
+              out.push(<Gap key={`g2-${it.key}`} minutes={it.startMin - nowMin} fromColor={NOW_COLOR} toColor={color} label onAdd={() => planAt(nowMin)} />);
               nowPlaced = true;
             } else {
-              out.push(<Gap key={`g-${it.key}`} minutes={gap} fromColor={prevColor} toColor={color} label={idx > 0 || gap >= 30} />);
+              out.push(<Gap key={`g-${it.key}`} minutes={gap} fromColor={prevColor} toColor={color} label={idx > 0 || gap >= 30} onAdd={() => planAt(gapStart)} />);
             }
             const live = nowMin != null && it.startMin <= nowMin && it.endMin > nowMin;
             if (live) nowPlaced = true;
@@ -333,12 +334,12 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
             prevColor = color;
           });
           if (!nowPlaced && nowMin != null) {
-            out.push(<Gap key="g-now" minutes={nowMin - Math.max(prevEnd, DAY_START)} fromColor={prevColor} toColor={NOW_COLOR} label />);
+            out.push(<Gap key="g-now" minutes={nowMin - Math.max(prevEnd, DAY_START)} fromColor={prevColor} toColor={NOW_COLOR} label onAdd={() => planAt(Math.max(prevEnd, DAY_START))} />);
             out.push(<NowLine key="now" nowMin={nowMin} />);
             prevColor = NOW_COLOR;
             prevEnd = nowMin;
           }
-          if (items.length) out.push(<Gap key="g-end" minutes={DAY_END - Math.max(prevEnd, DAY_START)} fromColor={prevColor} toColor={EVENT_COLOR} label />);
+          if (items.length) out.push(<Gap key="g-end" minutes={DAY_END - Math.max(prevEnd, DAY_START)} fromColor={prevColor} toColor={EVENT_COLOR} label onAdd={() => planAt(Math.max(prevEnd, DAY_START, nowMin ?? 0))} />);
           return out;
         })()}
         <Anchor icon={<Moon size={16} />} time={fmtClock(DAY_END)} label="就寝 · おやすみ、焚き火を消して" onClick={() => setHoursOpen(true)} />
@@ -348,29 +349,6 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
 
       <DayHoursSheet open={hoursOpen} onClose={() => setHoursOpen(false)} />
 
-      {/* 追加メニュー */}
-      <Sheet open={addMenu} onClose={() => setAddMenu(false)} title="タイムラインに追加" subtitle={fmtDateJa(selDate)}>
-        <div className="grid gap-2 pb-4">
-          <AddOption
-            icon={<NotebookPen size={20} />}
-            title="あとから記録"
-            desc="電車内や紙での勉強時間を、開始・終了時刻で記録"
-            onClick={() => {
-              setAddMenu(false);
-              setDraft(draftFromNow('record', selected));
-            }}
-          />
-          <AddOption
-            icon={<CalendarPlus size={20} />}
-            title="予定を立てる"
-            desc="学習ブロックを置いて、時間になったら出発"
-            onClick={() => {
-              setAddMenu(false);
-              setDraft(draftFromNow('plan', selected, settings.wakeMin));
-            }}
-          />
-        </div>
-      </Sheet>
 
       <EntrySheet open={!!draft} draft={draft} onClose={() => setDraft(null)} />
 
@@ -577,7 +555,7 @@ function ReorderRow({ plan, subject }: { plan: PlanBlock; subject?: Subject }) {
 }
 
 /** アイテム間のつなぎ線。空き時間に応じて高さが伸びる */
-function Gap({ minutes, fromColor, toColor, label = false, height }: { minutes: number; fromColor: string; toColor: string; label?: boolean; height?: number }) {
+function Gap({ minutes, fromColor, toColor, label = false, height, onAdd }: { minutes: number; fromColor: string; toColor: string; label?: boolean; height?: number; onAdd?: () => void }) {
   const m = Math.max(0, minutes);
   const h = height ?? Math.max(14, Math.min(96, m * 0.45));
   const showLabel = label && m >= 20;
@@ -588,7 +566,16 @@ function Gap({ minutes, fromColor, toColor, label = false, height }: { minutes: 
         style={{ background: `repeating-linear-gradient(180deg, ${alpha(fromColor, 0.55)} 0 4px, transparent 4px 8px)`, maskImage: `linear-gradient(180deg, #000, #000)` }}
       />
       <span className="absolute left-[29px] top-0 h-full w-[2px] opacity-60" style={{ background: `linear-gradient(180deg, ${alpha(fromColor, 0.35)}, ${alpha(toColor, 0.35)})` }} />
-      {showLabel && <span className="tabular ml-[60px] text-ui-[12px] text-fg-3">空き時間 {fmtDuration(m)}</span>}
+      {showLabel &&
+        (onAdd ? (
+          // 押すとここから始まる予定（1 タップで予定の入力へ）
+          <button onClick={onAdd} className="tabular ml-[52px] flex items-center gap-1 rounded-full px-2 py-1 text-ui-[12px] text-fg-3 active:bg-accent-soft">
+            空き時間 {fmtDuration(m)}
+            <Plus size={12} strokeWidth={2.6} className="text-accent" />
+          </button>
+        ) : (
+          <span className="tabular ml-[60px] text-ui-[12px] text-fg-3">空き時間 {fmtDuration(m)}</span>
+        ))}
     </div>
   );
 }
@@ -663,18 +650,6 @@ function Row({ item, live, past, nowMin, onClick }: { item: TimelineItem; live: 
             {filled && <Check size={14} strokeWidth={3.2} />}
           </span>
         )}
-      </span>
-    </motion.button>
-  );
-}
-
-function AddOption({ icon, title, desc, onClick }: { icon: ReactNode; title: string; desc: string; onClick: () => void }) {
-  return (
-    <motion.button onClick={onClick} className="group-box flex items-center gap-3.5 p-4 text-left active:bg-accent-soft">
-      <span className="grid h-11 w-11 place-items-center rounded-chip bg-accent-soft text-accent-ink">{icon}</span>
-      <span>
-        <span className="block text-ui-[14px] font-bold">{title}</span>
-        <span className="mt-0.5 block text-ui-[12px] text-fg-2">{desc}</span>
       </span>
     </motion.button>
   );

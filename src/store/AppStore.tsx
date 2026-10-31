@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { AppData, DiaryEntry, FocusSession, Habit, PlanBlock, Settings, Subject, SubjectIconKey, Todo, TravelLog } from '@/types';
+import type { AppData, DiaryEntry, FocusSession, Habit, MemoBoard, MemoEdge, MemoNode, PlanBlock, Settings, Subject, SubjectIconKey, Todo, TravelLog } from '@/types';
 import { repository } from '@/data';
 import { routeProgress, subjectMinutes } from '@/lib/altitude';
 import { uid } from '@/lib/id';
@@ -43,6 +43,14 @@ interface AppContextValue extends AppData {
   toggleHabit: (id: string, date: string) => void;
   deleteHabit: (id: string) => void;
 
+  /** 思考マップ。保存は新規・更新どちらも save。消したものは戻せるように返す */
+  saveMemoBoard: (board: MemoBoard) => void;
+  deleteMemoBoard: (id: string) => void;
+  saveMemoNode: (node: MemoNode) => void;
+  deleteMemoNode: (id: string) => { node: MemoNode; edges: MemoEdge[] } | null;
+  saveMemoEdge: (edge: MemoEdge) => void;
+  deleteMemoEdge: (id: string) => MemoEdge | null;
+
   clearAll: () => Promise<void>;
   /** バックアップ（JSON の文字列）。記録・科目・予定・設定・ノートなどすべて */
   exportBackup: () => string;
@@ -51,6 +59,11 @@ interface AppContextValue extends AppData {
 
   summit: SummitEvent | null;
   dismissSummit: () => void;
+}
+
+/** id で置き換える。なければ末尾に足す */
+function upsertIn<T extends { id: string }>(list: T[], item: T): T[] {
+  return list.some((x) => x.id === item.id) ? list.map((x) => (x.id === item.id ? item : x)) : [...list, item];
 }
 
 function persistSettings(settings: Settings) {
@@ -69,6 +82,9 @@ const EMPTY: AppData = {
   todos: [],
   habits: [],
   logs: [],
+  memoBoards: [],
+  memoNodes: [],
+  memoEdges: [],
 };
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -221,6 +237,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
     repository.deleteTodo(id);
   }, []);
 
+  const saveMemoBoard = useCallback((board: MemoBoard) => {
+    setData((d) => ({ ...d, memoBoards: upsertIn(d.memoBoards, board) }));
+    repository.upsertMemoBoard(board);
+  }, []);
+  const deleteMemoBoard = useCallback((id: string) => {
+    setData((d) => ({ ...d, memoBoards: d.memoBoards.filter((b) => b.id !== id), memoNodes: d.memoNodes.filter((n) => n.boardId !== id), memoEdges: d.memoEdges.filter((e) => e.boardId !== id) }));
+    repository.deleteMemoBoard(id);
+  }, []);
+  const saveMemoNode = useCallback((node: MemoNode) => {
+    setData((d) => ({ ...d, memoNodes: upsertIn(d.memoNodes, node) }));
+    repository.upsertMemoNode(node);
+  }, []);
+  const deleteMemoNode = useCallback((id: string) => {
+    const d = dataRef.current;
+    const node = d.memoNodes.find((n) => n.id === id);
+    if (!node) return null;
+    const edges = d.memoEdges.filter((e) => e.from === id || e.to === id);
+    setData((x) => ({ ...x, memoNodes: x.memoNodes.filter((n) => n.id !== id), memoEdges: x.memoEdges.filter((e) => e.from !== id && e.to !== id) }));
+    repository.deleteMemoNode(id);
+    return { node, edges };
+  }, []);
+  const saveMemoEdge = useCallback((edge: MemoEdge) => {
+    setData((d) => ({ ...d, memoEdges: upsertIn(d.memoEdges, edge) }));
+    repository.upsertMemoEdge(edge);
+  }, []);
+  const deleteMemoEdge = useCallback((id: string) => {
+    const edge = dataRef.current.memoEdges.find((e) => e.id === id) ?? null;
+    setData((d) => ({ ...d, memoEdges: d.memoEdges.filter((e) => e.id !== id) }));
+    repository.deleteMemoEdge(id);
+    return edge;
+  }, []);
+
   const addHabit = useCallback((name: string, emoji: string, color: string) => {
     const habit: Habit = { id: uid('hab-'), name: name.trim(), emoji, color, createdAt: Date.now(), log: [] };
     setData((d) => ({ ...d, habits: [...d.habits, habit] }));
@@ -291,6 +339,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toggleHabit,
     deleteHabit,
     addLog,
+    saveMemoBoard,
+    deleteMemoBoard,
+    saveMemoNode,
+    deleteMemoNode,
+    saveMemoEdge,
+    deleteMemoEdge,
     clearAll,
     exportBackup,
     importBackup,

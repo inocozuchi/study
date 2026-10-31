@@ -1,4 +1,4 @@
-import type { ActiveTimer, AppData, DiaryEntry, FocusSession, Habit, PlanBlock, Settings, Subject, Todo, TravelLog } from '@/types';
+import type { ActiveTimer, AppData, DiaryEntry, FocusSession, Habit, MemoBoard, MemoEdge, MemoNode, PlanBlock, Settings, Subject, Todo, TravelLog } from '@/types';
 
 /**
  * データ層の抽象。UI/ストアはこのインターフェースだけに依存する。
@@ -25,6 +25,13 @@ export interface FocusRepository {
   deleteTodo(id: string): Promise<void>;
   upsertHabit(habit: Habit): Promise<void>;
   deleteHabit(id: string): Promise<void>;
+  /** 思考マップ：ボード（消すとその上のメモと線も消える）・メモ（消すとつながる線も消える）・線 */
+  upsertMemoBoard(board: MemoBoard): Promise<void>;
+  deleteMemoBoard(id: string): Promise<void>;
+  upsertMemoNode(node: MemoNode): Promise<void>;
+  deleteMemoNode(id: string): Promise<void>;
+  upsertMemoEdge(edge: MemoEdge): Promise<void>;
+  deleteMemoEdge(id: string): Promise<void>;
   /** 旅の記録（ログブック） */
   addLog(log: TravelLog): Promise<void>;
 

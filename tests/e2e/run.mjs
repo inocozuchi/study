@@ -100,7 +100,10 @@ function visibleButtons(page) {
     const out = [];
     const area = innerWidth * innerHeight;
     const clickable = (n) => n?.closest?.('button, [role="button"], a[href], label');
-    for (const el of document.querySelectorAll('button, [role="button"], a[href]')) {
+    const all = [...document.querySelectorAll('button, [role="button"], a[href]')];
+    for (const el of all) {
+      // ボタンの中のボタン（メモの線を引くつまみなど）は、外のボタンと重なってよい
+      const parent = all.indexOf(el.parentElement?.closest('button, [role="button"], a[href]'));
       // 地図の上の駅・空港の札は、動かせる地図の一部（画面の外・重なりは地図を動かせば見える）
       if (el.closest('[data-map]')) continue;
       const r = el.getBoundingClientRect();
@@ -140,7 +143,7 @@ function visibleButtons(page) {
       }
       if (hits === pts.length && overlay === pts.length) continue; // 全面の重ねの後ろ
       const covered = hits > 0;
-      out.push({ label: el.getAttribute('aria-label') || el.textContent.trim().slice(0, 16), x: L, y: T, w: R - L, h: B - T, rx: r.left, ry: r.top, rw: r.width, rh: r.height, covered, inScroll, scrollable: covered && inScroll, coveredBy: by });
+      out.push({ label: el.getAttribute('aria-label') || el.textContent.trim().slice(0, 16), x: L, y: T, w: R - L, h: B - T, rx: r.left, ry: r.top, rw: r.width, rh: r.height, covered, inScroll, scrollable: covered && inScroll, coveredBy: by, idx: all.indexOf(el), parent });
     }
     return out;
   });
@@ -198,7 +201,7 @@ async function checkScreen(page, where, opts = {}) {
     for (let j = i + 1; j < btns.length; j++) {
       const a = btns[i];
       const b = btns[j];
-      if (a.covered || b.covered || a.inScroll !== b.inScroll) continue; // スクロールする中身と浮いた部品（タブバー）はスクロールでずらせる
+      if (a.covered || b.covered || a.inScroll !== b.inScroll || a.parent === b.idx || b.parent === a.idx) continue; // スクロールする中身と浮いた部品（タブバー）はスクロールでずらせる
       const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
       const oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
       const inside = (p, q) => p.x >= q.x - 1 && p.y >= q.y - 1 && p.x + p.w <= q.x + q.w + 1 && p.y + p.h <= q.y + q.h + 1;
@@ -334,11 +337,10 @@ async function patterns(browser, device) {
   try {
     await shot(page, 'p-timeline');
     await checkScreen(page, w('タイムライン'));
+    // 「＋」は 1 回で予定の入力へ（追加のメニューを挟まない）
     await page.click('[aria-label="追加"]');
-    await sleep(700);
-    await checkScreen(page, w('追加メニュー'), { allowCovered: true });
-    await page.click('button:has-text("予定を立てる")');
     await sleep(900);
+    if (!(await page.$('[role="dialog"] button:has-text("保存")'))) fail(w('予定の入力'), '「＋」を押しても予定の入力が開きません');
     await shot(page, 'p-entry');
     await checkScreen(page, w('予定の入力'), { allowCovered: true, allowOffscreen: true });
     await page.click('[role="dialog"] button:has-text("保存")');
@@ -469,8 +471,6 @@ async function patterns(browser, device) {
       }
       await tabTo(page, 'タイムライン');
       await page.click('[aria-label="追加"]');
-      await sleep(700);
-      await page.click('button:has-text("予定を立てる")');
       await sleep(900);
       await shot(page, `p-${name}-entry`);
       await checkScreen(page, w(`${name} 予定の入力`), { allowCovered: true, allowOffscreen: true });
@@ -521,7 +521,7 @@ async function patterns(browser, device) {
         }
         await tabTo(page, 'Home');
         for (const t of ['Notes', 'To-Do', 'Habits']) {
-          const b = page.locator(`nav[aria-label="Tools"] button`).nth(['Notes', 'To-Do', 'Habits'].indexOf(t));
+          const b = page.locator(`nav[aria-label="Tools"] button`).nth(['Notes', 'To-Do', 'Habits'].indexOf(t) + 1); // 1 つ目は思考マップ
           await b.click();
           await sleep(700);
           await checkEnglish(page, w(`英語 ツール ${t}`));
@@ -728,6 +728,178 @@ async function sheetsAndTabs(browser, device) {
   }
 }
 
+
+const memoCount = (page) =>
+  page.evaluate(() => ({
+    nodes: JSON.parse(localStorage.getItem('focus-trail:v1:memo-nodes') || '[]'),
+    edges: JSON.parse(localStorage.getItem('focus-trail:v1:memo-edges') || '[]'),
+    boards: JSON.parse(localStorage.getItem('focus-trail:v1:memo-boards') || '[]'),
+  }));
+const center = async (page, sel) => {
+  const b = await page.locator(sel).first().boundingBox();
+  return { x: b.x + b.width / 2, y: b.y + b.height / 2, b };
+};
+async function dragTo(page, from, to, steps = 14) {
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps });
+  await page.mouse.up();
+  await sleep(500);
+}
+
+/**
+ * 思考マップ：タップでメモ → 題名と説明 → タップで外す → もう 1 枚 → ドラッグで動かす → つまみのドラッグで線（メモへ / 何もないところへ＝新しいメモ）
+ * → 線を押して題名・向きを反対に → 削除と元に戻す → 拡大 → 全体 → マップの一覧（新しいマップ・戻る）→ 再読み込みしても残る → 英語
+ */
+async function memoMap(browser, device) {
+  const w = (s) => `${device.name}/思考マップ/${s}`;
+  let { ctx, page } = await open(browser, device, { timerDesign: 'flight' });
+  try {
+    await page.click('[aria-label="思考マップ"]');
+    await sleep(900);
+    await shot(page, 'memo-1-empty');
+    await checkScreen(page, w('空のマップ'));
+    const vp = (await page.locator('[data-map-viewport]').boundingBox());
+    // 1 回のタップでメモ。そのまま題名が打てる
+    await page.mouse.click(vp.x + 110, vp.y + 140);
+    await sleep(500);
+    let m = await memoCount(page);
+    if (m.nodes.length !== 1) fail(w('タップでメモ'), `何もないところをタップしてもメモができません（${m.nodes.length} 枚）`);
+    const focused = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
+    if (focused !== '題名') fail(w('タップでメモ'), `作ったメモの題名にすぐ打てません（${focused}）`);
+    await page.keyboard.type('目標を決める');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('なぜそれをやるのか、長い説明もここに書ける。');
+    await sleep(300);
+    m = await memoCount(page);
+    if (m.nodes[0]?.title !== '目標を決める' || !m.nodes[0]?.body.includes('長い説明')) fail(w('題名と説明'), '題名・説明が保存されません');
+    await shot(page, 'memo-2-edit');
+    await checkScreen(page, w('メモの編集'), { allowCovered: true });
+    // 何もないところのタップ：まず選択を外す → もう一度で 2 枚目
+    await page.mouse.click(vp.x + 250, vp.y + 330);
+    await sleep(400);
+    if ((await memoCount(page)).nodes.length !== 1) fail(w('選択を外す'), '選んでいるときのタップでメモができてしまいます');
+    await page.mouse.click(vp.x + 250, vp.y + 330);
+    await sleep(400);
+    await page.keyboard.type('手段');
+    await page.mouse.click(vp.x + 60, vp.y + 460);
+    await sleep(400);
+    // ドラッグで動かす
+    const before = (await memoCount(page)).nodes.find((n) => n.title === '手段');
+    const c2 = await center(page, '[aria-label="メモ：手段"]');
+    await dragTo(page, c2, { x: c2.x - 40, y: c2.y + 60 });
+    await sleep(900);
+    const after = (await memoCount(page)).nodes.find((n) => n.title === '手段');
+    if (!after || (after.x === before.x && after.y === before.y)) fail(w('ドラッグで動かす'), 'メモをドラッグしても動きません');
+    // つまみのドラッグでメモ → メモ
+    const h1 = await center(page, '[aria-label="メモ：目標を決める"] [data-handle]');
+    const n2 = await center(page, '[aria-label="メモ：手段"]');
+    await dragTo(page, h1, n2);
+    m = await memoCount(page);
+    if (m.edges.length !== 1) fail(w('線を引く'), `つまみをメモまでドラッグしても線ができません（${m.edges.length}）`);
+    // つまみのドラッグで何もないところ → 新しいメモ + 線（題名をすぐ打てる）
+    const h2 = await center(page, '[aria-label="メモ：手段"] [data-handle]');
+    await dragTo(page, h2, { x: vp.x + 280, y: vp.y + 120 });
+    m = await memoCount(page);
+    if (m.nodes.length !== 3 || m.edges.length !== 2) fail(w('線から新しいメモ'), `何もないところで離しても新しいメモと線ができません（${m.nodes.length} 枚・${m.edges.length} 本）`);
+    await page.keyboard.type('結果');
+    await page.mouse.click(vp.x + 40, vp.y + 600);
+    await sleep(400);
+    await shot(page, 'memo-3-graph');
+    await checkScreen(page, w('メモと線'), { allowCovered: true });
+    // 線を押して題名・向き
+    await page.locator('[data-edge][role="button"]').first().click();
+    await sleep(400);
+    const ph = await page.getAttribute('input[aria-label="題名"]', 'placeholder');
+    if (!ph?.startsWith('線の題名')) fail(w('線を選ぶ'), '線を押しても線の編集になりません');
+    await page.fill('input[aria-label="題名"]', 'だから');
+    await page.click('[aria-label="向きを反対に"]');
+    await sleep(300);
+    m = await memoCount(page);
+    const e1 = m.edges.find((e) => e.title === 'だから');
+    if (!e1) fail(w('線の題名'), '線の題名が保存されません');
+    // 線を消す → 元に戻す
+    await page.click('[aria-label="削除"]');
+    await sleep(400);
+    if ((await memoCount(page)).edges.length !== 1) fail(w('線の削除'), '線を削除できません');
+    await page.click('button:has-text("元に戻す")');
+    await sleep(400);
+    if ((await memoCount(page)).edges.length !== 2) fail(w('元に戻す'), '消した線を元に戻せません');
+    // メモを消す（つながる線も消える）→ 元に戻す
+    await page.click('[aria-label="メモ：結果"]');
+    await sleep(400);
+    await page.click('[aria-label="削除"]');
+    await sleep(400);
+    m = await memoCount(page);
+    if (m.nodes.length !== 2 || m.edges.length !== 1) fail(w('メモの削除'), `メモを消してもつながる線が残ります（${m.nodes.length} 枚・${m.edges.length} 本）`);
+    await page.click('button:has-text("元に戻す")');
+    await sleep(400);
+    m = await memoCount(page);
+    if (m.nodes.length !== 3 || m.edges.length !== 2) fail(w('メモを元に戻す'), '消したメモと線を元に戻せません');
+    // 拡大（トラックパッドのピンチ＝ctrl + ホイール）→ 全体を見る
+    await page.mouse.move(vp.x + 200, vp.y + 300);
+    await page.keyboard.down('Control');
+    await page.mouse.wheel(0, -200);
+    await page.keyboard.up('Control');
+    await sleep(900);
+    const k = (await memoCount(page)).boards[0]?.view?.k ?? 1;
+    if (!(k > 1.05)) fail(w('拡大'), `拡大できません（${k}）`);
+    await page.click('[aria-label="全体を見る"]');
+    await sleep(800);
+    await shot(page, 'memo-4-fit');
+    // マップの一覧：新しいマップ → 元のマップへ
+    await page.click('[aria-label="マップの一覧"]');
+    await sleep(700);
+    await checkScreen(page, w('マップの一覧'), { allowCovered: true });
+    await page.click('button:has-text("新しいマップ")');
+    await sleep(800);
+    if ((await page.locator('[data-node]').count()) !== 0) fail(w('新しいマップ'), '新しいマップに前のメモが出ています');
+    await page.fill('input[aria-label="マップの名前"]', 'ふたつめ');
+    await page.click('[aria-label="マップの一覧"]');
+    await sleep(700);
+    await page.locator('[role="dialog"] button', { hasText: 'メモ 3 枚' }).click();
+    await sleep(800);
+    if ((await page.locator('[data-node]').count()) !== 3) fail(w('マップを切り替える'), '元のマップに戻せません');
+    // 閉じて、再読み込みしても残る
+    await page.click('[aria-label="閉じる"]');
+    await sleep(900);
+    await page.reload();
+    await sleep(2600);
+    await page.click('[aria-label="思考マップ"]');
+    await sleep(900);
+    if ((await page.locator('[data-node]').count()) !== 3) fail(w('再読み込み'), '再読み込みするとメモが消えます');
+    await shot(page, 'memo-5-reload');
+  } catch (e) {
+    fail(w('操作'), String(e.message || e).split('\n')[0]);
+    await shot(page, 'memo-error').catch(() => {});
+  } finally {
+    await ctx.close();
+  }
+  // 英語・ダーク
+  for (const [name, st] of [['英語', { language: 'en' }], ['ダーク', { appearance: 'dark' }]]) {
+    ({ ctx, page } = await open(browser, device, { timerDesign: 'train', ...st }));
+    try {
+      await page.click(`[aria-label="${L(page, '思考マップ')}"]`);
+      await sleep(900);
+      const vp = await page.locator('[data-map-viewport]').boundingBox();
+      await page.mouse.click(vp.x + 120, vp.y + 160);
+      await sleep(400);
+      await page.keyboard.type('Idea');
+      const h = await center(page, '[data-node] [data-handle]');
+      await dragTo(page, h, { x: vp.x + 260, y: vp.y + 340 });
+      await page.mouse.click(vp.x + 40, vp.y + 560);
+      await sleep(400);
+      await shot(page, `memo-${name}`);
+      await checkScreen(page, w(name), { allowCovered: true });
+      if (name === '英語') await checkEnglish(page, w(name));
+    } catch (e) {
+      fail(w(name), String(e.message || e).split('\n')[0]);
+    } finally {
+      await ctx.close();
+    }
+  }
+}
+
 // ───────────────────────── 実行 ─────────────────────────
 
 rmSync(OUT, { recursive: true, force: true });
@@ -742,6 +914,7 @@ try {
     if (!only || only.includes('sheets')) await sheetsAndTabs(browser, d);
     // あらゆる操作の組み合わせは iPhone 16 で（いちばん使う端末）
     if (d.name === 'iPhone16' && (!only || only.includes('patterns'))) await patterns(browser, d);
+    if (!only || only.includes('memo')) await memoMap(browser, d);
   }
 } finally {
   await browser.close();

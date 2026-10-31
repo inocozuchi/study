@@ -249,6 +249,47 @@ export interface Todo {
   doneAt?: number;
 }
 
+/**
+ * 思考マップ（グラフのメモ）。ボードの上にメモ（ノード）を自由に置き、メモの間に向きのある線（エッジ）を張る。
+ * ノードにもエッジにも題名と長い説明を書ける（どちらも空でよい）。位置はボードの座標（px。拡大 1 のとき）。
+ */
+export interface MemoBoard {
+  id: ID;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
+  /** 最後に見ていた位置と拡大率（開き直すと同じ眺め） */
+  view?: { x: number; y: number; k: number };
+}
+
+/** メモの色（なし＝白） */
+export type MemoColor = 'none' | 'yellow' | 'green' | 'blue' | 'pink' | 'purple';
+
+export interface MemoNode {
+  id: ID;
+  boardId: ID;
+  /** 中心の位置 */
+  x: number;
+  y: number;
+  title: string;
+  body: string;
+  color: MemoColor;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface MemoEdge {
+  id: ID;
+  boardId: ID;
+  /** from → to の向き */
+  from: ID;
+  to: ID;
+  title: string;
+  body: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface Habit {
   id: ID;
   name: string;
@@ -268,4 +309,7 @@ export interface AppData {
   todos: Todo[];
   habits: Habit[];
   logs: TravelLog[];
+  memoBoards: MemoBoard[];
+  memoNodes: MemoNode[];
+  memoEdges: MemoEdge[];
 }
