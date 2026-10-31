@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, Clock3, Flame, IdCard, Music, Play } from 'lucide-react';
+import { ChevronDown, Clock3, Flame, IdCard, Music, Play, Waypoints } from 'lucide-react';
+import { MemoMap } from '@/components/memo/MemoMap';
 import { useApp } from '@/store/AppStore';
 import { useTimer, type JourneyResult } from '@/store/TimerStore';
 import { Pressable } from '@/components/ui/Pressable';
@@ -34,6 +35,7 @@ export function HomeScreen({ result, setResult, onInsights }: Props) {
   const [tool, setTool] = useState<ToolTab | null>(null);
   const [modeOpen, setModeOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
 
   // 到着した直後（リザルトを受け取るまでの 1 回の描画）も旅の画面のままにする。
   // ここで一度ホームに戻ると、AnimatePresence（wait）が hud → home → result の速い切り替えで止まってしまう
@@ -94,6 +96,7 @@ export function HomeScreen({ result, setResult, onInsights }: Props) {
               onFocus={() => setSetup(true)}
               onMusic={() => setMusic(true)}
               onTool={setTool}
+              onMap={() => setMapOpen(true)}
               onMode={() => setModeOpen(true)}
               onProfile={() => setProfileOpen(true)}
               onInsights={onInsights}
@@ -112,11 +115,12 @@ export function HomeScreen({ result, setResult, onInsights }: Props) {
       <ToolsPanel tab={tool} onTab={setTool} onClose={() => setTool(null)} />
       <ModeSheet open={modeOpen} onClose={() => setModeOpen(false)} />
       <ProfileSheet open={profileOpen} onClose={() => setProfileOpen(false)} />
+      <MemoMap open={mapOpen} onClose={() => setMapOpen(false)} />
     </div>
   );
 }
 
-function HomeIdle({ onFocus, onMusic, onTool, onMode, onProfile, onInsights }: { onFocus: () => void; onMusic: () => void; onTool: (t: ToolTab) => void; onMode: () => void; onProfile: () => void; onInsights?: () => void }) {
+function HomeIdle({ onFocus, onMusic, onTool, onMap, onMode, onProfile, onInsights }: { onFocus: () => void; onMusic: () => void; onTool: (t: ToolTab) => void; onMap: () => void; onMode: () => void; onProfile: () => void; onInsights?: () => void }) {
   const { settings, sessions, plans, subjectById } = useApp();
   const { startPlanned } = useTimer();
   const mode = TRAVEL_MODES.find((m) => m.id === settings.timerDesign);
@@ -180,6 +184,10 @@ function HomeIdle({ onFocus, onMusic, onTool, onMode, onProfile, onInsights }: {
 
       {/* サイドのツールタブ（窓の外・景色の端に） */}
       <motion.nav initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ ...springBouncy, delay: 0.15 }} className={`absolute right-3 top-[30%] flex flex-col gap-1 rounded-full p-1 ${skin.chip}`} aria-label="ツール">
+        {/* 思考マップ（グラフのメモ。全画面で開く） */}
+        <Pressable onClick={onMap} aria-label="思考マップ" className="btn-icon">
+          <Waypoints strokeWidth={2.2} />
+        </Pressable>
         {TOOL_TABS.map(({ key, label, icon: Icon }) => (
           <Pressable key={key} onClick={() => onTool(key)} aria-label={label} className="btn-icon">
             <Icon strokeWidth={2.2} />

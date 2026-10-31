@@ -1,4 +1,4 @@
-import type { ActiveTimer, AppData, DiaryEntry, FocusSession, Habit, PlanBlock, Settings, Subject, Todo, TravelLog } from '@/types';
+import type { ActiveTimer, AppData, DiaryEntry, FocusSession, Habit, MemoBoard, MemoEdge, MemoNode, PlanBlock, Settings, Subject, Todo, TravelLog } from '@/types';
 import type { FocusRepository } from './repository';
 import { DEFAULT_SETTINGS } from './defaults';
 
@@ -16,6 +16,9 @@ const K = {
   todos: `${PREFIX}todos`,
   habits: `${PREFIX}habits`,
   logs: `${PREFIX}logs`,
+  memoBoards: `${PREFIX}memo-boards`,
+  memoNodes: `${PREFIX}memo-nodes`,
+  memoEdges: `${PREFIX}memo-edges`,
 };
 
 function read<T>(key: string, fallback: T): T {
@@ -56,7 +59,7 @@ function mergeSettings(stored: Partial<Settings>): Settings {
 }
 
 function emptyData(settings: Settings): AppData {
-  return { subjects: [], sessions: [], plans: [], settings, diary: [], todos: [], habits: [], logs: [] };
+  return { subjects: [], sessions: [], plans: [], settings, diary: [], todos: [], habits: [], logs: [], memoBoards: [], memoNodes: [], memoEdges: [] };
 }
 
 export class LocalStorageRepository implements FocusRepository {
@@ -69,6 +72,9 @@ export class LocalStorageRepository implements FocusRepository {
     write(K.todos, data.todos);
     write(K.habits, data.habits);
     write(K.logs, data.logs);
+    write(K.memoBoards, data.memoBoards);
+    write(K.memoNodes, data.memoNodes);
+    write(K.memoEdges, data.memoEdges);
     write(K.initialized, true);
   }
 
@@ -98,6 +104,9 @@ export class LocalStorageRepository implements FocusRepository {
       todos: read<Todo[]>(K.todos, []),
       habits: read<Habit[]>(K.habits, []),
       logs: read<TravelLog[]>(K.logs, []),
+      memoBoards: read<MemoBoard[]>(K.memoBoards, []),
+      memoNodes: read<MemoNode[]>(K.memoNodes, []),
+      memoEdges: read<MemoEdge[]>(K.memoEdges, []),
     };
   }
 
@@ -148,6 +157,28 @@ export class LocalStorageRepository implements FocusRepository {
     write(K.habits, read<Habit[]>(K.habits, []).filter((h) => h.id !== id));
   }
 
+  async upsertMemoBoard(board: MemoBoard) {
+    write(K.memoBoards, upsert(read<MemoBoard[]>(K.memoBoards, []), board));
+  }
+  async deleteMemoBoard(id: string) {
+    write(K.memoBoards, read<MemoBoard[]>(K.memoBoards, []).filter((b) => b.id !== id));
+    write(K.memoNodes, read<MemoNode[]>(K.memoNodes, []).filter((n) => n.boardId !== id));
+    write(K.memoEdges, read<MemoEdge[]>(K.memoEdges, []).filter((e) => e.boardId !== id));
+  }
+  async upsertMemoNode(node: MemoNode) {
+    write(K.memoNodes, upsert(read<MemoNode[]>(K.memoNodes, []), node));
+  }
+  async deleteMemoNode(id: string) {
+    write(K.memoNodes, read<MemoNode[]>(K.memoNodes, []).filter((n) => n.id !== id));
+    write(K.memoEdges, read<MemoEdge[]>(K.memoEdges, []).filter((e) => e.from !== id && e.to !== id));
+  }
+  async upsertMemoEdge(edge: MemoEdge) {
+    write(K.memoEdges, upsert(read<MemoEdge[]>(K.memoEdges, []), edge));
+  }
+  async deleteMemoEdge(id: string) {
+    write(K.memoEdges, read<MemoEdge[]>(K.memoEdges, []).filter((e) => e.id !== id));
+  }
+
   async addLog(log: TravelLog) {
     write(K.logs, [...read<TravelLog[]>(K.logs, []), log]);
   }
@@ -163,7 +194,7 @@ export class LocalStorageRepository implements FocusRepository {
   async importAll(data: AppData) {
     const next: AppData = {
       ...emptyData(mergeSettings(data.settings ?? {})),
-      ...Object.fromEntries((['subjects', 'sessions', 'plans', 'diary', 'todos', 'habits', 'logs'] as const).map((k) => [k, Array.isArray(data[k]) ? data[k] : []])),
+      ...Object.fromEntries((['subjects', 'sessions', 'plans', 'diary', 'todos', 'habits', 'logs', 'memoBoards', 'memoNodes', 'memoEdges'] as const).map((k) => [k, Array.isArray(data[k]) ? data[k] : []])),
     } as AppData;
     this.persistAll(next);
     this.saveActiveTimer(null);

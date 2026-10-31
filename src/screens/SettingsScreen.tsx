@@ -8,7 +8,6 @@ import {
 import { useApp } from '@/store/AppStore';
 import { Toggle } from '@/components/ui/Toggle';
 import { PickerModal, type PickerOption } from '@/components/ui/PickerModal';
-import { Sheet } from '@/components/ui/Sheet';
 import { Modal } from '@/components/ui/Modal';
 import { InstallSheet, isStandalone } from '@/components/home/InstallSheet';
 import { useBgmTracks } from '@/audio/bgmLibrary';
@@ -118,14 +117,12 @@ export function SettingsScreen() {
   const tracks = useBgmTracks();
   const currentTrack = tracks.find((t) => t.id === settings.bgmTrackId) ?? tracks[0];
   const [picker, setPicker] = useState<PickerKey | null>(null);
-  const [nameOpen, setNameOpen] = useState(false);
   const [installOpen, setInstallOpen] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [googleOpen, setGoogleOpen] = useState(false);
   const [hoursOpen, setHoursOpen] = useState(false);
   const google = useGoogleCalendar();
-  const [name, setName] = useState('');
   const [confirm, setConfirm] = useState(false);
   const set = <K extends keyof Settings>(k: K) => (v: Settings[K]) => updateSettings({ [k]: v } as Partial<Settings>);
 
@@ -240,16 +237,29 @@ export function SettingsScreen() {
               </header>
 
               <Group title="プロフィール">
-                <Row
-                  icon={<User size={16} />}
-                 
-                  title="名前"
-                  value={settings.userName}
-                  onClick={() => {
-                    setName(settings.userName);
-                    setNameOpen(true);
-                  }}
-                />
+                {/* 名前はその場で書き換える（開いて保存、の手間をなくす）。空にしたら元の名前に戻す */}
+                <label className="card flex min-h-[60px] w-full items-center gap-3 px-4 py-2.5">
+                  <span className="grid w-[22px] shrink-0 place-items-center text-accent">
+                    <User size={16} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-ui-[14px] font-bold">名前</span>
+                    <input
+                      defaultValue={settings.userName}
+                      maxLength={16}
+                      placeholder="旅人"
+                      aria-label="名前"
+                      enterKeyHint="done"
+                      onBlur={(e) => {
+                        const v = e.target.value.trim();
+                        if (v && v !== settings.userName) updateSettings({ userName: v });
+                        else e.target.value = settings.userName;
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+                      className="mt-[3px] block w-full bg-transparent text-ui-[12px] text-fg-2 outline-none focus:text-fg"
+                    />
+                  </span>
+                </label>
               </Group>
 
               <Group title="時間設定" footer="ポモドーロの標準値です。出発前の支度でいつでも変えられます。">
@@ -351,7 +361,7 @@ export function SettingsScreen() {
                 />
                 {backupMsg && <p className="px-1 text-ui-[12px] font-semibold text-accent-ink" role="status">{backupMsg}</p>}
                 <Row icon={<Trash2 size={21} />} title="すべての記録を消去" onClick={() => setConfirm(true)} danger />
-                <Row icon={<Database size={21} />} title="Focus Trail" value="v2.2" />
+                <Row icon={<Database size={21} />} title="Focus Trail" value="v2.3" />
                 <Row icon={<Ruler size={19} />} title="表示の診断" detail="画面の高さ・安全域・タブバーの位置を表示" right={<Toggle checked={probe} onChange={setLayoutProbe} label="表示の診断" />} />
               </Group>
             </div>
@@ -364,19 +374,6 @@ export function SettingsScreen() {
       <GoogleCalendarSheet open={googleOpen} onClose={() => setGoogleOpen(false)} />
       <DayHoursSheet open={hoursOpen} onClose={() => setHoursOpen(false)} />
 
-      <Sheet open={nameOpen} onClose={() => setNameOpen(false)} title="名前" subtitle="ホームの挨拶で呼ぶ名前です">
-        <form
-          className="space-y-3 pb-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (name.trim()) updateSettings({ userName: name.trim() });
-            setNameOpen(false);
-          }}
-        >
-          <input className="field text-ui-[17px] font-semibold" value={name} onChange={(e) => setName(e.target.value)} maxLength={16} autoFocus placeholder="旅人" />
-          <button type="submit" className="btn-primary w-full">保存</button>
-        </form>
-      </Sheet>
 
       <Modal open={confirm} onClose={() => setConfirm(false)}>
         <div className="p-6 text-center">

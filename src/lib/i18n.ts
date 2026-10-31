@@ -98,6 +98,8 @@ export function translate(text: string): string | null {
 function doText(node: Text) {
   const v = node.nodeValue ?? '';
   if (translated.get(node) === v) return; // 自分で書いた訳
+  // 人が書いた文字（メモ・題名など）は訳さない（data-no-translate の中）
+  if (node.parentElement?.closest('[data-no-translate]')) return;
   const t = translate(v);
   if (t == null || t === v) return;
   original.set(node, v);

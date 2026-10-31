@@ -6,7 +6,7 @@
  * - 同一オリジンの静的アセット（BGM の音声ファイルを含む）：キャッシュ優先 + 裏で更新（stale-while-revalidate）
  */
 // 公開時に deploy.yml がビルド番号を付け足す（毎回 SW が更新され、古いアセットのキャッシュが消える）
-const VERSION = 'focus-trail-v16';
+const VERSION = 'focus-trail-v17';
 const FONT_CACHE = 'focus-trail-fonts';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
