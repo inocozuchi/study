@@ -229,7 +229,7 @@ async function checkHeader(page, where) {
   );
   if (!icons.length) return null;
   for (const i of icons) if (Math.round(i.w) !== 42 || Math.round(i.h) !== 42) fail(where, `ヘッダーのボタン「${i.label}」が 42px ではありません（${i.w}×${i.h}）`);
-  const expect = Math.max(d.top, 16) + 12 + 1;
+  const expect = Math.max(d.top, 16) + 24 + 1;
   const top = Math.round(icons[0].top);
   if (Math.abs(top - expect) > 1) fail(where, `ヘッダーの行の位置がずれています（上から ${top}px、本来は ${expect}px）`);
   return top;
@@ -800,13 +800,14 @@ async function memoMap(browser, device) {
     await shot(page, 'memo-2-edit');
     await checkScreen(page, w('メモの編集'), { allowCovered: true });
     // 何もないところのタップ：まず選択を外す → もう一度で 2 枚目
-    await page.mouse.click(vp.x + 250, vp.y + 330);
+    // （座標は画面の高さに合わせる。編集の面の下になる位置にメモを作ると、見える所へずらす動きが入る）
+    await page.mouse.click(vp.x + 250, vp.y + Math.min(330, vp.height * 0.38));
     await sleep(400);
     if ((await memoCount(page)).nodes.length !== 1) fail(w('選択を外す'), '選んでいるときのタップでメモができてしまいます');
-    await page.mouse.click(vp.x + 250, vp.y + 330);
+    await page.mouse.click(vp.x + 250, vp.y + Math.min(330, vp.height * 0.38));
     await sleep(400);
     await page.keyboard.type('手段');
-    await page.mouse.click(vp.x + 60, vp.y + 460);
+    await page.mouse.click(vp.x + 60, vp.y + Math.min(460, vp.height * 0.5));
     await sleep(400);
     // ドラッグで動かす
     const before = (await memoCount(page)).nodes.find((n) => n.title === '手段');
@@ -827,7 +828,7 @@ async function memoMap(browser, device) {
     m = await memoCount(page);
     if (m.nodes.length !== 3 || m.edges.length !== 2) fail(w('線から新しいメモ'), `何もないところで離しても新しいメモと線ができません（${m.nodes.length} 枚・${m.edges.length} 本）`);
     await page.keyboard.type('結果');
-    await page.mouse.click(vp.x + 40, vp.y + 600);
+    await page.mouse.click(vp.x + 40, vp.y + Math.min(600, vp.height - 250));
     await sleep(400);
     await shot(page, 'memo-3-graph');
     await checkScreen(page, w('メモと線'), { allowCovered: true });
@@ -926,7 +927,7 @@ async function memoMap(browser, device) {
       await page.keyboard.type('Idea');
       const h = await center(page, '[data-node] [data-handle]');
       await dragTo(page, h, { x: vp.x + 260, y: vp.y + 340 });
-      await page.mouse.click(vp.x + 40, vp.y + 560);
+      await page.mouse.click(vp.x + 40, vp.y + Math.min(560, vp.height - 250));
       await sleep(400);
       await shot(page, `memo-${name}`);
       await checkScreen(page, w(name), { allowCovered: true });

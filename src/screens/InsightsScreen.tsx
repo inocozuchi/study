@@ -1,3 +1,5 @@
+import { CompactTitle } from '@/components/ui/CompactTitle';
+import { Rolling } from '@/components/ui/Rolling';
 import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Flame, Mountain, TrendingDown, TrendingUp } from 'lucide-react';
@@ -29,7 +31,8 @@ export function InsightsScreen() {
   const delta = sum.today - sum.yesterday;
 
   return (
-    <div className="mx-auto max-w-xl px-5 pb-nav pt-safe">
+    <div className="ios-stagger mx-auto max-w-xl px-5 pb-nav pt-safe">
+      <CompactTitle title={'インサイト'} />
       <header className="pt-2">
         <p className="text-ui-[12.5px] font-semibold text-fg-2">{fmtDateJa(now)}</p>
         <h1 className="text-ui-[29px] font-bold leading-tight tracking-tight">インサイト</h1>
@@ -41,9 +44,9 @@ export function InsightsScreen() {
           <div>
             <p className="text-ui-[12.5px] font-semibold text-fg-2">今日の集中</p>
             <p className="tabular mt-1 text-ui-[40px] font-bold leading-none tracking-tight">
-              {Math.floor(sum.today / 60)}
+              <Rolling value={Math.floor(sum.today / 60)} />
               <span className="text-ui-[18px] font-semibold text-fg-2">時間</span>
-              {Math.round(sum.today % 60)}
+              <Rolling value={Math.round(sum.today % 60)} />
               <span className="text-ui-[18px] font-semibold text-fg-2">分</span>
             </p>
             <p className={`mt-2 flex items-center gap-1 text-ui-[12.5px] font-semibold ${delta >= 0 ? 'text-moss' : 'text-fg-2'}`}>
@@ -94,7 +97,9 @@ function Tile({ label, value, sub, icon, delay }: { label: string; value: string
   return (
     <GlassCard delay={delay} className="p-4">
       <p className="flex items-center gap-1 text-ui-[12px] font-semibold text-fg-2">{icon}{label}</p>
-      <p className="tabular mt-1 text-ui-[22px] font-bold tracking-tight">{value}</p>
+      <p className="tabular mt-1 text-ui-[22px] font-bold tracking-tight">
+        <Rolling value={value} />
+      </p>
       <p className="mt-0.5 truncate text-ui-[11px] text-fg-2">{sub}</p>
     </GlassCard>
   );
@@ -360,7 +365,9 @@ function AltitudeCard({ total }: { total: number }) {
     <GlassCard className="relative mt-3 overflow-hidden p-5" delay={0.12}>
       <div className="relative">
         <p className="flex items-center gap-1.5 text-ui-[12.5px] font-semibold text-fg-2"><Mountain size={15} className="text-accent" /> これまでの獲得標高</p>
-        <p className="tabular mt-1 text-ui-[37px] font-bold leading-none tracking-tight text-accent-ink">{fmtMeters(meters)}</p>
+        <p className="tabular mt-1 text-ui-[37px] font-bold leading-none tracking-tight text-accent-ink">
+          <Rolling value={fmtMeters(meters)} />
+        </p>
         <p className="mt-2 text-ui-[12.5px] text-fg-2">
           富士山 <span className="tabular font-bold text-fg">{fuji.toFixed(1)}</span> 座分 · エベレスト <span className="tabular font-bold text-fg">{everest.toFixed(2)}</span> 座分
         </p>

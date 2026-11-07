@@ -30,7 +30,7 @@ export function PickerModal<T extends string | number>({
 }) {
   return (
     <Sheet open={open} onClose={onClose} title={title} subtitle={subtitle}>
-      <div className="group-box mb-4 divide-y divide-line overflow-hidden rounded-2xl">
+      <div className="ios-stagger group-box mb-4 divide-y divide-line overflow-hidden rounded-2xl">
         {options.map((o) => {
           const active = o.value === value;
           return (

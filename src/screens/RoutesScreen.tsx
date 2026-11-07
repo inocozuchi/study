@@ -1,3 +1,4 @@
+import { CompactTitle } from '@/components/ui/CompactTitle';
 import { useMemo, useState, type ReactNode, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Lock, Mountain, Pencil, Plus, Route } from 'lucide-react';
@@ -35,7 +36,8 @@ export function RoutesScreen() {
   const summited = activeSubjects.filter((s) => s.summitedAt).sort((a, b) => (b.summitedAt ?? 0) - (a.summitedAt ?? 0));
 
   return (
-    <div className="mx-auto max-w-xl px-5 pb-nav pt-safe">
+    <div className="ios-stagger mx-auto max-w-xl px-5 pb-nav pt-safe">
+      <CompactTitle title={mode?.title ?? '山岳ルート'} />
       <header className="flex items-end justify-between pt-2">
         <div>
           <p className="text-ui-[12.5px] font-semibold text-fg-2">

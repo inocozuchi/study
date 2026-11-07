@@ -22,7 +22,6 @@ import { ambientFiles } from '@/audio/ambientFiles';
 import { loadAmbientLibrary } from '@/audio/ambientLibrary';
 import { hourFor } from '@/lib/scene';
 import { getDesign } from '@/designs';
-import { markBoot } from '@/lib/boot';
 import { applyFont } from '@/lib/fonts';
 import { applyDisplay } from '@/lib/display';
 import { applyLanguage } from '@/lib/i18n';
@@ -48,9 +47,6 @@ export default function App() {
 
 function Gate() {
   const { ready, settings, epoch } = useApp();
-  useEffect(() => {
-    if (ready) markBoot('data');
-  }, [ready]);
   const font = ready ? settings.font : undefined;
   useEffect(() => {
     if (font) applyFont(font);
@@ -74,7 +70,7 @@ function Gate() {
   );
 }
 
-/** データの読み込み中。見た目は index.html の起動画面（#boot）が担うので、ここは同じ背景だけ */
+/** データの読み込み中（localStorage なので一瞬）。地の色だけ */
 function Splash() {
   return <div className="h-full bg-page" />;
 }
@@ -155,17 +151,17 @@ function Shell() {
         // シーンはパッと消さずに 250ms で溶かしてから隠す（タブの切り替えと同じ速さ）
         style={{ opacity: sceneShown ? 1 : 0, visibility: sceneShown ? 'visible' : 'hidden', transition: sceneShown ? 'opacity 250ms cubic-bezier(0.22, 1, 0.36, 1)' : 'opacity 250ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 250ms' }}
         data-probe={sceneShown ? 'scene' : undefined}>
-        <SceneLayer ended={!!result} paused={!sceneShown} shown={sceneShown} />
+        <SceneLayer ended={!!result} paused={!sceneShown} />
       </div>
 
       {/* タブの切り替えは iOS と同じく前の画面をすぐ外し、新しい画面だけ 250ms でふわっと出す。
           前の画面の退場を待たない（退場の中の AnimatePresence が止まると前の画面が残り続けた） */}
         <motion.main
           key={tab}
-          // 250ms のフェード + 下から 6px（filter は使わない。位置と透明度だけ）
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, ease: easeIOS }}
+          // 200ms のフェードだけ。中身は .ios-stagger で上から順にふわっと上がる（画面ごと）
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2, ease: easeIOS }}
           layoutScroll
           // スクロールの枠（タブをもう一度押すと上へ）
           data-main-scroll
@@ -211,7 +207,7 @@ function Shell() {
 }
 
 /** 背景シーン：選択中のタイマーデザインに描画を任せる */
-function SceneLayer({ ended, paused, shown }: { ended: boolean; paused: boolean; shown: boolean }) {
+function SceneLayer({ ended, paused }: { ended: boolean; paused: boolean }) {
   const { settings } = useApp();
   const { timer, elapsedMs } = useTimer();
   const now = useNow(60_000);
@@ -241,10 +237,6 @@ function SceneLayer({ ended, paused, shown }: { ended: boolean; paused: boolean;
     const id = setTimeout(onReady, 3000);
     return () => clearTimeout(id);
   }, [ready, onReady]);
-  // 起動画面：最初に見えるシーンの準備ができたら（シーンを見せない画面ならすぐ）閉じてよい
-  useEffect(() => {
-    if (ready || !shown) markBoot('scene');
-  }, [ready, shown]);
 
   return (
     <div className="absolute inset-0 overflow-hidden" style={{ background: design.skeleton ?? '#16181D' }}>

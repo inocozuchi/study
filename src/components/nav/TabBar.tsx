@@ -70,7 +70,15 @@ export function TabBar({ tab, onChange, onReselect, skin = PLAIN }: { tab: TabKe
               aria-current={active ? 'page' : undefined}
               className={`relative z-10 grid flex-1 place-items-center rounded-full transition-colors duration-150 ${active ? skin.on : skin.off}`}
             >
-              <Icon size={22} strokeWidth={active ? 2.3 : 1.9} />
+              {/* 選んだ瞬間にアイコンが小さく弾む（iOS の記号の bounce）。開いたときは動かさない */}
+              <motion.span
+                className="grid place-items-center"
+                initial={false}
+                animate={active ? { scale: [1, 0.82, 1.08, 1] } : { scale: 1 }}
+                transition={{ duration: 0.34, ease: easeIOS, times: [0, 0.3, 0.7, 1] }}
+              >
+                <Icon size={22} strokeWidth={active ? 2.3 : 1.9} />
+              </motion.span>
             </motion.button>
           );
         })}

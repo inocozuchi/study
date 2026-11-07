@@ -83,10 +83,10 @@
   :root {
     /* タブバー（浮いたカプセル）の下の余白と、タブバーが占める高さ。ホームのボタン位置・各画面の下の余白はこれから決める */
     /*
-     * 上の文字・ボタンを置き始める線（ヘッダーの行の上端）。時刻の帯（安全域）から 12px 下げる。
+     * 上の文字・ボタンを置き始める線（ヘッダーの行の上端）。時刻の帯（安全域）から 24px 下げる（上に余裕を持たせる。ユーザーの指定）。
      * ヘッダーの行は高さ 44（.screen-header）。すべての画面でここが同じなので、画面を切り替えてもタイトルと戻るボタンがずれない
      */
-    --safe-top: calc(max(env(safe-area-inset-top), 16px) + 12px);
+    --safe-top: calc(max(env(safe-area-inset-top), 16px) + 24px);
     --tabbar-pb: max(calc(env(safe-area-inset-bottom) - 6px), 14px);
     --nav-space: calc(60px + var(--tabbar-pb));
     /* 文字の大きさ・行間（設定。lib/display.ts が --user-ts / --user-lh を入れる）。
@@ -246,5 +246,33 @@ html.layout-probe [data-probe='status'] { outline-color: rgba(255, 200, 0, 0.95)
 /* シーンのフェードイン（画像のデコードがそろってから）。iOS のしっとりした減速カーブ */
 .scene-fade {
   transition: opacity 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── iOS の動き（アプリ本体）。CLAUDE.md「デザインエンジニアリング基準」：transform と opacity だけ・強い ease-out・短く ── */
+@layer components {
+  /* 回る数字（components/ui/Rolling） */
+  .roll { display: inline-block; height: 1.12em; line-height: 1.12em; overflow: hidden; vertical-align: -0.16em; }
+  .roll > span { display: block; transition: transform 520ms cubic-bezier(0.23, 1, 0.32, 1); }
+  .roll > span > span { display: block; height: 1.12em; }
+
+  /* 画面を開いたとき、中身が上から順にふわっと上がる（30ms ずつずらす。操作は止めない） */
+  .ios-stagger > * { animation: ios-rise 280ms cubic-bezier(0.23, 1, 0.32, 1) backwards; }
+  .ios-stagger > *:nth-child(2) { animation-delay: 30ms; }
+  .ios-stagger > *:nth-child(3) { animation-delay: 60ms; }
+  .ios-stagger > *:nth-child(4) { animation-delay: 90ms; }
+  .ios-stagger > *:nth-child(5) { animation-delay: 120ms; }
+  .ios-stagger > *:nth-child(6) { animation-delay: 150ms; }
+  .ios-stagger > *:nth-child(n + 7) { animation-delay: 180ms; }
+}
+@keyframes ios-rise {
+  from { opacity: 0; transform: translateY(10px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .roll > span { transition: none; }
+  /* 動きを減らす：位置は動かさず、透明度だけ */
+  .ios-stagger > * { animation-name: ios-fade; }
+}
+@keyframes ios-fade {
+  from { opacity: 0; }
 }
 

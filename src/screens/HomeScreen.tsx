@@ -196,7 +196,7 @@ function HomeIdle({ onFocus, onMusic, onTool, onMap, onMode, onProfile, onInsigh
       </motion.nav>
 
       {/* 下：タブバーのすぐ上。真ん中に「集中」、左右に今日の記録（目標までの輪）と連続日数。押すとインサイトへ */}
-      <div className="absolute inset-x-0 bottom-[calc(var(--nav-space)+16px)] grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-5">
+      <div className="ios-stagger absolute inset-x-0 bottom-[calc(var(--nav-space)+16px)] grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-5">
         <Pressable onClick={onInsights} aria-label={`今日の集中 ${fmtDuration(sum.today, true)}${goal > 0 ? `（目標 ${fmtDuration(goal, true)}）` : ''}`} className={`tabular flex h-[34px] items-center gap-1.5 justify-self-start whitespace-nowrap rounded-full pl-1.5 pr-3 text-[12px] font-bold ${skin.chip}`}>
           {goal > 0 ? <GoalRing ratio={ratio} /> : <Clock3 size={13} strokeWidth={2.4} className="ml-1" />}
           {goal > 0 ? (

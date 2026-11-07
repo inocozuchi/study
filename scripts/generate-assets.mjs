@@ -13,8 +13,8 @@ import path from 'node:path';
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const svg = fs.readFileSync(path.join(root, 'public/icons/icon.svg'), 'utf8');
 const THEMES = [
-  { suffix: '', scheme: 'light', bg: '#F2F3F7', shadow: '0 0 0 1px rgba(28,29,34,0.06),0 12px 30px rgba(28,29,34,0.16)' },
-  { suffix: '-dark', scheme: 'dark', bg: '#0E1015', shadow: '0 0 0 1px rgba(255,255,255,0.06),0 18px 40px rgba(0,0,0,0.45)' },
+  { suffix: '', scheme: 'light', bg: '#F2F3F7' },
+  { suffix: '-dark', scheme: 'dark', bg: '#0E1015' },
 ];
 
 /** [CSS 幅, CSS 高さ, 倍率] — 縦向きの iPhone */
@@ -48,13 +48,12 @@ await page.setViewportSize({ width: 512, height: 512 });
 await page.setContent(`<body style="margin:0"><div style="width:512px;height:512px;background:linear-gradient(#22305A,#0A1022);display:grid;place-items:center">${icon(380)}</div></body>`);
 await page.screenshot({ path: path.join(root, 'public/icons/icon-maskable-512.png') });
 
-// iOS 起動画像
+// iOS 起動画像：アプリの地の色だけ（アイコンを出さない。開いた瞬間にロード画面に見えないように、そのままアプリが現れる）
 for (const t of THEMES) {
   for (const [w, h, r] of IPHONES) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: r });
     const p = await ctx.newPage();
-    await p.setContent(`<body style="margin:0;background:${t.bg};width:${w}px;height:${h}px;display:grid;place-items:center">
-      <div style="width:112px;height:112px;border-radius:25px;overflow:hidden;box-shadow:${t.shadow}">${icon(112)}</div></body>`);
+    await p.setContent(`<body style="margin:0;background:${t.bg};width:${w}px;height:${h}px"></body>`);
     await p.screenshot({ path: path.join(root, `public/splash/splash-${w * r}x${h * r}${t.suffix}.png`) });
     await ctx.close();
   }
