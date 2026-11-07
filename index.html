@@ -34,7 +34,7 @@
     <meta name="apple-mobile-web-app-title" content="Focus Trail" />
     <meta name="format-detection" content="telephone=no" />
 
-    <!-- iOS の起動画像（ホーム画面から開いた瞬間に出る画面。下の #boot と同じ見た目） -->
+    <!-- iOS の起動画像（ホーム画面から開いた瞬間に出る画面）：アプリの地の色だけ。アイコンもロード画面も出さず、そのままアプリが現れる -->
     <link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" href="./splash/splash-1320x2868.png" />
     <link rel="apple-touch-startup-image" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" href="./splash/splash-1206x2622.png" />
     <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" href="./splash/splash-1290x2796.png" />
@@ -58,66 +58,17 @@
     <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" href="./splash/splash-1242x2208-dark.png" />
     <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: dark)" href="./splash/splash-750x1334-dark.png" />
 
-    <!-- 書体（フォント設定で選んだもの）は lib/fonts.ts が読み込む。起動画面を先に出す -->
+    <!-- 書体（フォント設定で選んだもの）は lib/fonts.ts が読み込む -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-    <!-- 起動画面：JavaScript より先に描かれる。iOS の起動画像と同じ位置・大きさ -->
+    <!-- 起動画面は置かない（開いたらすぐ操作できるように）。地の色だけ先に塗り、白い一瞬を作らない -->
     <style>
       html, body { margin: 0; background: #F2F3F7; }
       html[data-theme='dark'], html[data-theme='dark'] body { background: #0E1015; }
-      #boot {
-        position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center;
-        background: #F2F3F7;
-        transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-      }
-      html[data-theme='dark'] #boot { background: #0E1015; }
-      html[data-theme='dark'] #boot .spinner i { background: rgba(255,255,255,0.8); }
-      /* 閉じるとき：フェードアウトしながら少しだけ手前へ（1 回だけ） */
-      #boot.hide { opacity: 0; transform: scale(1.04); pointer-events: none; }
-      #boot .icon {
-        width: 112px; height: 112px; border-radius: 25px; overflow: hidden;
-        box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 18px 40px rgba(0,0,0,0.45);
-        /* 現れる動きはつけない：iOS の起動画像と同じ絵がそのまま続くので、ここで点滅しない */
-      }
-      #boot .icon svg { display: block; width: 100%; height: 100%; }
-      /* iOS の読み込みインジケーター（12 本の線が順に濃くなる）。読み込みが長いときだけ現れる */
-      #boot .spinner {
-        position: absolute; left: 50%; top: calc(50% + 112px); width: 20px; height: 20px; margin-left: -10px;
-        opacity: 0; animation: boot-fade 0.3s ease 0.9s forwards;
-      }
-      #boot .spinner i {
-        position: absolute; left: 50%; top: 0; width: 2px; height: 5.5px; margin-left: -1px; border-radius: 1px;
-        background: #6B6E7A; transform-origin: 1px 10px; opacity: 0.15;
-        animation: boot-spoke 1s linear infinite;
-      }
-      @keyframes boot-fade { to { opacity: 1; } }
-      @keyframes boot-spoke { 0% { opacity: 1; } 100% { opacity: 0.15; } }
-      @media (prefers-reduced-motion: reduce) { #boot.hide { transform: none; } }
     </style>
   </head>
   <body>
-    <div id="boot" role="status" aria-label="読み込み中">
-      <div class="icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true">
-          <defs>
-            <linearGradient id="boot-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22305A" /><stop offset="1" stop-color="#0A1022" /></linearGradient>
-          </defs>
-          <rect width="512" height="512" fill="url(#boot-bg)" />
-          <path d="M92 396 L256 138 L420 396 Z" fill="#F4F7FC" />
-          <path d="M256 138 L420 396 L292 396 Z" fill="#B7C6E4" />
-          <circle cx="378" cy="138" r="24" fill="#FF8A4C" />
-        </svg>
-      </div>
-      <div class="spinner" aria-hidden="true">
-        <i style="transform: rotate(0deg); animation-delay: -1s"></i><i style="transform: rotate(30deg); animation-delay: -0.9167s"></i>
-        <i style="transform: rotate(60deg); animation-delay: -0.8333s"></i><i style="transform: rotate(90deg); animation-delay: -0.75s"></i>
-        <i style="transform: rotate(120deg); animation-delay: -0.6667s"></i><i style="transform: rotate(150deg); animation-delay: -0.5833s"></i>
-        <i style="transform: rotate(180deg); animation-delay: -0.5s"></i><i style="transform: rotate(210deg); animation-delay: -0.4167s"></i>
-        <i style="transform: rotate(240deg); animation-delay: -0.3333s"></i><i style="transform: rotate(270deg); animation-delay: -0.25s"></i>
-        <i style="transform: rotate(300deg); animation-delay: -0.1667s"></i><i style="transform: rotate(330deg); animation-delay: -0.0833s"></i>
-      </div>
-    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

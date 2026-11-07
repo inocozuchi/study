@@ -229,7 +229,7 @@ async function checkHeader(page, where) {
   );
   if (!icons.length) return null;
   for (const i of icons) if (Math.round(i.w) !== 42 || Math.round(i.h) !== 42) fail(where, `ヘッダーのボタン「${i.label}」が 42px ではありません（${i.w}×${i.h}）`);
-  const expect = Math.max(d.top, 16) + 12 + 1;
+  const expect = Math.max(d.top, 16) + 24 + 1;
   const top = Math.round(icons[0].top);
   if (Math.abs(top - expect) > 1) fail(where, `ヘッダーの行の位置がずれています（上から ${top}px、本来は ${expect}px）`);
   return top;

@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
 import { springBouncy } from '@/lib/motion';
 
 /** iOS リマインダー風の丸いチェックボックス（既定は操作の青。習慣などは自分の色） */
@@ -22,9 +21,20 @@ export function CheckCircle({ checked, onChange, color, size = 26, label }: { ch
         style={color ? { background: color } : undefined}
       />
       {checked && (
-        <motion.span initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={springBouncy} className="relative text-white">
-          <Check size={size * 0.58} strokeWidth={3.2} />
-        </motion.span>
+        // チェックの印は書くように左から右へ引かれる（iOS のリマインダー）
+        <svg viewBox="0 0 24 24" width={size * 0.58} height={size * 0.58} className="relative text-white" aria-hidden>
+          <motion.path
+            d="M5 12.5l4.5 4.5L19 7.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={3.2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1], delay: 0.05 }}
+          />
+        </svg>
       )}
     </motion.button>
   );

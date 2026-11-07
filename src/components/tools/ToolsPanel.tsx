@@ -214,19 +214,36 @@ function TodoView() {
 
 function TodoRow({ text, done, onToggle, onDelete }: { text: string; done: boolean; onToggle: () => void; onDelete: () => void }) {
   return (
-    <motion.li layout initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 30, height: 0 }} transition={springSoft} className="group flex items-center gap-3 rounded-2xl bg-fill px-3 py-2.5">
-      <CheckCircle checked={done} onChange={onToggle} label={text} />
-      <span data-no-translate className={`relative min-w-0 flex-1 text-ui-[13px] ${done ? 'text-fg-3' : ''}`}>
-        {text}
-        {done && (
-          <motion.svg className="absolute left-0 top-1/2 h-2 w-full -translate-y-1/2 overflow-visible" viewBox="0 0 100 4" preserveAspectRatio="none">
-            <motion.path d="M0 2 Q30 0.6 60 2.4 T100 1.6" stroke="rgb(var(--c-fg3))" strokeWidth="1.6" fill="none" vectorEffect="non-scaling-stroke" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.35 }}  />
-          </motion.svg>
-        )}
-      </span>
-      <button onClick={onDelete} aria-label="削除" className="hit grid h-8 w-8 place-items-center rounded-full text-fg-2 active:bg-fill">
-        <Trash2 size={15} />
-      </button>
+    // 消えるときは横へ抜けて薄くなるだけ（高さは動かさない。並びの詰めは layout が transform で行う）
+    <motion.li layout initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40, transition: { duration: 0.18 } }} transition={springSoft} className="relative overflow-hidden rounded-2xl">
+      {/* 左へスワイプすると後ろの赤い「削除」が見え、大きく（か勢いよく）引くと消える（iOS のメール）。元に戻せる */}
+      <div aria-hidden className="absolute inset-0 flex items-center justify-end rounded-2xl bg-danger pr-4 text-ui-[12.5px] font-bold text-white">
+        <Trash2 size={15} className="mr-1" /> 削除
+      </div>
+      <motion.div
+        drag="x"
+        dragDirectionLock
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={{ left: 0.75, right: 0.04 }}
+        onDragEnd={(_, info) => {
+          if (info.offset.x < -110 || (info.offset.x < -36 && info.velocity.x < -450)) onDelete();
+        }}
+        style={{ touchAction: 'pan-y' }}
+        className="group relative flex items-center gap-3 rounded-2xl bg-fill px-3 py-2.5"
+      >
+        <CheckCircle checked={done} onChange={onToggle} label={text} />
+        <span data-no-translate className={`relative min-w-0 flex-1 text-ui-[13px] ${done ? 'text-fg-3' : ''}`}>
+          {text}
+          {done && (
+            <motion.svg className="absolute left-0 top-1/2 h-2 w-full -translate-y-1/2 overflow-visible" viewBox="0 0 100 4" preserveAspectRatio="none">
+              <motion.path d="M0 2 Q30 0.6 60 2.4 T100 1.6" stroke="rgb(var(--c-fg3))" strokeWidth="1.6" fill="none" vectorEffect="non-scaling-stroke" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }} />
+            </motion.svg>
+          )}
+        </span>
+        <button onClick={onDelete} aria-label="削除" className="hit grid h-8 w-8 place-items-center rounded-full text-fg-2 active:bg-fill">
+          <Trash2 size={15} />
+        </button>
+      </motion.div>
     </motion.li>
   );
 }

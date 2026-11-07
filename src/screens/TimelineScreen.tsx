@@ -1,3 +1,5 @@
+import { CompactTitle } from '@/components/ui/CompactTitle';
+import { Rolling } from '@/components/ui/Rolling';
 import { useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { AnimatePresence, Reorder, motion, useDragControls } from 'framer-motion';
 import { ArrowUpDown, CalendarDays, Check, GripVertical, ChevronLeft, ChevronRight, ExternalLink, MapPin, Moon, Pencil, Play, Plus, RefreshCw, Sunrise, NotebookPen, CalendarPlus } from 'lucide-react';
@@ -121,7 +123,8 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
   const shiftWeek = (d: number) => setSelected(dateKey(addDays(selDate, d * 7)));
 
   return (
-    <div className="mx-auto max-w-xl px-5 pb-nav pt-safe">
+    <div className="ios-stagger mx-auto max-w-xl px-5 pb-nav pt-safe">
+      <CompactTitle title={'タイムライン'} />
       {/* ヘッダー */}
       <header className="flex items-end justify-between pt-3">
         <div>
@@ -461,7 +464,9 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="px-3 text-center">
       <p className="text-ui-[12px] font-bold text-fg-2">{label}</p>
-      <p className="tabular mt-0.5 text-ui-[18px] font-extrabold tracking-tight">{value}</p>
+      <p className="tabular mt-0.5 text-ui-[18px] font-extrabold tracking-tight">
+        <Rolling value={value} />
+      </p>
     </div>
   );
 }

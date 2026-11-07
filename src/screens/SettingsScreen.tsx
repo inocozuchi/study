@@ -1,3 +1,4 @@
+import { CompactTitle } from '@/components/ui/CompactTitle';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Bell, CalendarDays, ChevronRight, Clock, Coffee, Database, Leaf, Mountain, Music, PlusSquare, Repeat, Smartphone, Sun, Timer, Trash2,
@@ -231,7 +232,8 @@ export function SettingsScreen() {
   const probe = useLayoutProbe();
   return (
     <>
-            <div className="mx-auto max-w-xl px-5 pb-nav pt-safe">
+            <div className="ios-stagger mx-auto max-w-xl px-5 pb-nav pt-safe">
+              <CompactTitle title={'設定'} />
               <header className="pt-2">
                 <h1 className="text-ui-[29px] font-bold leading-tight tracking-tight">設定</h1>
               </header>
@@ -362,7 +364,7 @@ export function SettingsScreen() {
                 />
                 {backupMsg && <p className="px-1 text-ui-[12px] font-semibold text-accent-ink" role="status">{backupMsg}</p>}
                 <Row icon={<Trash2 size={21} />} title="すべての記録を消去" onClick={() => setConfirm(true)} danger />
-                <Row icon={<Database size={21} />} title="Focus Trail" value="v2.4" />
+                <Row icon={<Database size={21} />} title="Focus Trail" value="v2.5" />
                 <Row icon={<Ruler size={19} />} title="表示の診断" detail="画面の高さ・安全域・タブバーの位置を表示" right={<Toggle checked={probe} onChange={setLayoutProbe} label="表示の診断" />} />
               </Group>
             </div>
