@@ -3,6 +3,8 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   // ダークは <html data-theme="dark">（lib/theme.ts）。端末の設定ではなくアプリの外観に従う
   darkMode: ['selector', '[data-theme="dark"]'],
+  // hover: はマウスなど本当にホバーできる端末だけ（iPhone でタップしたあと拡大のまま残らない）
+  future: { hoverOnlyWhenSupported: true },
   theme: {
     extend: {
       // iOS のカーブ：初速が速く最後にスッと収まる（既定・ease-out）と、わずかに弾むバネ（spring）

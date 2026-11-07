@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { springBouncy } from '@/lib/motion';
+import { spring } from '@/lib/motion';
 
 /** 中央に浮かぶ確認 / お祝い用の窓（重ねて出す窓なので角丸 20px） */
 export function Modal({ open, onClose, children, dismissable = true }: { open: boolean; onClose?: () => void; children: ReactNode; dismissable?: boolean }) {
@@ -24,7 +24,7 @@ export function Modal({ open, onClose, children, dismissable = true }: { open: b
             initial={{ opacity: 0, scale: 0.94, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 6 }}
-            transition={springBouncy}
+            transition={spring}
           >
             {children}
           </motion.div>

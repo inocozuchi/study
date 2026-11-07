@@ -14,7 +14,11 @@ let current: Language = 'ja';
 export const lang = () => current;
 const LANG_KEY = 'focus-trail:v1:language';
 
-type Dict = { plain: Record<string, string>; tpl: [RegExp, string, boolean][] };
+/** 型：正規表現・訳・固定が 1 文字だけ（弱い）・数の型（値は数字だけ） */
+type Dict = { plain: Record<string, string>; tpl: [RegExp, string, boolean, boolean][] };
+/** 固定の部分がこの単位の字だけの型（{0}月{1}日・{0}時間{1}分 など）は、値が数字のときだけ使う（人が書いた「今年3月」などを壊さない） */
+const UNIT = /^[年月日時間分秒件回駅便枚台週\s]+$/;
+const NUMERIC = /^[\d\s.,:+\-/]+$/;
 let dict: Dict | null = null;
 let observer: MutationObserver | null = null;
 /** 訳す前の文字（日本語に戻すとき・React が同じノードを書き直したかを見分けるため） */
@@ -83,12 +87,13 @@ export function translate(text: string): string | null {
   const key = text.trim();
   const plain = translatePlain(key);
   if (plain != null) return lead + plain + trail;
-  for (const [re, out, weak] of dict.tpl) {
+  for (const [re, out, weak, numeric] of dict.tpl) {
     const m = key.match(re);
     if (!m) continue;
     // 値の部分も日本語なら訳す（駅名・時間など）。固定の部分が 1 文字だけの型は、値がすべて訳せるときだけ使う（何にでも当たってしまうので）
     const vals = m.slice(1).map((v) => piece(v));
     if (weak && vals.some((v, i) => v == null && JP.test(m[i + 1]))) continue;
+    if (numeric && m.slice(1).some((v) => !NUMERIC.test(v))) continue;
     return lead + out.replace(/\{(\d+)\}/g, (_, i) => vals[+i] ?? m[+i + 1] ?? '') + trail;
   }
   const pieces = translatePieces(key);
@@ -180,7 +185,7 @@ async function loadDict() {
     const tpl = Object.entries(raw.tpl)
       .filter(([k]) => fixedJp(k) > 0)
       .sort((a, b) => b[0].replace(/\{\d+\}/g, '').length - a[0].replace(/\{\d+\}/g, '').length)
-      .map(([k, v]) => [new RegExp('^' + escapeRe(k).replace(/\\\{\d+\\\}/g, '(.+?)') + '$'), v, fixedJp(k) <= 1] as [RegExp, string, boolean]);
+      .map(([k, v]) => [new RegExp('^' + escapeRe(k).replace(/\\\{\d+\\\}/g, '(.+?)') + '$'), v, fixedJp(k) <= 1, UNIT.test(k.replace(/\{\d+\}/g, ''))] as [RegExp, string, boolean, boolean]);
     dict = { plain, tpl };
   });
   await loading;

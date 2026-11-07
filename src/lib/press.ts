@@ -1,5 +1,6 @@
 /**
- * すべてのボタンの「押し込み」：押した瞬間にキュッと縮み（scale 0.94）、離すとバネのように 1.0 へ戻る。
+ * すべてのボタンの「押し込み」：押した瞬間にキュッと縮み（scale 0.96）、離すとわずかに弾んで 1.0 へ戻る。
+ * 縮み具合は 0.95–0.98（CLAUDE.md「デザインエンジニアリング基準」の 5）。戻りはシステムの返事なので短く（380ms）
  * 1 つのリスナーでアプリ全体のボタン（button / role=button / a / data-press）に効かせる。
  *  - 動かすのは CSS の `scale` プロパティ（Web Animations）。transform とは別の値なので、
  *    framer-motion や Tailwind の translate と重ねても位置がずれない
@@ -21,7 +22,7 @@ export function installPress() {
     current = null;
     const now = getComputedStyle(el).scale;
     anim.cancel();
-    el.animate([{ scale: now && now !== 'none' ? now : '1' }, { scale: '1' }], { duration: 520, easing: RELEASE_EASE });
+    el.animate([{ scale: now && now !== 'none' ? now : '1' }, { scale: '1' }], { duration: 380, easing: RELEASE_EASE });
   };
 
   document.addEventListener(
@@ -32,7 +33,7 @@ export function installPress() {
       if (!el || el.matches(':disabled, [aria-disabled="true"], [data-no-press]') || el.closest('[data-no-press]')) return;
       const r = el.getBoundingClientRect();
       if (r.width > innerWidth * 0.9 && r.height > innerHeight * 0.5) return;
-      const to = Number(el.dataset.pressScale) || (r.width > innerWidth * 0.6 ? 0.97 : 0.94);
+      const to = Number(el.dataset.pressScale) || (r.width > innerWidth * 0.6 ? 0.97 : 0.96);
       release();
       current = { el, anim: el.animate([{ scale: '1' }, { scale: String(to) }], { duration: 160, easing: PRESS_EASE, fill: 'forwards' }) };
     },

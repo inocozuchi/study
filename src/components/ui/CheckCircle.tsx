@@ -22,7 +22,7 @@ export function CheckCircle({ checked, onChange, color, size = 26, label }: { ch
         style={color ? { background: color } : undefined}
       />
       {checked && (
-        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={springBouncy} className="relative text-white">
+        <motion.span initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={springBouncy} className="relative text-white">
           <Check size={size * 0.58} strokeWidth={3.2} />
         </motion.span>
       )}

@@ -23,8 +23,9 @@ export function FlightResult({ result, onContinue }: DesignResultProps) {
     <div className="fl-root absolute inset-0 overflow-y-auto overscroll-contain bg-[#050608]/55">
       <div className="mx-auto w-[min(92vw,360px)] pb-[calc(env(safe-area-inset-bottom)+28px)] pt-[calc(var(--safe-top)+14px)]">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-center">
-          <p className="text-[12.5px] font-semibold text-[#FF9F0A]">{result.arrived ? 'ようこそ' : '途中の空港に着陸しました'}</p>
-          <p className="mt-0.5 text-[22px] font-bold tracking-tight">{b ? `${b.toName}に着陸しました` : '着陸しました'}</p>
+          <p className="text-[12.5px] font-semibold text-[#FF9F0A]">{result.arrived ? 'ようこそ' : '途中で着陸しました'}</p>
+          {/* 途中で終えたときに「行き先に着陸しました」と言わない */}
+          <p className="mt-0.5 text-[22px] font-bold tracking-tight">{b ? (result.arrived ? `${b.toName}に着陸しました` : `${b.toName}行きの便を途中で降りました`) : '着陸しました'}</p>
         </motion.div>
 
         {b && (

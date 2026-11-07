@@ -120,7 +120,10 @@ export class LocalStorageRepository implements FocusRepository {
   }
 
   async addSession(session: FocusSession) {
-    write(K.sessions, [...read<FocusSession[]>(K.sessions, []), session]);
+    const list = read<FocusSession[]>(K.sessions, []);
+    // 同じ集中を 2 回書かない（デスクトップで 2 つのタブが同じタイマーを見ているとき、両方が終わりを記録する）
+    if (list.some((s) => s.subjectId === session.subjectId && s.start === session.start && s.end === session.end)) return;
+    write(K.sessions, [...list, session]);
   }
   async updateSession(session: FocusSession) {
     write(K.sessions, upsert(read<FocusSession[]>(K.sessions, []), session));
@@ -180,7 +183,9 @@ export class LocalStorageRepository implements FocusRepository {
   }
 
   async addLog(log: TravelLog) {
-    write(K.logs, [...read<TravelLog[]>(K.logs, []), log]);
+    const list = read<TravelLog[]>(K.logs, []);
+    if (list.some((l) => l.startedAt === log.startedAt && l.mode === log.mode)) return;
+    write(K.logs, [...list, log]);
   }
 
   loadActiveTimer(): ActiveTimer | null {
@@ -188,7 +193,13 @@ export class LocalStorageRepository implements FocusRepository {
   }
   saveActiveTimer(timer: ActiveTimer | null) {
     if (timer) write(K.timer, timer);
-    else localStorage.removeItem(K.timer);
+    else {
+      try {
+        localStorage.removeItem(K.timer);
+      } catch {
+        /* 保存できない環境（サイトのデータを止めている）でも止まらない */
+      }
+    }
   }
 
   async importAll(data: AppData) {
@@ -196,6 +207,11 @@ export class LocalStorageRepository implements FocusRepository {
       ...emptyData(mergeSettings(data.settings ?? {})),
       ...Object.fromEntries((['subjects', 'sessions', 'plans', 'diary', 'todos', 'habits', 'logs', 'memoBoards', 'memoNodes', 'memoEdges'] as const).map((k) => [k, Array.isArray(data[k]) ? data[k] : []])),
     } as AppData;
+    // 記録の数字が文字になっている・欠けているバックアップでも、合計が崩れないように直す（直せないものは捨てる）
+    next.sessions = next.sessions
+      .filter((x) => x && typeof x === 'object' && typeof x.id === 'string' && typeof x.subjectId === 'string')
+      .map((x) => ({ ...x, start: Number(x.start), end: Number(x.end), minutes: Math.max(0, Number(x.minutes) || 0) }))
+      .filter((x) => Number.isFinite(x.start) && Number.isFinite(x.end));
     this.persistAll(next);
     this.saveActiveTimer(null);
     write(K.freshStart, true);

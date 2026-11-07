@@ -9,7 +9,7 @@ const EDGE = 22;
  *  - 画面の左端に指を置いて右へ引くと、画面が指についてくる（x）
  *  - 幅の 1/3 を越えるか、勢いよく払うと、画面が右へ抜けてから onBack
  *  - 足りなければバネで元の位置へ戻る
- *  - 縦に動いたとき・ダイヤル（role=slider）の上では始めない
+ *  - 縦に動いたとき・ダイヤル（role=slider）・data-no-edge-swipe の中（思考マップのボード）では始めない
  * bind は画面のいちばん外の要素に付ける（キャプチャで受ける）。
  */
 export function useEdgeSwipeBack(onBack: () => void, enabled = true) {
@@ -17,7 +17,7 @@ export function useEdgeSwipeBack(onBack: () => void, enabled = true) {
   const g = useRef<{ id: number; x0: number; y0: number; w: number; live: boolean; t: number; lastX: number; v: number } | null>(null);
 
   const onPointerDownCapture = (e: RPointerEvent) => {
-    if (!enabled || e.clientX > EDGE || (e.target as Element).closest?.('[role="slider"]')) return;
+    if (!enabled || e.clientX > EDGE || (e.target as Element).closest?.('[role="slider"], [data-no-edge-swipe]')) return;
     g.current = { id: e.pointerId, x0: e.clientX, y0: e.clientY, w: (e.currentTarget as HTMLElement).clientWidth || innerWidth, live: false, t: performance.now(), lastX: e.clientX, v: 0 };
   };
   const onPointerMoveCapture = (e: RPointerEvent) => {

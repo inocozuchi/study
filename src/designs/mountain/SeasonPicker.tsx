@@ -29,7 +29,7 @@ export function SeasonPicker({ draft, onChange }: DesignSetupProps) {
               <span className={`relative block w-full overflow-hidden rounded-card transition-shadow ${active ? 'shadow-[0_0_0_2.5px_rgb(var(--c-accent))]' : 'shadow-[0_0_0_1px_rgb(var(--c-line))]'}`}>
                 <SeasonSwatch season={s} className="block aspect-[4/3] w-full" />
                 {active && (
-                  <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={springBouncy} className="absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-accent text-white">
+                  <motion.span initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={springBouncy} className="absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-accent text-white">
                     <Check size={10} strokeWidth={3.5} />
                   </motion.span>
                 )}

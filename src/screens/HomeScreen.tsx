@@ -166,7 +166,7 @@ function HomeIdle({ onFocus, onMusic, onTool, onMap, onMode, onProfile, onInsigh
       {/* 挨拶と次の予定：シーンの上でもくっきり読めるよう、着せ替えの面（不透明に近い塗り）に載せる。光彩・ぼかしの影は使わない */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={springSoft} className="relative mt-3 flex flex-col items-start gap-2 px-5">
         <h1 className={`max-w-full truncate rounded-full px-3.5 py-1.5 text-[14px] font-bold leading-tight ${skin.chip} ${skin.greeting}`}>
-          やあ！{settings.userName}、<span className="font-semibold opacity-80">前へ進む準備はいい？</span>
+          やあ！<span data-no-translate>{settings.userName}</span>、<span className="font-semibold opacity-80">前へ進む準備はいい？</span>
         </h1>
         {next && nextSubject && (
           <Pressable
@@ -176,7 +176,7 @@ function HomeIdle({ onFocus, onMusic, onTool, onMap, onMode, onProfile, onInsigh
           >
             <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: nextSubject.color }} />
             <span className="tabular shrink-0">{next.startMin <= nowMin ? 'いま' : fmtClock(next.startMin)}</span>
-            <span className="min-w-0 truncate">{next.title || nextSubject.name} · {fmtDuration(next.endMin - next.startMin)}</span>
+            <span className="min-w-0 truncate"><span data-no-translate={next.title ? true : undefined}>{next.title || nextSubject.name}</span> · {fmtDuration(next.endMin - next.startMin)}</span>
             <Play size={12} fill="currentColor" className="shrink-0 opacity-80" />
           </Pressable>
         )}

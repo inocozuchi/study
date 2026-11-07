@@ -245,6 +245,7 @@ export function SettingsScreen() {
                   <span className="min-w-0 flex-1">
                     <span className="block text-ui-[14px] font-bold">名前</span>
                     <input
+                      key={settings.userName}
                       defaultValue={settings.userName}
                       maxLength={16}
                       placeholder="旅人"
@@ -361,7 +362,7 @@ export function SettingsScreen() {
                 />
                 {backupMsg && <p className="px-1 text-ui-[12px] font-semibold text-accent-ink" role="status">{backupMsg}</p>}
                 <Row icon={<Trash2 size={21} />} title="すべての記録を消去" onClick={() => setConfirm(true)} danger />
-                <Row icon={<Database size={21} />} title="Focus Trail" value="v2.3" />
+                <Row icon={<Database size={21} />} title="Focus Trail" value="v2.4" />
                 <Row icon={<Ruler size={19} />} title="表示の診断" detail="画面の高さ・安全域・タブバーの位置を表示" right={<Toggle checked={probe} onChange={setLayoutProbe} label="表示の診断" />} />
               </Group>
             </div>

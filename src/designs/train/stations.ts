@@ -57,7 +57,8 @@ function bookedStop(timer: ActiveTimer, b: JourneyBooking, settings: Settings, f
   const origin = stationByName(line, b.from);
   if (ended) {
     const at = lastPassed(stops, focusMin);
-    const dest = focusMin >= b.minutes - 0.5 ? stationByName(line, b.to) : at?.station ?? origin;
+    // 終着の駅は、リザルト（TrainResult）と同じ決まり：通り過ぎた最後の駅（行き先に着いたら行き先）
+    const dest = at?.station ?? origin;
     const i = stops.findIndex((s) => s.station.name === dest.name);
     return { kind: 'terminal', name: dest.name, roman: dest.roman.toUpperCase(), prev: i > 0 ? stops[i - 1].station.name : origin.name, next: '' };
   }

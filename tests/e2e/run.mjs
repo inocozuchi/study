@@ -444,6 +444,16 @@ async function patterns(browser, device) {
       await sleep(2200);
       await shot(page, `p-plan-${mode}`);
       await checkScreen(page, w(`予定から出発 ${mode}`));
+      // 1 回目の集中の途中で休憩 → 再読み込みしても旅が続く → 出発し直す
+      const rest = { train: '途中駅で休憩', flight: '休憩する', mountain: 'ひと休み' }[mode];
+      await page.locator(`button:has-text("${rest}")`).filter({ visible: true }).first().click();
+      await sleep(1800);
+      await page.reload();
+      await sleep(3200);
+      if (await page.locator('[aria-label="集中する"]').filter({ visible: true }).count()) fail(w(`休憩中に再読み込み ${mode}`), '休憩中に再読み込みすると旅が消えます');
+      const go = { train: '発車', flight: '離陸', mountain: '出発' }[mode];
+      await page.locator(`button:has-text("${go}")`).filter({ visible: true }).last().click();
+      await sleep(1600);
       await page.reload();
       await sleep(3200);
       const end = { train: '旅を終える', flight: '長押しで着陸', mountain: '旅を終える' }[mode];
@@ -706,6 +716,20 @@ async function sheetsAndTabs(browser, device) {
       await sleep(700);
       await shot(page, `tool-${t}`);
       await checkScreen(page, w(`ツール ${t}`), { allowCovered: true });
+      if (t === 'ToDo') {
+        // 足す → 消す（すぐ消える）→ 元に戻す
+        await page.fill('input[placeholder="やることを追加"]', '問題集 3 ページ');
+        await page.keyboard.press('Enter');
+        await sleep(500);
+        await page.locator('[role="dialog"] li', { hasText: '問題集 3 ページ' }).locator('[aria-label="削除"]').click();
+        await sleep(500);
+        const left = await page.evaluate(() => JSON.parse(localStorage.getItem('focus-trail:v1:todos') || '[]').length);
+        if (left !== 0) fail(w('ToDo の削除'), 'ToDo を削除できません');
+        await page.click('button:has-text("元に戻す")');
+        await sleep(500);
+        const back = await page.evaluate(() => JSON.parse(localStorage.getItem('focus-trail:v1:todos') || '[]').length);
+        if (back !== 1) fail(w('ToDo を元に戻す'), '消した ToDo を元に戻せません');
+      }
       await page.keyboard.press('Escape');
       await sleep(600);
     }
@@ -860,6 +884,21 @@ async function memoMap(browser, device) {
     await page.locator('[role="dialog"] button', { hasText: 'メモ 3 枚' }).click();
     await sleep(800);
     if ((await page.locator('[data-node]').count()) !== 3) fail(w('マップを切り替える'), '元のマップに戻せません');
+    // 左端からボードを引いて途中で離す（以前は指が残ったままになり、以後のドラッグがすべて拡大になった）→ そのあともタップでメモができる
+    await dragTo(page, { x: vp.x + 8, y: vp.y + vp.height * 0.55 }, { x: vp.x + 70, y: vp.y + vp.height * 0.55 + 10 }, 6);
+    const before3 = (await memoCount(page)).nodes.length;
+    await page.mouse.click(vp.x + 60, vp.y + vp.height - 70);
+    await sleep(400);
+    if ((await memoCount(page)).nodes.length !== before3 + 1) fail(w('左端から引いたあと'), '左端から引いたあと、タップでメモができません');
+    await page.keyboard.press('Escape');
+    await sleep(300);
+    const extra = (await memoCount(page)).nodes.find((n) => !n.title);
+    if (extra) {
+      await page.click(`[data-node="${extra.id}"]`);
+      await sleep(300);
+      await page.click('[aria-label="削除"]');
+      await sleep(400);
+    }
     // 閉じて、再読み込みしても残る
     await page.click('[aria-label="閉じる"]');
     await sleep(900);

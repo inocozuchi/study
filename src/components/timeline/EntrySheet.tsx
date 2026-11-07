@@ -5,6 +5,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Segmented } from '@/components/ui/Segmented';
 import { Pressable } from '@/components/ui/Pressable';
 import { SubjectIcon } from '@/components/ui/SubjectBadge';
+import { showUndo } from '@/components/ui/UndoToast';
 import { useApp } from '@/store/AppStore';
 import { MIN, addDays, dateKey, fmtClock, fmtDuration, inputToMin, minutesOfDay, parseDateKey, timeToInput } from '@/lib/time';
 import { alpha } from '@/lib/subjects';
@@ -47,7 +48,7 @@ function repeatDates(start: string, mode: RepeatMode): string[] {
  * 科目はその場で新しく作れる。時刻は「開始 + 長さ」で決め（終了は自動）、よく使う長さや「いまから」「前の予定のあと」をワンタップで。
  */
 export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: () => void; draft: EntryDraft | null }) {
-  const { activeSubjects, settings, plans, sessions, addSession, updateSession, deleteSession, savePlan, deletePlan, ensureSubject } = useApp();
+  const { activeSubjects, settings, plans, sessions, addSession, updateSession, deleteSession, restoreSession, savePlan, deletePlan, ensureSubject } = useApp();
   const [kind, setKind] = useState<EntryKind>('record');
   const [subjectId, setSubjectId] = useState<string>('');
   const [newName, setNewName] = useState('');
@@ -83,6 +84,8 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
   const future = !isPlan && startTs + minutes * MIN > Date.now() + MIN;
   const today = dateKey(Date.now());
   const nowMin = Math.ceil(minutesOfDay(Date.now()) / 5) * 5;
+  // 「いま終わった」は切り下げ（切り上げると終わりが未来になって保存できない）
+  const nowFloor = Math.floor(minutesOfDay(Date.now()) / 5) * 5;
 
   // その日のほかの予定・記録（重なりと「前の予定のあと」に使う）
   const dayBlocks = useMemo(() => {
@@ -122,9 +125,15 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
     onClose();
   };
 
+  // 削除はすぐ。5 秒だけ「元に戻す」
   const remove = () => {
-    if (shown?.session && !isPlan) deleteSession(shown.session.id);
-    else if (shown?.plan) deletePlan(shown.plan.id);
+    if (shown?.session && !isPlan) {
+      const s = deleteSession(shown.session.id);
+      if (s) showUndo('記録を削除しました', () => restoreSession(s));
+    } else if (shown?.plan) {
+      const p = deletePlan(shown.plan.id);
+      if (p) showUndo('予定を削除しました', () => savePlan(p));
+    }
     onClose();
   };
 
@@ -233,7 +242,7 @@ export function EntrySheet({ open, onClose, draft }: { open: boolean; onClose: (
               </button>
             )}
             {!isPlan && date === today && (
-              <button onClick={() => setStart(Math.max(0, nowMin - duration))} className={`${chip(endMin === nowMin)} flex items-center gap-1`}>
+              <button onClick={() => setStart(Math.max(0, nowFloor - duration))} className={`${chip(endMin === nowFloor)} flex items-center gap-1`}>
                 <Clock size={13} /> いま終わった
               </button>
             )}
@@ -351,7 +360,8 @@ export function draftFromNow(kind: EntryKind, date: string, wakeMin = 9 * 60): E
   const isToday = date === dateKey(Date.now());
   const nowMin = Math.ceil(minutesOfDay(Date.now()) / 5) * 5;
   if (kind === 'record') {
-    const endMin = isToday ? Math.max(60, nowMin) : 10 * 60;
+    // 記録の終わりは「いま」を切り下げ（切り上げると未来になり保存できない）
+    const endMin = isToday ? Math.max(60, Math.floor(minutesOfDay(Date.now()) / 5) * 5) : 10 * 60;
     return { kind, date, startMin: endMin - 60, endMin };
   }
   const startMin = isToday ? Math.min(22 * 60, nowMin) : Math.max(wakeMin, 9 * 60);

@@ -32,6 +32,11 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
   };
   const onDown = (e: RPointerEvent) => {
     if (e.target !== e.currentTarget) return; // ボタンの上では始めない
+    // 2 本目の指：長押しも休憩もやめる（1 本目のタイマーを置き去りにすると、離したあとに旅が終わってしまう）
+    if (holdTimer.current) {
+      cancel();
+      return;
+    }
     start.current = { x: e.clientX, y: e.clientY };
     setHold({ x: e.clientX, y: e.clientY });
     holdTimer.current = setTimeout(() => {
@@ -169,7 +174,7 @@ export function MountainSession({ onMusic, onEnd }: DesignSessionProps) {
               initial={{ strokeDashoffset: 2 * Math.PI * 38 }}
               animate={{ strokeDashoffset: 0 }}
               transition={{ duration: HOLD_MS / 1000, ease: 'linear' }}
-              style={{ filter: 'url(#crayon-soft)' }}
+              // 動く輪に SVG のフィルタをかけない（iPhone は毎フレーム計算し直して重い）
             />
           </motion.svg>
         )}
@@ -193,6 +198,9 @@ function HoldButton({ onDone, className = '', children }: { onDone: () => void; 
     <button
       onPointerDown={(e) => {
         e.stopPropagation();
+        // 2 本目の指ではやめる（1 本目のタイマーを置き去りにしない）。指を外へ滑らせたらやめられるよう、指の捕まえを外す
+        if (timer.current) return stop();
+        (e.currentTarget as Element).releasePointerCapture?.(e.pointerId);
         setHeld(true);
         timer.current = setTimeout(() => {
           timer.current = null;
@@ -210,7 +218,7 @@ function HoldButton({ onDone, className = '', children }: { onDone: () => void; 
       onContextMenu={(e) => e.preventDefault()}
       className={`relative flex items-center justify-center gap-1.5 overflow-hidden text-[13px] font-bold ${className}`}
     >
-      <span className="pointer-events-none absolute inset-y-0 left-0 bg-white/25" style={{ width: held ? '100%' : '0%', transition: held ? `width ${HOLD_MS}ms linear` : 'width 200ms ease-out' }} />
+      <span className="pointer-events-none absolute inset-0 origin-left bg-white/25" style={{ transform: `scaleX(${held ? 1 : 0})`, transition: held ? `transform ${HOLD_MS}ms linear` : 'transform 200ms cubic-bezier(0.23, 1, 0.32, 1)' }} />
       <span className="relative flex flex-col items-center leading-tight">{children}</span>
     </button>
   );

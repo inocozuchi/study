@@ -4,9 +4,10 @@ import { usePresentDepth } from '@/lib/depth';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Angry, BookOpen, ChevronDown, ChevronLeft, ChevronRight, Droplet, Flower2, Footprints, Frown, Headphones, Laugh, ListTodo, Meh, Moon, Mountain, NotebookPen, PenLine, Plus, Salad, Smile, Sparkles, Sprout, Trash2, X, type LucideIcon } from 'lucide-react';
 import { useNow } from '@/hooks/useNow';
+import { showUndo } from '@/components/ui/UndoToast';
 import { useApp } from '@/store/AppStore';
 import { CheckCircle } from '@/components/ui/CheckCircle';
-import { addDays, dateKey, fmtDateJa, parseDateKey, startOfWeek, weekdayJa, DAY } from '@/lib/time';
+import { addDays, dateKey, fmtDateJa, parseDateKey, startOfWeek, weekdayJa } from '@/lib/time';
 import { SUBJECT_COLORS } from '@/lib/subjects';
 import { spring, springBouncy, springSoft } from '@/lib/motion';
 
@@ -39,7 +40,7 @@ export function ToolsPanel({ tab, onTab, onClose }: { tab: ToolTab | null; onTab
             initial={{ opacity: 0, scale: 0.9, x: 40 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.94, x: 30 }}
-            transition={springBouncy}
+            transition={spring}
           >
             {/* サイドタブ */}
             <nav className="relative flex w-[74px] shrink-0 flex-col items-center gap-2 border-r border-line bg-fill py-4">
@@ -153,7 +154,11 @@ function DiaryView() {
 // ───────────── ToDo ─────────────
 
 function TodoView() {
-  const { todos, addTodo, toggleTodo, deleteTodo } = useApp();
+  const { todos, addTodo, toggleTodo, deleteTodo, restoreTodo } = useApp();
+  const remove = (id: string) => {
+    const t = deleteTodo(id);
+    if (t) showUndo('ToDo を削除しました', () => restoreTodo(t));
+  };
   const [text, setText] = useState('');
   const [showDone, setShowDone] = useState(false);
   const open = todos.filter((t) => !t.done).sort((a, b) => a.createdAt - b.createdAt);
@@ -182,7 +187,7 @@ function TodoView() {
       <ul className="mt-3 space-y-1.5">
         <AnimatePresence initial={false}>
           {open.map((t) => (
-            <TodoRow key={t.id} text={t.text} done={false} onToggle={() => toggleTodo(t.id)} onDelete={() => deleteTodo(t.id)} />
+            <TodoRow key={t.id} text={t.text} done={false} onToggle={() => toggleTodo(t.id)} onDelete={() => remove(t.id)} />
           ))}
         </AnimatePresence>
         {open.length === 0 && <li className="py-6 text-center text-ui-[12.5px] text-fg-3">ぜんぶ終わり！</li>}
@@ -196,7 +201,7 @@ function TodoView() {
             {showDone && (
               <motion.ul initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="mt-1.5 space-y-1.5 overflow-hidden">
                 {done.map((t) => (
-                  <TodoRow key={t.id} text={t.text} done onToggle={() => toggleTodo(t.id)} onDelete={() => deleteTodo(t.id)} />
+                  <TodoRow key={t.id} text={t.text} done onToggle={() => toggleTodo(t.id)} onDelete={() => remove(t.id)} />
                 ))}
               </motion.ul>
             )}
@@ -211,7 +216,7 @@ function TodoRow({ text, done, onToggle, onDelete }: { text: string; done: boole
   return (
     <motion.li layout initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 30, height: 0 }} transition={springSoft} className="group flex items-center gap-3 rounded-2xl bg-fill px-3 py-2.5">
       <CheckCircle checked={done} onChange={onToggle} label={text} />
-      <span className={`relative min-w-0 flex-1 text-ui-[13px] ${done ? 'text-fg-3' : ''}`}>
+      <span data-no-translate className={`relative min-w-0 flex-1 text-ui-[13px] ${done ? 'text-fg-3' : ''}`}>
         {text}
         {done && (
           <motion.svg className="absolute left-0 top-1/2 h-2 w-full -translate-y-1/2 overflow-visible" viewBox="0 0 100 4" preserveAspectRatio="none">
@@ -259,7 +264,7 @@ function streakOf(log: string[]) {
 }
 
 function HabitView() {
-  const { habits, addHabit, toggleHabit, deleteHabit } = useApp();
+  const { habits, addHabit, toggleHabit, deleteHabit, restoreHabit } = useApp();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
@@ -267,7 +272,7 @@ function HabitView() {
   const today = dateKey(Date.now());
   // 週が変わったら（月曜になったら）作り直す
   const weekStart = startOfWeek(useNow(60_000));
-  const week = useMemo(() => Array.from({ length: 7 }, (_, i) => new Date(weekStart + i * DAY)), [weekStart]);
+  const week = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
 
   return (
     <div>
@@ -293,11 +298,16 @@ function HabitView() {
                 <div className="flex items-center gap-3">
                   <span className="grid h-10 w-10 place-items-center rounded-2xl" style={{ background: `${h.color}22`, color: h.color }}><HabitIcon value={h.emoji} /></span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-ui-[14px] font-bold">{h.name}</p>
+                    <p data-no-translate className="truncate text-ui-[14px] font-bold">{h.name}</p>
                     <p className="text-ui-[11px] text-fg-2">{streak > 0 ? `${streak}日連続` : 'きょうから始めよう'}{` · 累計 ${h.log.length}日`}</p>
                   </div>
                   {editing ? (
-                    <button onClick={() => deleteHabit(h.id)} aria-label="削除" className="grid h-9 w-9 place-items-center rounded-full bg-danger-soft text-danger-ink">
+                    <button
+                      onClick={() => {
+                        const r = deleteHabit(h.id);
+                        if (r) showUndo('習慣を削除しました', () => restoreHabit(r));
+                      }}
+                      aria-label="削除" className="grid h-9 w-9 place-items-center rounded-full bg-danger-soft text-danger-ink">
                       <Trash2 size={15} />
                     </button>
                   ) : (

@@ -146,9 +146,9 @@ export function RouteStep({ draft, routes, route, patch, onClose, onNext }: { dr
 
 export function Steps({ at }: { at: 1 | 2 | 3 }) {
   return (
-    <span className="mt-1 flex justify-center gap-1" aria-label={`ステップ ${at} / 3`}>
+    <span className="mt-1 flex justify-center" aria-label={`ステップ ${at} / 3`}>
       {[1, 2, 3].map((i) => (
-        <span key={i} className={`h-1 rounded-full transition-all ${i === at ? 'w-4 bg-[#FF9F0A]' : 'w-1 bg-white/35'}`} />
+        <span key={i} className={`h-1 w-4 rounded-full transition-[transform,background-color] duration-200 ${i === at ? 'scale-x-100 bg-[#FF9F0A]' : 'scale-x-[0.25] bg-white/35'}`} />
       ))}
     </span>
   );
