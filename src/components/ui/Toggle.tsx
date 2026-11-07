@@ -12,8 +12,10 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
       className={`relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200 ${checked ? 'bg-accent' : 'bg-line-strong/70'}`}
     >
       <motion.span
-        className="absolute top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow-[0_2px_6px_rgba(0,0,0,0.22)]"
-        animate={{ left: checked ? 22 : 2 }}
+        className="absolute left-[2px] top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow-[0_2px_6px_rgba(0,0,0,0.22)]"
+        // 位置は transform で（left を動かすと毎フレーム並べ直しになる）
+        initial={false}
+        animate={{ x: checked ? 20 : 0 }}
         transition={spring}
       />
     </button>

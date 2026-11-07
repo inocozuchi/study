@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Mountain, Trash2 } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
@@ -54,13 +54,17 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
     onClose();
   };
 
-  const studied = subject ? minutesBySubject[subject.id] ?? 0 : 0;
+  // 閉じる動きの間も中身（題名・削除の欄）を変えない
+  const shownRef = useRef(subject);
+  if (open) shownRef.current = subject;
+  const shown = shownRef.current;
+  const studied = shown ? minutesBySubject[shown.id] ?? 0 : 0;
 
   return (
     <Sheet
       open={open}
       onClose={onClose}
-      title={subject ? 'ルートを編集' : '新しいルート'}
+      title={shown ? 'ルートを編集' : '新しいルート'}
       subtitle="科目ごとに、登る山をひとつ決めましょう"
       action={
         <Pressable onClick={save} disabled={!valid} className="hit flex h-8 items-center gap-1 rounded-full bg-accent px-3.5 text-ui-[12.5px] font-bold text-white">
@@ -85,7 +89,7 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
                 className="relative h-9 w-9 rounded-full"
                 style={{ background: c, boxShadow: color === c ? `0 0 0 3px #0C1224, 0 0 0 5px ${c}` : 'none' }}
               >
-                {color === c && <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={spring} className="absolute inset-0 grid place-items-center text-night-950"><Check size={16} strokeWidth={3} /></motion.span>}
+                {color === c && <motion.span initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={spring} className="absolute inset-0 grid place-items-center text-night-950"><Check size={16} strokeWidth={3} /></motion.span>}
               </motion.button>
             ))}
           </div>
@@ -133,7 +137,7 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
             <p className="tabular text-ui-[12.5px] text-fg-2">標高 {fmtMeters(hours * 60 * METERS_PER_MINUTE)}</p>
           </div>
           <div className="group-box flex items-center gap-3 rounded-2xl p-3">
-            <input type="range" min={1} max={200} value={hours} onChange={(e) => setHours(Number(e.target.value))} className="flex-1 accent-white" aria-label="目標時間" />
+            <input type="range" min={1} max={200} value={hours} onChange={(e) => setHours(Number(e.target.value))} className="flex-1 accent-[rgb(var(--c-accent))]" aria-label="目標時間" />
             <span className="tabular w-16 text-right text-ui-[16px] font-bold">{hours}時間</span>
           </div>
           <div className="mt-2 flex gap-2">
@@ -143,10 +147,10 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
               </button>
             ))}
           </div>
-          {subject && <p className="mt-2 text-ui-[12px] text-fg-2">これまでに {Math.round(studied / 6) / 10} 時間登っています</p>}
+          {shown && <p className="mt-2 text-ui-[12px] text-fg-2">これまでに {Math.round(studied / 6) / 10} 時間登っています</p>}
         </section>
 
-        {subject && (
+        {shown && (
           <div className="pt-2">
             {confirmDelete ? (
               <div className="group-box flex items-center justify-between gap-3 rounded-2xl p-3">
@@ -155,7 +159,7 @@ export function SubjectEditorSheet({ open, onClose, subject, onSaved }: { open: 
                   <button onClick={() => setConfirmDelete(false)} className="rounded-xl bg-fill px-3 py-2 text-ui-[12.5px] font-semibold">やめる</button>
                   <button
                     onClick={() => {
-                      deleteSubject(subject.id);
+                      deleteSubject(shown.id);
                       onClose();
                     }}
                     className="rounded-xl bg-[#FF5A5F] px-3 py-2 text-ui-[12.5px] font-bold"

@@ -250,6 +250,24 @@ function createParticles(L: StageLayout) {
  * 炎のスプライト（中心ほど白く明るい丸）。毎フレーム グラデーションを作らないよう、最初に 3 色ぶん描いておく。
  *  0：芯（白〜黄）、1：中（橙）、2：外（赤〜すす）
  */
+/** 光の粒（ほこり・蛍）の絵。色ごとに 1 回だけ描いておく */
+const glowSprites = new Map<string, HTMLCanvasElement>();
+function glowSprite(inner: string, outer: string) {
+  const key = inner + outer;
+  let cv = glowSprites.get(key);
+  if (cv) return cv;
+  cv = document.createElement('canvas');
+  cv.width = cv.height = 32;
+  const x = cv.getContext('2d')!;
+  const g = x.createRadialGradient(16, 16, 0, 16, 16, 16);
+  g.addColorStop(0, inner);
+  g.addColorStop(1, outer);
+  x.fillStyle = g;
+  x.fillRect(0, 0, 32, 32);
+  glowSprites.set(key, cv);
+  return cv;
+}
+
 let flameSprites: HTMLCanvasElement[] | null = null;
 function getFlameSprites() {
   if (flameSprites) return flameSprites;
@@ -304,12 +322,11 @@ function drawParticles(
       p.y -= dt * (3 + Math.sin(p.a * 0.7) * 4);
       wrap(p);
       const tw = 0.35 + 0.65 * Math.abs(Math.sin(p.a * 1.3));
-      const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
-      g.addColorStop(0, `rgba(255,244,214,${0.75 * tw * day})`);
-      g.addColorStop(1, 'rgba(255,244,214,0)');
-      c.fillStyle = g;
-      c.fillRect(p.x - p.r * 4, p.y - p.r * 4, p.r * 8, p.r * 8);
+      // 光の粒は先に描いた 1 枚の絵（毎フレーム グラデーションを作らない）を濃さだけ変えて置く
+      c.globalAlpha = Math.min(1, 0.75 * tw * day);
+      c.drawImage(glowSprite('rgba(255,244,214,1)', 'rgba(255,244,214,0)'), p.x - p.r * 4, p.y - p.r * 4, p.r * 8, p.r * 8);
     }
+    c.globalAlpha = 1;
     c.globalCompositeOperation = 'source-over';
   }
 
@@ -379,12 +396,10 @@ function drawParticles(
       const x = p.x + Math.sin(p.a * 0.5 + p.hue * 9) * 30;
       const y = p.y + Math.cos(p.a * 0.4 + p.hue * 5) * 16;
       const al = env.night * (0.4 + 0.6 * Math.abs(Math.sin(p.a * 1.4 + p.hue * 6)));
-      const g = c.createRadialGradient(x, y, 0, x, y, 9);
-      g.addColorStop(0, `rgba(222,255,140,${al})`);
-      g.addColorStop(1, 'rgba(222,255,140,0)');
-      c.fillStyle = g;
-      c.fillRect(x - 9, y - 9, 18, 18);
+      c.globalAlpha = Math.min(1, al);
+      c.drawImage(glowSprite('rgba(222,255,140,1)', 'rgba(222,255,140,0)'), x - 9, y - 9, 18, 18);
     }
+    c.globalAlpha = 1;
     c.globalCompositeOperation = 'source-over';
   }
 

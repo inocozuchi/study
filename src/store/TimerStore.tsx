@@ -5,6 +5,7 @@ import { useApp } from './AppStore';
 import { ambient } from '@/audio/ambient';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { MIN, fmtTimer } from '@/lib/time';
+import { translate } from '@/lib/i18n';
 
 /** 休憩明けに自動で次の集中へ進めるのは、休憩が終わってからこの時間内に気づいたときだけ */
 const AUTO_CONTINUE_WINDOW_MS = 60_000;
@@ -85,6 +86,9 @@ interface TimerContextValue {
   clearArrival: () => void;
 }
 
+/** タブの題名の言葉（集中中・休憩中） */
+const TITLE_WORDS: Record<string, [string, string]> = { mountain: ['登山中', '焚き火で休憩'], train: ['乗車中', '途中駅で休憩'], flight: ['飛行中', '休憩中'] };
+
 const TimerContext = createContext<TimerContextValue | null>(null);
 
 function elapsedOf(t: ActiveTimer, now: number) {
@@ -104,7 +108,8 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const setTimer = useCallback((next: ActiveTimer) => {
     timerRef.current = next;
     setTimerState(next);
-    repository.saveActiveTimer(next.phase === 'idle' && !next.running && next.cycle === 0 ? null : next);
+    // 旅の途中（休憩明けで止まっている・1 回目の集中を途中で区切った）も残す。旅の外で止まっているときだけ消す
+    repository.saveActiveTimer(next.phase === 'idle' && !next.running && next.cycle === 0 && !next.journeyStartedAt ? null : next);
   }, []);
 
   // 初回：選択科目がなければ先頭を選ぶ
@@ -432,7 +437,8 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const startPlanned = useCallback(
     (subjectId: string, minutes: number) => {
       const t = timerRef.current;
-      if (t.phase === 'focus') return false;
+      // 旅の途中（休憩中・止まっている旅）には割り込まない（予約やログブックが消えてしまう）
+      if (t.phase !== 'idle' || t.journeyStartedAt) return false;
       ambient.unlock();
       const m = Math.max(10, Math.min(180, Math.round(minutes)));
       updateSettings({ selectedSubjectId: subjectId, mode: 'countdown', countdownMinutes: m });
@@ -440,7 +446,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       setNow(n);
       setTimer({
         ...IDLE,
-        cycle: t.cycle,
+        cycle: 0,
         phase: 'focus',
         mode: 'countdown',
         running: true,
@@ -478,8 +484,11 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       return;
     }
     const shown = remainingMs ?? elapsedMs;
-    document.title = `${fmtTimer(shown)} · ${timer.phase === 'focus' ? (timer.running ? '登山中' : '一時停止') : '焚き火で休憩'}`;
-  }, [timer.phase, timer.running, Math.floor((remainingMs ?? elapsedMs) / 1000)]); // eslint-disable-line react-hooks/exhaustive-deps
+    // 旅のモードの言葉で（登山・列車・航空）。英語のときは辞書で（タブの題名は <head> にあり、画面の訳の見張りの外）
+    const words = TITLE_WORDS[settings?.timerDesign ?? 'mountain'] ?? TITLE_WORDS.mountain;
+    const state = timer.phase === 'focus' ? (timer.running ? words[0] : '一時停止') : words[1];
+    document.title = `${fmtTimer(shown)} · ${translate(state)?.trim() ?? state}`;
+  }, [timer.phase, timer.running, settings?.timerDesign, settings?.language, Math.floor((remainingMs ?? elapsedMs) / 1000)]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const value = useMemo<TimerContextValue>(
     () => ({

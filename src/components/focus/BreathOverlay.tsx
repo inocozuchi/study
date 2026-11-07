@@ -30,8 +30,8 @@ export function BreathOverlay({ open, onDone }: { open: boolean; onDone: () => v
           key="breath"
           aria-label="深呼吸をスキップ"
           onClick={onDone}
-          className="fixed inset-x-0 top-0 h-app z-50 grid place-items-center bg-night-950/70"
-          style={{ backdropFilter: 'blur(24px) saturate(140%)', WebkitBackdropFilter: 'blur(24px) saturate(140%)' }}
+          // ぼかしは使わない（アプリ本体の決まり・iPhone で重い）。濃い幕だけ
+          className="fixed inset-x-0 top-0 h-app z-50 grid place-items-center bg-night-950/85"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.8 } }}

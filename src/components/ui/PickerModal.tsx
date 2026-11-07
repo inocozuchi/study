@@ -48,7 +48,7 @@ export function PickerModal<T extends string | number>({
                 {o.detail && <span className="mt-0.5 block text-ui-[12px] text-fg-2">{o.detail}</span>}
               </span>
               {active && (
-                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-accent-ink">
+                <motion.span initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-accent-ink">
                   <Check size={18} strokeWidth={2.8} />
                 </motion.span>
               )}

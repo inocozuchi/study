@@ -42,13 +42,14 @@ export function streaks(sessions: FocusSession[], now = Date.now()) {
 
 export function summary(sessions: FocusSession[], now = Date.now()) {
   const today0 = startOfDay(now);
-  const tomorrow = today0 + DAY;
-  const last7 = sumBetween(sessions, today0 - 6 * DAY, tomorrow);
+  // 日は addDays で数える（夏時間の切り替えの日は 23 / 25 時間あり、24 時間を足すと日がずれる）
+  const tomorrow = addDays(today0, 1).getTime();
+  const last7 = sumBetween(sessions, addDays(today0, -6).getTime(), tomorrow);
   return {
     today: sumBetween(sessions, today0, tomorrow),
-    yesterday: sumBetween(sessions, today0 - DAY, today0),
+    yesterday: sumBetween(sessions, addDays(today0, -1).getTime(), today0),
     week: sumBetween(sessions, startOfWeek(now), tomorrow),
-    lastWeek: sumBetween(sessions, startOfWeek(now) - 7 * DAY, startOfWeek(now)),
+    lastWeek: sumBetween(sessions, addDays(startOfWeek(now), -7).getTime(), startOfWeek(now)),
     month: sumBetween(sessions, startOfMonth(now), tomorrow),
     avg7: last7 / 7,
     total: sessions.reduce((a, s) => a + s.minutes, 0),
@@ -65,7 +66,7 @@ export interface DayBar {
 export function dailyBars(sessions: FocusSession[], days: number, now = Date.now()): DayBar[] {
   const today0 = startOfDay(now);
   const bars: DayBar[] = Array.from({ length: days }, (_, i) => {
-    const date = new Date(today0 - (days - 1 - i) * DAY);
+    const date = addDays(today0, -(days - 1 - i));
     return { key: dateKey(date), date, total: 0, bySubject: {} };
   });
   const index = new Map(bars.map((b, i) => [b.key, i]));
@@ -80,7 +81,7 @@ export function dailyBars(sessions: FocusSession[], days: number, now = Date.now
 
 /** 曜日(月=0) × 時刻 の集中分（直近 n 日） */
 export function heatmap(sessions: FocusSession[], days = 28, now = Date.now()) {
-  const from = startOfDay(now) - (days - 1) * DAY;
+  const from = addDays(startOfDay(now), -(days - 1)).getTime();
   const grid = Array.from({ length: 7 }, () => new Array<number>(24).fill(0));
   for (const s of sessions) {
     if (s.start < from) continue;

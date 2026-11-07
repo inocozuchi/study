@@ -90,8 +90,12 @@ function MapBody({ onClose }: { onClose: () => void }) {
     }
   });
   const board = memoBoards.find((b) => b.id === boardId) ?? memoBoards[0];
+  // 1 回だけ（StrictMode の 2 度呼びで空のマップが 2 枚できないように）
+  const madeBoard = useRef(false);
   useEffect(() => {
-    if (!memoBoards.length) {
+    if (memoBoards.length) madeBoard.current = false; // 全部消したら、また 1 枚作れるように
+    else if (!madeBoard.current) {
+      madeBoard.current = true;
       const now = Date.now();
       const b: MemoBoard = { id: uid('mb-'), title: '', createdAt: now, updatedAt: now };
       saveMemoBoard(b);
@@ -179,6 +183,10 @@ function MapBody({ onClose }: { onClose: () => void }) {
   const [drag, setDrag] = useState<{ id: string; x: number; y: number } | null>(null);
   const [link, setLink] = useState<{ from: string; x: number; y: number; over: string | null } | null>(null);
   const [lifted, setLifted] = useState<string | null>(null);
+  const nodesRef = useRef(nodeById);
+  nodesRef.current = nodeById;
+  const dragRef = useRef(drag);
+  dragRef.current = drag;
   const posOf = useCallback((n: MemoNode) => (drag && drag.id === n.id ? { x: drag.x, y: drag.y } : { x: n.x, y: n.y }), [drag]);
   const boxOf = useCallback(
     (n: MemoNode): Box => {
@@ -233,9 +241,14 @@ function MapBody({ onClose }: { onClose: () => void }) {
   const g = useRef<G | null>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const glide = useRef<number | null>(null);
+  // 滑っている途中で止めたときの後始末（メモなら置いた位置を保存する）。止めても位置が消えないように
+  const glideEnd = useRef<(() => void) | null>(null);
   const stopGlide = () => {
     if (glide.current) cancelAnimationFrame(glide.current);
     glide.current = null;
+    const end = glideEnd.current;
+    glideEnd.current = null;
+    end?.();
   };
 
   const startPinch = () => {
@@ -246,6 +259,8 @@ function MapBody({ onClose }: { onClose: () => void }) {
 
   const onPointerDown = (e: RPointerEvent<HTMLDivElement>) => {
     if (e.button !== 0 && e.pointerType === 'mouse') return;
+    // メモ・つまみ・線を 1 本の指で動かしている間は、2 本目の指を無視する（指を替えても跳ばない）
+    if (g.current && g.current.kind !== 'pan' && g.current.kind !== 'pinch') return;
     stopGlide();
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     viewportRef.current?.setPointerCapture?.(e.pointerId);
@@ -350,7 +365,12 @@ function MapBody({ onClose }: { onClose: () => void }) {
       else saveViewSoon();
     } else if (s.kind === 'node') {
       const n = nodeById.get(s.id);
-      if (!n) return;
+      if (!n) {
+        // 動かしている間に消された
+        setLifted(null);
+        setDrag(null);
+        return;
+      }
       if (!s.moved) {
         setSel({ kind: 'node', id: n.id });
         return;
@@ -363,7 +383,9 @@ function MapBody({ onClose }: { onClose: () => void }) {
       const done = () => {
         setLifted(null);
         setDrag(null);
-        saveMemoNode({ ...n, x: Math.round(x), y: Math.round(y), updatedAt: Date.now() });
+        // 滑っている間に消されたメモは戻さない（最新のメモで保存する）
+        const latest = nodesRef.current.get(n.id);
+        if (latest) saveMemoNode({ ...latest, x: Math.round(x), y: Math.round(y), updatedAt: Date.now() });
       };
       if (Math.hypot(vx, vy) < 3) return done();
       const step = () => {
@@ -375,9 +397,11 @@ function MapBody({ onClose }: { onClose: () => void }) {
         if (Math.hypot(vx, vy) > 0.4) glide.current = requestAnimationFrame(step);
         else {
           glide.current = null;
+          glideEnd.current = null;
           done();
         }
       };
+      glideEnd.current = done;
       glide.current = requestAnimationFrame(step);
     } else if (s.kind === 'link') {
       setLink(null);
@@ -395,6 +419,23 @@ function MapBody({ onClose }: { onClose: () => void }) {
     } else if (s.kind === 'edge') {
       if (!s.moved) setSel({ kind: 'edge', id: s.id });
     }
+  };
+
+  // 指の操作が取り消された（iOS のジェスチャー・ほかの要素に指を取られた）：タップ扱いにせず、そこまでを片付ける
+  const onPointerCancel = (e: RPointerEvent<HTMLDivElement>) => {
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.delete(e.pointerId);
+    const s = g.current;
+    g.current = null;
+    setLink(null);
+    if (s?.kind === 'node' && s.moved) {
+      const n = nodesRef.current.get(s.id);
+      const d = dragRef.current;
+      setLifted(null);
+      setDrag(null);
+      if (n && d?.id === n.id) saveMemoNode({ ...n, x: Math.round(d.x), y: Math.round(d.y), updatedAt: Date.now() });
+    }
+    if (s?.kind === 'pan' || s?.kind === 'pinch') saveViewSoon();
   };
 
   const viewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -539,12 +580,15 @@ function MapBody({ onClose }: { onClose: () => void }) {
       <div
         ref={viewportRef}
         data-map-viewport
+        // 左端からのスワイプで戻る操作は、ボードの上では使わない（見る場所の移動とぶつかる。閉じるのは左上か Esc）
+        data-no-edge-swipe
         className="relative min-h-0 flex-1 touch-none select-none overflow-hidden"
         style={{ backgroundImage: 'radial-gradient(circle, rgb(var(--c-line-strong)) 1.1px, transparent 1.3px)' }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onLostPointerCapture={onPointerCancel}
       >
         <div ref={worldRef} className="absolute left-0 top-0 h-0 w-0 origin-top-left" style={{ willChange: 'transform' }}>
           {/* 線（矢印は向かう先のメモ側） */}
@@ -605,7 +649,8 @@ function MapBody({ onClose }: { onClose: () => void }) {
             <NodeCard
               key={n.id}
               node={n}
-              pos={posOf(n)}
+              x={posOf(n).x}
+              y={posOf(n).y}
               selected={sel?.kind === 'node' && sel.id === n.id}
               lifted={lifted === n.id}
               target={link?.over === n.id}
@@ -670,13 +715,13 @@ function MapBody({ onClose }: { onClose: () => void }) {
       <AnimatePresence>
         {undo && (
           <motion.div
-            className="absolute inset-x-0 z-40 flex justify-center px-4"
+            className="pointer-events-none absolute inset-x-0 z-40 flex justify-center px-4"
             style={{ bottom: `calc(env(safe-area-inset-bottom) + 20px + ${kb}px)` }}
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 30, opacity: 0 }}
           >
-            <div className="flex items-center gap-3 rounded-full bg-[#1C1E24] py-2 pl-4 pr-2 text-ui-[13px] font-semibold text-white shadow-raised" role="status">
+            <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-[#1C1E24] py-2 pl-4 pr-2 text-ui-[13px] font-semibold text-white shadow-raised" role="status">
               {undo.label}
               <button
                 onClick={() => {
@@ -723,7 +768,7 @@ function MapBody({ onClose }: { onClose: () => void }) {
 }
 
 /** メモ 1 枚（題名・説明の頭・右の丸＝線を引くつまみ） */
-const NodeCard = memo(function NodeCard({ node, pos, selected, lifted, target, observe }: { node: MemoNode; pos: Pt; selected: boolean; lifted: boolean; target: boolean; observe: ResizeObserver }) {
+const NodeCard = memo(function NodeCard({ node, x, y, selected, lifted, target, observe }: { node: MemoNode; x: number; y: number; selected: boolean; lifted: boolean; target: boolean; observe: ResizeObserver }) {
   const ref = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -733,22 +778,22 @@ const NodeCard = memo(function NodeCard({ node, pos, selected, lifted, target, o
   }, [observe]);
   const title = node.title.trim();
   const body = node.body.trim();
+  // 持ち上げ（1.05 倍・影）は中のカードだけ。位置は外の箱の transform（ドラッグの間は毎回変わるので動きを付けない）
   const style: CSSProperties = {
-    left: pos.x,
-    top: pos.y,
     transform: `translate(-50%,-50%) scale(${lifted ? 1.05 : 1})`,
-    transition: 'transform 260ms cubic-bezier(0.34,1.56,0.64,1), box-shadow 200ms',
+    transition: 'transform 200ms cubic-bezier(0.23,1,0.32,1), box-shadow 200ms ease',
   };
   return (
+    <div className={`absolute left-0 top-0 h-0 w-0 ${lifted ? 'z-[3]' : 'z-[2]'}`} style={{ transform: `translate3d(${x}px,${y}px,0)` }}>
     <div
       ref={ref}
       data-node={node.id}
       data-no-press
       role="button"
       aria-label={`メモ：${title || '無題'}`}
-      className={`absolute z-[2] w-max min-w-[64px] max-w-[210px] cursor-grab rounded-card border px-3 py-2 ${cardOf(node.color)} ${
+      className={`absolute left-0 top-0 w-max min-w-[64px] max-w-[210px] cursor-grab rounded-card border px-3 py-2 ${cardOf(node.color)} ${
         selected ? 'border-accent ring-2 ring-accent/60' : target ? 'border-accent ring-4 ring-accent/30' : 'border-line'
-      } ${lifted ? 'z-[3] shadow-[0_18px_40px_-12px_rgba(0,0,0,0.35)]' : 'shadow-card'}`}
+      } ${lifted ? 'shadow-[0_18px_40px_-12px_rgba(0,0,0,0.35)]' : 'shadow-card'}`}
       style={style}
     >
       {title ? (
@@ -761,6 +806,7 @@ const NodeCard = memo(function NodeCard({ node, pos, selected, lifted, target, o
       <span data-handle={node.id} data-no-press aria-label="線を引く" role="button" className="absolute -right-[15px] top-1/2 grid h-[30px] w-[30px] -translate-y-1/2 cursor-crosshair place-items-center">
         <span className={`h-[13px] w-[13px] rounded-full border-2 border-surface ${selected || target ? 'bg-accent' : 'bg-accent/70'} shadow-card`} />
       </span>
+    </div>
     </div>
   );
 });

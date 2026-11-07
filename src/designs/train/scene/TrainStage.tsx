@@ -36,6 +36,14 @@ export interface TrainStageProps {
 /** 巡航の速さ（普通 = 1。快速 1.2・急行 1.42・特急 1.65 倍で流れる）と加速（1 秒あたり）は CLASSES。普通は約 10 秒、特急は約 12 秒で巡航に届く */
 /** ブレーキ（1 秒あたり） */
 const BRAKE = 0.2;
+
+/** transform は値が変わったときだけ書く（同じ値を毎フレーム書かない） */
+const lastTf = new WeakMap<HTMLElement, string>();
+function put(el: HTMLElement | null | undefined, tf: string) {
+  if (!el || lastTf.get(el) === tf) return;
+  lastTf.set(el, tf);
+  el.style.transform = tf;
+}
 /** 巡航 = 1 のときの流れる速さ（px/秒）。中景 : 遠景 = 10 : 1.5 */
 const SPEED = { mid: 60, sky: 9, fence: 150 };
 /** 電柱が窓を横切る時間（秒）と、次の電柱までの間隔（秒） */
@@ -222,6 +230,8 @@ export function TrainStage({ hour, moving, cls, rain, paused = false, sound, sta
     let last = performance.now();
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
+      // 止まっている間（駅・ホーム）は 30fps で十分（雲がわずかに流れるだけ。電池のため）
+      if (s.v === 0 && !live.current.moving && now - last < 32) return;
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       s.t += dt;
@@ -231,7 +241,9 @@ export function TrainStage({ hour, moving, cls, rain, paused = false, sound, sta
       const st = s.st;
       // 駅に止まりたいか：休憩・終着・出発前、または集中の終わりまでの時間がブレーキの時間を切ったとき
       const left = cfg.deadline == null ? Infinity : (cfg.deadline - now) / 1000;
-      const want = cfg.station || (s.v > 0.05 && left <= (2 * D) / (stSpeed * s.v));
+      // 締め切りの直前（1.5 秒）は速さに関係なく止まりに行く（ブレーキの終わりで遅くなったときに一度発車してしまい、
+      // ホームが入り直して数分遅れて止まる不具合があった）
+      const want = cfg.station || (cfg.deadline != null && left <= 1.5) || (s.v > 0.05 && left <= (2 * D) / (stSpeed * s.v));
       if (want && (st.phase === 'none' || st.phase === 'leaving')) {
         if (s.v < 0.02) {
           st.phase = 'stopped';
@@ -274,7 +286,8 @@ export function TrainStage({ hour, moving, cls, rain, paused = false, sound, sta
       s.off.fence += SPEED.fence * sp * dt;
 
       // 電柱：線路に沿って並ぶ。窓を一瞬で駆け抜ける速さ（速いときは 0.3 秒で頭打ち）
-      s.d += ((ww + poleW) / Math.max(0.3, POLE_PASS / Math.max(s.v, 1e-6))) * dt * (reduced ? 0.6 : 1);
+      // 止まっているときは進めない（進めると架線を毎フレーム描き直してしまう）
+      if (s.v > 0) s.d += ((ww + poleW) / Math.max(0.3, POLE_PASS / s.v)) * dt * (reduced ? 0.6 : 1);
       while (s.poles[s.poles.length - 1] < s.d + ww + poleW * 2) s.poles.push(s.poles[s.poles.length - 1] + gap());
       while (s.poles.length > 2 && s.poles[1] < s.d - poleW) s.poles.shift();
       // いま窓に見える電柱（間隔が窓より広いので、見えるのは多くても 1 本）
@@ -314,11 +327,11 @@ export function TrainStage({ hour, moving, cls, rain, paused = false, sound, sta
 
       for (const [v, tr] of tracks.current) {
         const t = tile(v);
-        if (tr.sky) tr.sky.style.transform = `translate3d(${-(s.off.sky % t.sky).toFixed(1)}px,0,0)`;
-        if (tr.mid) tr.mid.style.transform = `translate3d(${-(s.off.mid % t.mid).toFixed(1)}px,0,0)`;
-        if (tr.fence) tr.fence.style.transform = `translate3d(${-(s.off.fence % fenceTile).toFixed(1)}px,0,0)`;
-        if (tr.pole) tr.pole.style.transform = poleX == null ? 'translate3d(-9999px,0,0)' : `translate3d(${poleX.toFixed(1)}px,0,0)`;
-        if (tr.station) tr.station.style.transform = st.phase === 'none' ? 'translate3d(-99999px,0,0)' : `translate3d(${st.x.toFixed(1)}px,0,0)`;
+        put(tr.sky, `translate3d(${-(s.off.sky % t.sky).toFixed(1)}px,0,0)`);
+        put(tr.mid, `translate3d(${-(s.off.mid % t.mid).toFixed(1)}px,0,0)`);
+        put(tr.fence, `translate3d(${-(s.off.fence % fenceTile).toFixed(1)}px,0,0)`);
+        put(tr.pole, poleX == null ? 'translate3d(-9999px,0,0)' : `translate3d(${poleX.toFixed(1)}px,0,0)`);
+        put(tr.station, st.phase === 'none' ? 'translate3d(-99999px,0,0)' : `translate3d(${st.x.toFixed(1)}px,0,0)`);
       }
 
       // 揺れ：走っている間の小さな上下と、レールの継ぎ目のガタンゴトン
@@ -330,7 +343,7 @@ export function TrainStage({ hour, moving, cls, rain, paused = false, sound, sta
       }
       s.bump *= Math.exp(-dt * 14);
       const sway = reduced ? 0 : Math.sin(s.t * 2.3) * 0.7 * vn + Math.sin(s.t * 5.1) * 0.25 * vn + s.bump;
-      if (swayRef.current) swayRef.current.style.transform = `translate3d(0,${sway.toFixed(2)}px,0)`;
+      put(swayRef.current, `translate3d(0,${sway.toFixed(2)}px,0)`);
 
       if (now - s.lastSound > 120) {
         s.lastSound = now;

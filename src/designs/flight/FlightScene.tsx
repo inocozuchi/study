@@ -43,12 +43,16 @@ export function FlightScene({ ended, paused, onReady }: DesignSceneProps) {
   const o = project(origin.lon, origin.lat);
 
   // 進み具合（1 秒ごとに更新される値を、なめらかに追いかける）
-  const progress = useMotionValue(ended ? 1 : journeyProgress ?? 0);
+  // 旅を終えたあとは最後の進み具合のまま（途中で着陸したのに行き先まで飛んで見えないように）。着いたときだけ 1
+  const lastProgress = useRef(0);
+  if (journeyProgress != null) lastProgress.current = journeyProgress;
+  const endAt = lastProgress.current > 0.97 ? 1 : lastProgress.current;
+  const progress = useMotionValue(ended ? endAt : journeyProgress ?? 0);
   useEffect(() => {
-    const to = ended ? 1 : journeyProgress ?? 0;
+    const to = ended ? endAt : journeyProgress ?? 0;
     const c = animate(progress, to, { duration: Math.abs(to - progress.get()) > 0.2 ? 1.4 : 1, ease: 'linear' });
     return () => c.stop();
-  }, [ended, journeyProgress, progress]);
+  }, [ended, journeyProgress, progress, endAt]);
   const px = useTransform(progress, (t) => path?.at(t).x ?? o.x);
   const py = useTransform(progress, (t) => path?.at(t).y ?? o.y);
   const angle = useTransform(progress, (t) => path?.at(t).angle ?? 0);

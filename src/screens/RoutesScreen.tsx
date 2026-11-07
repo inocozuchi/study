@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Lock, Mountain, Pencil, Plus, Route } from 'lucide-react';
 import { useApp } from '@/store/AppStore';
@@ -125,7 +125,7 @@ function RouteCard({ mode, subject, minutes, delay, onClick }: { mode?: DesignRo
       </div>
       <div className="px-4 py-3">
         <div className="h-1.5 overflow-hidden rounded-full bg-fill">
-          <motion.div className="h-full rounded-full" style={{ background: `linear-gradient(90deg, ${alpha(subject.color, 0.6)}, ${subject.color})` }} initial={{ width: 0 }} animate={{ width: `${prog * 100}%` }} transition={{ ...springSoft, delay: delay + 0.15 }} />
+          <motion.div className="h-full w-full origin-left rounded-full" style={{ background: `linear-gradient(90deg, ${alpha(subject.color, 0.6)}, ${subject.color})` }} initial={{ scaleX: 0 }} animate={{ scaleX: prog }} transition={{ ...springSoft, delay: delay + 0.15 }} />
         </div>
         <div className="tabular mt-2 flex justify-between text-ui-[12px] text-fg-2">
           <span>{mode ? mode.distance(prog) : `標高 ${fmtMeters(minutes * METERS_PER_MINUTE)} / ${fmtMeters(subject.targetMinutes * METERS_PER_MINUTE)}`}</span>
@@ -139,14 +139,18 @@ function RouteCard({ mode, subject, minutes, delay, onClick }: { mode?: DesignRo
 function RouteDetailSheet({ mode, subject, onClose, onEdit }: { mode?: DesignRoutes; subject: Subject | null; onClose: () => void; onEdit: (s: Subject) => void }) {
   const { minutesBySubject, sessions, subjectById } = useApp();
   const { setSubject, timer } = useTimer();
-  const live = subject ? subjectById(subject.id) ?? subject : null;
+  // 閉じる動きの間も最後の中身を出したまま（空にならない）
+  const lastRef = useRef(subject);
+  if (subject) lastRef.current = subject;
+  const shownSubject = subject ?? lastRef.current;
+  const live = shownSubject ? subjectById(shownSubject.id) ?? shownSubject : null;
   const minutes = live ? minutesBySubject[live.id] ?? 0 : 0;
   const prog = live ? routeProgress(live, minutes) : 0;
   const recent = useMemo(() => (live ? sessions.filter((s) => s.subjectId === live.id).slice(-5).reverse() : []), [live, sessions]);
 
   return (
     <Sheet
-      open={!!live}
+      open={!!subject}
       onClose={onClose}
       title={mode ? mode.title : live?.mountainName}
       subtitle={live && `${live.name} · 累計 ${fmtDuration(minutes)}`}
@@ -175,10 +179,10 @@ function RouteDetailSheet({ mode, subject, onClose, onEdit }: { mode?: DesignRou
               const needMin = st.from * live.targetMinutes;
               return (
                 <li key={st.index} className="relative flex gap-3 pb-4 last:pb-0">
-                  {i < STAGES.length - 1 && <span className="absolute left-[15px] top-8 h-[calc(100%-24px)] w-[2px] rounded-full" style={{ background: reached ? alpha(live.color, 0.6) : 'rgba(255,255,255,0.1)' }} />}
+                  {i < STAGES.length - 1 && <span className="absolute left-[15px] top-8 h-[calc(100%-24px)] w-[2px] rounded-full" style={{ background: reached ? alpha(live.color, 0.6) : 'rgb(var(--c-line))' }} />}
                   <span
                     className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full text-ui-[12.5px] font-bold"
-                    style={{ background: reached ? live.color : 'rgba(255,255,255,0.08)', color: reached ? '#0C1224' : 'rgba(255,255,255,0.4)', boxShadow: current ? `0 0 0 4px ${alpha(live.color, 0.25)}` : 'none' }}
+                    style={{ background: reached ? live.color : 'rgb(var(--c-fill))', color: reached ? '#0C1224' : 'rgb(var(--c-fg3))', boxShadow: current ? `0 0 0 4px ${alpha(live.color, 0.25)}` : 'none' }}
                   >
                     {reached && !current ? <Check size={15} strokeWidth={3} /> : i + 1}
                   </span>

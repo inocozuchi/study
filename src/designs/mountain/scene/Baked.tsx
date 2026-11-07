@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type CSSProperties, type ReactElement } from 'react';
+import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactElement } from 'react';
 import { CRAYON_FILTERS } from '../CrayonDefs';
 import { trackBake } from './bakeTracker';
 
@@ -180,14 +180,16 @@ export function Baked({
     };
     const showBlob = (blob: Blob) => {
       const prev = out.src;
+      const url = URL.createObjectURL(blob);
       out.onload = () => {
-        if (cancelled) return;
+        // 取り消されたあとに読み終えた画像の URL は捨てる（作るたびに残ってメモリを食う）
+        if (cancelled) return URL.revokeObjectURL(url);
         show(out);
         canvas.width = canvas.height = 0;
         canvas.style.display = 'none';
         if (prev.startsWith('blob:')) URL.revokeObjectURL(prev);
       };
-      out.src = URL.createObjectURL(blob);
+      out.src = url;
     };
 
     const bake = () =>
@@ -230,6 +232,15 @@ export function Baked({
       finish();
     };
   }, [bakeKey, width, height, repeat]);
+
+  // 消えるときに最後の画像の URL を捨てる（モードの切り替え・画面の大きさが変わるたびに作り直すため）
+  useEffect(
+    () => () => {
+      const src = imgRef.current?.src;
+      if (src?.startsWith('blob:')) URL.revokeObjectURL(src);
+    },
+    [],
+  );
 
   const size: CSSProperties = { width: width * repeat, height, maxWidth: 'none', opacity: 0, transition: 'opacity 0.5s', ...style };
   return (

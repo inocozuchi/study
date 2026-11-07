@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Clock3, Timer, X } from 'lucide-react';
@@ -82,7 +82,14 @@ export function MountainBooking({ open, onClose, onStart }: DesignBookingProps) 
   const gain = draft.minutes * METERS_PER_MINUTE;
   const peak = peakFor(gain);
 
+  // 2 度押し（閉じる動きの間のもう一度のタップ）で旅を 2 回始めない
+  const busy = useRef(false);
+  useEffect(() => {
+    if (open) busy.current = false;
+  }, [open]);
   const start = () => {
+    if (busy.current) return;
+    busy.current = true;
     onStart({
       task: draft.task,
       icon: draft.icon,

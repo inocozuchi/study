@@ -33,6 +33,7 @@ import { useNow } from '@/hooks/useNow';
 import { easeIOS, spring, springSheet } from '@/lib/motion';
 import { chromeFor } from '@/lib/chrome';
 import { LayoutProbe } from '@/components/debug/LayoutProbe';
+import { UndoToast } from '@/components/ui/UndoToast';
 
 export default function App() {
   return (
@@ -203,6 +204,7 @@ function Shell() {
       <div className="status-band z-[80]" data-area={chrome.statusArea} data-probe="status" aria-hidden />
 
       <SummitModal />
+      <UndoToast />
       <LayoutProbe />
     </div>
   );

@@ -23,10 +23,13 @@ interface AppContextValue extends AppData {
 
   addSession: (s: Omit<FocusSession, 'id'>) => FocusSession;
   updateSession: (s: FocusSession) => void;
-  deleteSession: (id: string) => void;
+  /** 消したものを返す（元に戻すため） */
+  deleteSession: (id: string) => FocusSession | null;
+  /** 消したものを戻す（同じ id のまま） */
+  restoreSession: (s: FocusSession) => void;
 
   savePlan: (p: Omit<PlanBlock, 'id'> & { id?: string }) => void;
-  deletePlan: (id: string) => void;
+  deletePlan: (id: string) => PlanBlock | null;
 
   updateSettings: (patch: Partial<Settings>) => void;
 
@@ -38,10 +41,12 @@ interface AppContextValue extends AppData {
   saveDiary: (date: string, patch: Partial<Omit<DiaryEntry, 'date'>>) => void;
   addTodo: (text: string) => void;
   toggleTodo: (id: string) => void;
-  deleteTodo: (id: string) => void;
+  deleteTodo: (id: string) => Todo | null;
+  restoreTodo: (t: Todo) => void;
   addHabit: (name: string, emoji: string, color: string) => void;
   toggleHabit: (id: string, date: string) => void;
-  deleteHabit: (id: string) => void;
+  deleteHabit: (id: string) => Habit | null;
+  restoreHabit: (h: Habit) => void;
 
   /** 思考マップ。保存は新規・更新どちらも save。消したものは戻せるように返す */
   saveMemoBoard: (board: MemoBoard) => void;
@@ -167,8 +172,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteSession = useCallback((id: string) => {
+    const s = dataRef.current.sessions.find((x) => x.id === id) ?? null;
     setData((d) => ({ ...d, sessions: d.sessions.filter((s) => s.id !== id) }));
     repository.deleteSession(id);
+    return s;
+  }, []);
+  const restoreSession = useCallback((s: FocusSession) => {
+    setData((d) => ({ ...d, sessions: upsertIn(d.sessions, s) }));
+    repository.updateSession(s);
   }, []);
 
   const savePlan = useCallback((input: Omit<PlanBlock, 'id'> & { id?: string }) => {
@@ -181,8 +192,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deletePlan = useCallback((id: string) => {
+    const p = dataRef.current.plans.find((x) => x.id === id) ?? null;
     setData((d) => ({ ...d, plans: d.plans.filter((p) => p.id !== id) }));
     repository.deletePlan(id);
+    return p;
   }, []);
 
   const updateSettings = useCallback((patch: Partial<Settings>) => {
@@ -233,8 +246,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
   const deleteTodo = useCallback((id: string) => {
+    const t = dataRef.current.todos.find((x) => x.id === id) ?? null;
     setData((d) => ({ ...d, todos: d.todos.filter((t) => t.id !== id) }));
     repository.deleteTodo(id);
+    return t;
+  }, []);
+  const restoreTodo = useCallback((t: Todo) => {
+    setData((d) => ({ ...d, todos: upsertIn(d.todos, t) }));
+    repository.upsertTodo(t);
   }, []);
 
   const saveMemoBoard = useCallback((board: MemoBoard) => {
@@ -283,8 +302,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
   const deleteHabit = useCallback((id: string) => {
+    const h = dataRef.current.habits.find((x) => x.id === id) ?? null;
     setData((d) => ({ ...d, habits: d.habits.filter((h) => h.id !== id) }));
     repository.deleteHabit(id);
+    return h;
+  }, []);
+  const restoreHabit = useCallback((h: Habit) => {
+    setData((d) => ({ ...d, habits: upsertIn(d.habits, h) }));
+    repository.upsertHabit(h);
   }, []);
 
   const addLog = useCallback((input: Omit<TravelLog, 'id'>) => {
@@ -327,6 +352,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addSession,
     updateSession,
     deleteSession,
+    restoreSession,
     savePlan,
     deletePlan,
     updateSettings,
@@ -335,9 +361,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addTodo,
     toggleTodo,
     deleteTodo,
+    restoreTodo,
     addHabit,
     toggleHabit,
     deleteHabit,
+    restoreHabit,
     addLog,
     saveMemoBoard,
     deleteMemoBoard,

@@ -226,7 +226,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
 
       {/* 次の予定 */}
       <AnimatePresence>
-        {isToday && next && !current && timer.phase !== 'focus' && (
+        {isToday && next && !current && timer.phase === 'idle' && !timer.journeyStartedAt && (
           <motion.button
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -371,7 +371,7 @@ export function TimelineScreen({ onStartFocus }: { onStartFocus: () => void }) {
                 実績 {fmtClock(pi.actual.startMin)} – {fmtClock(pi.actual.endMin)}（{fmtDuration(pi.actual.minutes)}）{pi.note ? ` · ${pi.note}` : ''}
               </p>
             )}
-            {!pi.done && isToday && timer.phase !== 'focus' && pi.subject && (
+            {!pi.done && isToday && timer.phase === 'idle' && !timer.journeyStartedAt && pi.subject && (
               <motion.button
                 onClick={() => {
                   if (startPlanned(pi.subject!.id, pi.endMin - pi.startMin)) {

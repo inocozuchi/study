@@ -19,7 +19,8 @@ function Cassette({ track, spinning }: { track: LibraryTrack; spinning: boolean 
     <div className="relative aspect-[1.6] w-full overflow-hidden rounded-2xl shadow-[0_18px_40px_-18px_rgba(0,0,0,0.8)]" style={{ background: `linear-gradient(160deg, ${c.band}, ${alpha(c.band, 0.85)})` }}>
       <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-line" />
       {/* ラベル */}
-      <div className="absolute inset-x-[7%] top-[9%] h-[40%] rounded-lg bg-surface px-3 py-2">
+      {/* ラベルは紙のシール（ライト・ダークに関係なく明るい紙に濃い文字） */}
+      <div className="absolute inset-x-[7%] top-[9%] h-[40%] rounded-lg bg-[#F6F3EA] px-3 py-2">
         <div className="h-1.5 w-full rounded-full" style={{ background: c.label }} />
         <p className="mt-1.5 truncate text-center text-ui-[14px] font-bold text-night-950">{track.title}</p>
         <p className="truncate text-center text-ui-[11px] text-night-950/55">∞ {track.subtitle}</p>
@@ -121,7 +122,7 @@ export function CassettePlayer({ open, onClose }: { open: boolean; onClose: () =
           </div>
           <label className="mt-4 flex items-center gap-3 text-fg-2">
             <Volume1 size={16} />
-            <input type="range" min={0} max={1} step={0.01} value={settings.bgmVolume} onChange={(e) => updateSettings({ bgmVolume: Number(e.target.value) })} className="flex-1 accent-white" aria-label="BGM の音量" />
+            <input type="range" min={0} max={1} step={0.01} value={settings.bgmVolume} onChange={(e) => updateSettings({ bgmVolume: Number(e.target.value) })} className="flex-1 accent-[rgb(var(--c-accent))]" aria-label="BGM の音量" />
             <Volume2 size={16} />
           </label>
         </div>

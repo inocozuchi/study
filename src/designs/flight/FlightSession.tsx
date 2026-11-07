@@ -118,6 +118,12 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
     }
   };
 
+  // 指の操作が取り消された（iOS のジェスチャーなど）：休憩にしない。指と長押しだけ片付ける
+  const onCancel = (e: RPointerEvent) => {
+    pointers.current.delete(e.pointerId);
+    cancelHold();
+  };
+
   // 退場中は表示を固定する
   const present = useIsPresent();
   const frozen = useRef({ phase: timer.phase, running: timer.running });
@@ -132,7 +138,7 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
   const status = rest ? '休憩中 · 巡航高度で待機' : waiting ? '待機中' : running ? (b ? `${b.from} → ${b.to} · 巡航中` : '遊覧飛行 · 巡航中') : '一時停止中';
 
   return (
-    <div className={`fl-root absolute inset-0 touch-none select-none ${view.window ? "fl-on-window" : ""}`} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onContextMenu={(e) => e.preventDefault()}>
+    <div className={`fl-root absolute inset-0 touch-none select-none ${view.window ? "fl-on-window" : ""}`} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onCancel} onContextMenu={(e) => e.preventDefault()}>
       {/* 大きな時計（表示の切り替え） */}
       <AnimatePresence>
         {view.clock && (
@@ -146,7 +152,7 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>{view.window && <WindowView seat={b?.seat} hour={hourFor(settings.sky, new Date())} />}</AnimatePresence>
+      <AnimatePresence>{view.window && <WindowView seat={b?.seat} hour={hourFor(settings.sky, new Date(), { phase: timer.phase, elapsedMs: t.elapsedMs, targetMs: timer.targetMs, freeSpanMs: settings.pomodoroFocus * 60_000 })} />}</AnimatePresence>
 
       {/* 上の真ん中：レーダー地図 ⇄ 機窓ビュー（いつでもワンタップで切り替え） */}
       <ViewSwitch window={view.window} onChange={(w) => setFlightView({ window: w })} />
@@ -240,7 +246,7 @@ export function FlightSession({ onMusic, onEnd }: DesignSessionProps) {
           </div>
           {b && (
             <div className="mt-2.5 h-[3px] overflow-hidden rounded-full bg-white/12">
-              <div className="h-full rounded-full bg-white transition-[width] duration-1000 ease-linear" style={{ width: `${(t.journeyProgress ?? 0) * 100}%` }} />
+              <div className="h-full w-full origin-left rounded-full bg-white transition-transform duration-1000 ease-linear" style={{ transform: `scaleX(${t.journeyProgress ?? 0})` }} />
             </div>
           )}
         </div>
@@ -296,7 +302,10 @@ function HoldButton({ onDone, className = '', children }: { onDone: () => void; 
   useEffect(() => stop, []);
   return (
     <button
-      onPointerDown={() => {
+      onPointerDown={(e) => {
+        // 2 本目の指ではやめる（1 本目のタイマーを置き去りにしない）。指を外へ滑らせたらやめられるよう、指の捕まえを外す
+        if (timer.current) return stop();
+        (e.currentTarget as Element).releasePointerCapture?.(e.pointerId);
         setHeld(true);
         timer.current = setTimeout(() => {
           timer.current = null;
@@ -311,7 +320,7 @@ function HoldButton({ onDone, className = '', children }: { onDone: () => void; 
       onContextMenu={(e) => e.preventDefault()}
       className={`fl-glass relative flex items-center justify-center gap-1.5 overflow-hidden text-[13px] font-semibold text-[#FFD60A] ${className}`}
     >
-      <span className="pointer-events-none absolute inset-y-0 left-0 bg-[#FF9F0A]/35" style={{ width: held ? '100%' : '0%', transition: held ? `width ${HOLD_MS}ms linear` : 'width 200ms ease-out' }} />
+      <span className="pointer-events-none absolute inset-0 origin-left bg-[#FF9F0A]/35" style={{ transform: `scaleX(${held ? 1 : 0})`, transition: held ? `transform ${HOLD_MS}ms linear` : 'transform 200ms cubic-bezier(0.23, 1, 0.32, 1)' }} />
       <span className="relative flex items-center gap-1.5">{children}</span>
     </button>
   );

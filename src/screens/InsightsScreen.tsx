@@ -8,7 +8,7 @@ import { Segmented } from '@/components/ui/Segmented';
 import { SubjectIcon } from '@/components/ui/SubjectBadge';
 import { LANDMARKS, METERS_PER_MINUTE, fmtMeters } from '@/lib/altitude';
 import { bySubject, dailyBars, heatmap, streaks, summary } from '@/lib/stats';
-import { DAY, fmtDateJa, fmtDuration, startOfDay, weekdayJa, weekdaysMonFirst } from '@/lib/time';
+import { addDays, fmtDateJa, fmtDuration, startOfDay, weekdayJa, weekdaysMonFirst } from '@/lib/time';
 import { springSoft } from '@/lib/motion';
 import type { Subject } from '@/types';
 
@@ -24,7 +24,7 @@ export function InsightsScreen() {
   const days = period === 'week' ? 7 : 30;
   const bars = useMemo(() => dailyBars(sessions, days, now), [sessions, days, now]);
   const heat = useMemo(() => heatmap(sessions, 28, now), [sessions, now]);
-  const dist = useMemo(() => bySubject(sessions, startOfDay(now) - (days - 1) * DAY, startOfDay(now) + DAY), [sessions, days, now]);
+  const dist = useMemo(() => bySubject(sessions, addDays(startOfDay(now), -(days - 1)).getTime(), addDays(startOfDay(now), 1).getTime()), [sessions, days, now]);
 
   const delta = sum.today - sum.yesterday;
 
@@ -126,7 +126,7 @@ function BarsCard({ bars, subjects, period }: { bars: ReturnType<typeof dailyBar
         <CardTitle title="日別の集中時間" sub={`平均 ${fmtDuration(avg)} / 日`} />
         <AnimatePresence>
           {hb && (
-            <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="rounded-xl bg-black/40 px-3 py-2 text-right text-ui-[12px]">
+            <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="rounded-xl bg-fill px-3 py-2 text-right text-ui-[12px]">
               <p className="font-semibold text-fg-2">{fmtDateJa(hb.date)}</p>
               <p className="tabular text-ui-[14px] font-bold">{fmtDuration(hb.total)}</p>
             </motion.div>
@@ -156,9 +156,11 @@ function BarsCard({ bars, subjects, period }: { bars: ReturnType<typeof dailyBar
                 aria-label={`${fmtDateJa(b.date)} ${fmtDuration(b.total)}`}
               >
                 <motion.div
-                  className="flex w-full flex-col-reverse gap-[2px] overflow-hidden rounded-t-[4px]"
-                  initial={{ height: 0 }}
-                  animate={{ height: (b.total / top) * H, opacity: dim ? 0.4 : 1 }}
+                  // 高さは決めておき、伸びる動きは scaleY（height を動かすと毎フレーム並べ直しになる）
+                  className="flex w-full origin-bottom flex-col-reverse gap-[2px] overflow-hidden rounded-t-[4px]"
+                  style={{ height: (b.total / top) * H }}
+                  initial={{ scaleY: 0 }}
+                  animate={{ scaleY: 1, opacity: dim ? 0.4 : 1 }}
                   transition={{ ...springSoft, delay: i * (period === 'week' ? 0.03 : 0.008) }}
                 >
                   {segs.map((s) => (
@@ -221,7 +223,7 @@ function DonutCard({ dist, subjects }: { dist: Record<string, number>; subjects:
         <div className="flex flex-col items-center gap-5 min-[440px]:flex-row">
           <div className="relative h-[150px] w-[150px] shrink-0">
             <svg viewBox="0 0 140 140" className="h-full w-full -rotate-90">
-              <circle cx="70" cy="70" r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="16" />
+              <circle cx="70" cy="70" r={R} fill="none" stroke="rgb(var(--c-fill))" strokeWidth="16" />
               {rows.map(({ s, m }) => {
                 const len = (m / total) * C;
                 const dash = Math.max(0.5, len - GAP);
@@ -368,7 +370,7 @@ function AltitudeCard({ total }: { total: number }) {
             <span className="font-semibold">{target.name} <span className="tabular text-fg-2">{fmtMeters(target.meters)}</span></span>
           </div>
           <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-fill">
-            <motion.div className="h-full rounded-full bg-accent"initial={{ width: 0 }} animate={{ width: `${p * 100}%` }} transition={springSoft} />
+            <motion.div className="h-full w-full origin-left rounded-full bg-accent" initial={{ scaleX: 0 }} animate={{ scaleX: p }} transition={springSoft} />
           </div>
           <p className="tabular mt-1 text-right text-ui-[11px] text-fg-2">あと {fmtMeters(target.meters - meters)}（{fmtDuration((target.meters - meters) / METERS_PER_MINUTE)}）</p>
         </div>

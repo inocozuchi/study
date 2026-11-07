@@ -104,9 +104,11 @@ export function useRulerDial({ value, min, max, step, pxPerMin, onChange, onDete
     const d = drag.current;
     if (!d || d.id !== e.pointerId) return;
     drag.current = null;
-    const a = d.samples[0];
-    const b = d.samples[d.samples.length - 1];
-    const dt = (b.t - a.t) / 1000;
+    // 指を止めてから離したときに飛ばないよう、離す直前 100ms の動きだけで勢いを決める
+    const recent = d.samples.filter((p) => e.timeStamp - p.t <= 100);
+    const a = recent[0];
+    const b = recent[recent.length - 1];
+    const dt = a && b ? (b.t - a.t) / 1000 : 0;
     settle(dt > 0 ? (b.x - a.x) / dt : 0);
   };
   const onWheel = (e: RWheelEvent) => {

@@ -33,7 +33,8 @@ export function Sheet({ open, onClose, title, subtitle, children, action, maxHei
   }, [open, onClose]);
 
   const onDragEnd = (_: unknown, info: PanInfo) => {
-    if (info.offset.y > 120 || info.velocity.y > 600) onClose();
+    // 距離か勢いで閉じる（さっと払えば短くても閉じる：0.11px/ms 前後。ごく小さな揺れでは閉じない）
+    if (info.offset.y > 120 || (info.offset.y > 24 && info.velocity.y > 250)) onClose();
   };
 
   return createPortal(

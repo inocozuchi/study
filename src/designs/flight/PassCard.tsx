@@ -45,10 +45,11 @@ export function PassCard({ data, stub, landed = false, compact = false }: { data
               </span>
               FOCUS AIR
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-[3px] text-[11.5px] font-semibold">
-                <Icon size={12} strokeWidth={2.4} />
-                {data.task}
+            <span className="flex min-w-0 items-center gap-1.5">
+              {/* 長い名前は省略して、便名を押し出さない */}
+              <span className="flex min-w-0 max-w-[60%] items-center gap-1 rounded-full bg-white/10 px-2 py-[3px] text-[11.5px] font-semibold">
+                <Icon size={12} strokeWidth={2.4} className="shrink-0" />
+                <span className="truncate">{data.task}</span>
               </span>
               <span className="fl-num text-[11.5px] font-semibold text-white/55">{data.flight}</span>
             </span>
